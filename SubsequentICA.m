@@ -14,12 +14,9 @@ if TrueOrFalse == 1
     
     addpath = strcat(functionsEEGLAB, '\', 'adminfunc', '\');
     addpath = strcat(functionsEEGLAB, '\', 'popfunc', '\');
-end
 
-strVerify = contains(strSystem,'GLNX');
+else
 
-if TrueOrFalse == 1
-    
     addpath = strcat(functionsEEGLAB, '/', 'adminfunc', '/');
     addpath = strcat(functionsEEGLAB, '/', 'popfunc','/');
 end

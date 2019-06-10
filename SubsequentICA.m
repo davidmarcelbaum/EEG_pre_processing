@@ -65,7 +65,7 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
         EEG = eeg_checkset( EEG );
     
-        %Function to run ICA with default parameters
+        %Function to run ICA with specific parameters
         ChannelsICA = EEG.nbchan-1;
         EEG = pop_runica(EEG, 'icatype', 'runica', 'extended',1,'interrupt','off','chanind',1:ChannelsICA);
         EEG = eeg_checkset( EEG );

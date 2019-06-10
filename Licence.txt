@@ -22,4 +22,5 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-This project makes use of EEGLAB and all credits go to the authors of the EEGLAB prohect. EEGLAB is published under the terms of the Simplified BSD Licence (https://github.com/sccn/eeglab).
+This project makes use of EEGLAB and all credits go to the authors of the EEGLAB project.
+EEGLAB is published under the terms of the Simplified BSD Licence (https://github.com/sccn/eeglab).

@@ -49,10 +49,10 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
     %"daughter folder" ICAClean
     newFileName = strcat(fileName, '_ICAWeights.set');
     
-    if TrueOrFalse == 1
-        newFilePath = strcat(pathName, 'ICAWeights\');
-    else
+    if isempty(strVerify)
         newFilePath = strcat(pathName, 'ICAWeights/');
+    else
+        newFilePath = strcat(pathName, 'ICAWeights\');
     end
     
     %Check if dataset has already been run ICA on

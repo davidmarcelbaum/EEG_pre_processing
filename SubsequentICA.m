@@ -12,14 +12,13 @@ EEG = [];
 
 %System-specific appendix to point Matlab to the functions used in this script.
 strVerify = strfind(strSystem,'PCWIN');
-TrueOrFalse = strVerify;
 
-if TrueOrFalse == 1
-    addpath = strcat(functionsEEGLAB, '\', 'adminfunc', '\');
-    addpath = strcat(functionsEEGLAB, '\', 'popfunc', '\');
-else
+if isempty(strVerify)
     addpath = strcat(functionsEEGLAB, '/', 'adminfunc', '/');
-    addpath = strcat(functionsEEGLAB, '/', 'popfunc','/');
+    addpath = strcat(functionsEEGLAB, '/', 'popfunc', '/');
+else
+    addpath = strcat(functionsEEGLAB, '\', 'adminfunc', '\');
+    addpath = strcat(functionsEEGLAB, '\', 'popfunc','\');
 end
 
 %Give here the source folder of the .set files to be run ICA with

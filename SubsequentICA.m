@@ -4,7 +4,11 @@ functionsEEGLAB = uigetdir(matlabroot,'Point to the folder >>functions<< of EEGL
 %Determine which system Matlab runs on
 strSystem = computer;
 
-[ALLEEG EEG CURRENTSET ALLCOM] = eeglab;
+%instead of loading the interface by [ALLEEG EEG CURRENTSET ALLCOM] = eeglab
+ALLCOM = {};
+ALLEEG = [];
+CURRENTSET = 0;
+EEG = [];
 
 %System-specific appendix to point Matlab to the functions used in this script.
 strVerify = strfind(strSystem,'PCWIN');

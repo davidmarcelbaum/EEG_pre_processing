@@ -72,9 +72,17 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         %dataset in current and a global dataset
         [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
         EEG = eeg_checkset( EEG );
-    
+        
+        %Look if dataset contains Trigger channel
+        searchTrigger = strfind(strcat(EEG.chanlocs.labels), 'Trigger');
+        
+        if isempty(searchTrigger)
+           ChannelsICA = EEG.nbchan;
+        else
+           channelsICA = EEG.nbchan-1; 
+        end
+        
         %Function to run ICA with specific parameters
-        ChannelsICA = EEG.nbchan-1;
         EEG = pop_runica(EEG, 'icatype', 'runica', 'extended',1,'interrupt','off','chanind',1:ChannelsICA);
         EEG = eeg_checkset( EEG );
     
@@ -97,5 +105,6 @@ end
 if Filenum == numel(FilesList)
     
     displayedMessage = msgbox('Operation Completed');
+    
     
 end

@@ -11,12 +11,9 @@ strVerify = strfind(strSystem,'PCWIN');
 TrueOrFalse = strVerify;
 
 if TrueOrFalse == 1
-    
     addpath = strcat(functionsEEGLAB, '\', 'adminfunc', '\');
     addpath = strcat(functionsEEGLAB, '\', 'popfunc', '\');
-
 else
-
     addpath = strcat(functionsEEGLAB, '/', 'adminfunc', '/');
     addpath = strcat(functionsEEGLAB, '/', 'popfunc','/');
 end
@@ -36,9 +33,7 @@ end
 existsICAWeights = exist ([pathName, 'ICAWeights'], 'dir');
 
 if existsICAWeights ~= 7
-    
     mkdir (pathName, 'ICAWeights');
-else
 end
 
 for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
@@ -52,11 +47,8 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
     newFileName = strcat(fileName, '_ICAWeights.set');
     
     if TrueOrFalse == 1
-    
         newFilePath = strcat(pathName, 'ICAWeights\');
-        
     else
-        
         newFilePath = strcat(pathName, 'ICAWeights/');
     end
     
@@ -103,8 +95,10 @@ end
 
 %If all files have been analyzed, then stop
 if Filenum == numel(FilesList)
-    
     displayedMessage = msgbox('Operation Completed');
+<<<<<<< HEAD
     
     
+=======
+>>>>>>> 9169b90e673846bee7f0e6104511adf13f3032ff
 end

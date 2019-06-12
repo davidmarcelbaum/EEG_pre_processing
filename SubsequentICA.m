@@ -93,12 +93,7 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
     
 end
 
-%If all files have been analyzed, then stop
+%Display end message
 if Filenum == numel(FilesList)
     displayedMessage = msgbox('Operation Completed');
-<<<<<<< HEAD
-    
-    
-=======
->>>>>>> 9169b90e673846bee7f0e6104511adf13f3032ff
 end

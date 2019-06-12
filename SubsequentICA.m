@@ -71,7 +71,7 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         if isempty(searchTrigger)
            ChannelsICA = EEG.nbchan;
         else
-           channelsICA = EEG.nbchan-1; 
+           ChannelsICA = EEG.nbchan-1; 
         end
         
         %Function to run ICA with specific parameters

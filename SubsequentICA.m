@@ -1,25 +1,34 @@
-%Point to functions used in this sript
-functionsEEGLAB = uigetdir(matlabroot,'Point to the folder >>functions<< of EEGLAB');
+%Search for EEGLAB functions folder
+popfuncPath = which('pop_loadset');
+adminfuncPath = which ('pop_delset');
 
 %Determine which system Matlab runs on
 strSystem = computer;
+
+%System-specific appendix to point Matlab to the functions used in this script.
+strVerify = strfind(strSystem,'PCWIN');
+
+if isempty(popfuncPath)
+    %Point to functions used in this sript
+    functionsEEGLAB = uigetdir(matlabroot,'Point to the folder >>functions<< of EEGLAB');
+    
+    if isempty(strVerify)
+        addpath = strcat(functionsEEGLAB, '/', 'adminfunc', '/');
+        addpath = strcat(functionsEEGLAB, '/', 'popfunc', '/');
+    else
+        addpath = strcat(functionsEEGLAB, '\', 'adminfunc', '\');
+        addpath = strcat(functionsEEGLAB, '\', 'popfunc','\');
+    end
+else
+    addpath = popfuncPath(1:strfind(popfuncPath, '/pop_loadset.m'));
+    addpath = adminfuncPath(1:strfind(adminfuncPath, '/pop_delset.m'));
+end
 
 %instead of loading the interface by [ALLEEG EEG CURRENTSET ALLCOM] = eeglab
 ALLCOM = {};
 ALLEEG = [];
 CURRENTSET = 0;
 EEG = [];
-
-%System-specific appendix to point Matlab to the functions used in this script.
-strVerify = strfind(strSystem,'PCWIN');
-
-if isempty(strVerify)
-    addpath = strcat(functionsEEGLAB, '/', 'adminfunc', '/');
-    addpath = strcat(functionsEEGLAB, '/', 'popfunc', '/');
-else
-    addpath = strcat(functionsEEGLAB, '\', 'adminfunc', '\');
-    addpath = strcat(functionsEEGLAB, '\', 'popfunc','\');
-end
 
 %Give here the source folder of the .set files to be run ICA with
 [FilesList, pathName, filterIndex] = uigetfile('*.set',...

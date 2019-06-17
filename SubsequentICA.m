@@ -1,6 +1,6 @@
 %Search for EEGLAB functions folder
-popfuncPath = which('pop_loadset');
-adminfuncPath = which ('pop_delset');
+locateEeglab = which('eeglab.m');
+eeglabFolder = erase(locateEeglab, "eeglab.m");
 
 %Determine which system Matlab runs on
 strSystem = computer;
@@ -8,7 +8,7 @@ strSystem = computer;
 %System-specific appendix to point Matlab to the functions used in this script.
 strVerify = strfind(strSystem,'PCWIN');
 
-if isempty(popfuncPath)
+if isempty(locateEeglab)
     %Point to functions used in this sript
     functionsEEGLAB = uigetdir(matlabroot,'Point to the folder >>functions<< of EEGLAB');
     
@@ -20,8 +20,13 @@ if isempty(popfuncPath)
         addpath = strcat(functionsEEGLAB, '\', 'popfunc','\');
     end
 else
-    addpath = popfuncPath(1:strfind(popfuncPath, '/pop_loadset.m'));
-    addpath = adminfuncPath(1:strfind(adminfuncPath, '/pop_delset.m'));
+    if isempty(strVerify)
+        addpath = strcat(eeglabFolder, 'functions/popfunc/');
+        addpath = strcat(eeglabFolder, 'functions/adminfunc/');
+    else
+        addpath = strcat(eeglabFolder, 'functions\popfunc\');
+        addpath = strcat(eeglabFolder, 'functions\adminfunc\');
+    end
 end
 
 %instead of loading the interface by [ALLEEG EEG CURRENTSET ALLCOM] = eeglab

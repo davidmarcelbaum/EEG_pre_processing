@@ -100,7 +100,7 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         EEG = eeg_checkset( EEG );
 
         %Saving new file name to new path
-        EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',newFilePath,'savemode','onefile');
+        EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',newFilePath);
         EEG = eeg_checkset( EEG );
 
         %Purge dataset from memory

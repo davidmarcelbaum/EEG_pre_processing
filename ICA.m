@@ -47,11 +47,14 @@ if existsICAWeights ~= 7
     mkdir (pathName, 'ICAWeights');
 end
 
+conservedCharacters = str2double(inputdlg({char(FilesList(1,1))},...
+    'Number of characters to conserve in file name'));
+
 for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
 
     %Function to get the file name
     fileNameComplete = char(FilesList(Filenum));
-    fileName = fileNameComplete(1:21);
+    fileName = fileNameComplete(1:conservedCharacters);
 
     %Append ICAWeights to file names and set path for future save to
     %"daughter folder" ICAClean

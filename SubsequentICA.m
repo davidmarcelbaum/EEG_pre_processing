@@ -17,7 +17,7 @@ if isempty(locateEeglab)
         addpath = strcat(functionsEEGLAB, '/', 'popfunc', '/');
     else
         addpath = strcat(functionsEEGLAB, '\', 'adminfunc', '\');
-        addpath = strcat(functionsEEGLAB, '\', 'popfunc','\');
+        addpath = strcat(functionsEEGLAB, '\', 'popfunc','\');;
     end
 else
     if isempty(strVerify)

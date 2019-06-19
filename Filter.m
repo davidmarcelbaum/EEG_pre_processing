@@ -13,19 +13,19 @@ if isempty(locateEeglab)
     functionsEEGLAB = uigetdir(matlabroot,'Point to the folder >>functions<< of EEGLAB');
 
     if isempty(strVerify)
-        addpath = strcat(functionsEEGLAB, '/', 'adminfunc', '/');
-        addpath = strcat(functionsEEGLAB, '/', 'popfunc', '/');
+        addpath(strcat(functionsEEGLAB, '/', 'adminfunc', '/'));
+        addpath(strcat(functionsEEGLAB, '/', 'popfunc', '/'));
     else
-        addpath = strcat(functionsEEGLAB, '\', 'adminfunc', '\');
-        addpath = strcat(functionsEEGLAB, '\', 'popfunc','\');
+        addpath(strcat(functionsEEGLAB, '\', 'adminfunc', '\'));
+        addpath(strcat(functionsEEGLAB, '\', 'popfunc','\'));
     end
 else
     if isempty(strVerify)
-        addpath = strcat(eeglabFolder, 'functions/popfunc/');
-        addpath = strcat(eeglabFolder, 'functions/adminfunc/');
+        addpath(strcat(eeglabFolder, 'functions/popfunc/'));
+        addpath(strcat(eeglabFolder, 'functions/adminfunc/'));
     else
-        addpath = strcat(eeglabFolder, 'functions\popfunc\');
-        addpath = strcat(eeglabFolder, 'functions\adminfunc\');
+        addpath(strcat(eeglabFolder, 'functions\popfunc\'));
+        addpath(strcat(eeglabFolder, 'functions\adminfunc\'));
     end
 end
 

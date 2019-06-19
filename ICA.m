@@ -13,27 +13,21 @@ if isempty(locateEeglab)
     functionsEEGLAB = uigetdir(matlabroot,'Point to the folder >>functions<< of EEGLAB');
 
     if isempty(strVerify)
-        addpath = strcat(functionsEEGLAB, '/', 'adminfunc', '/');
-        addpath = strcat(functionsEEGLAB, '/', 'popfunc', '/');
+        addpath(strcat(functionsEEGLAB, '/', 'adminfunc', '/'));
+        addpath(strcat(functionsEEGLAB, '/', 'popfunc', '/'));
     else
-        addpath = strcat(functionsEEGLAB, '\', 'adminfunc', '\');
-        addpath = strcat(functionsEEGLAB, '\', 'popfunc','\');
+        addpath(strcat(functionsEEGLAB, '\', 'adminfunc', '\'));
+        addpath(strcat(functionsEEGLAB, '\', 'popfunc','\'));
     end
 else
     if isempty(strVerify)
-        addpath = strcat(eeglabFolder, 'functions/popfunc/');
-        addpath = strcat(eeglabFolder, 'functions/adminfunc/');
+        addpath(strcat(eeglabFolder, 'functions/popfunc/'));
+        addpath(strcat(eeglabFolder, 'functions/adminfunc/'));
     else
-        addpath = strcat(eeglabFolder, 'functions\popfunc\');
-        addpath = strcat(eeglabFolder, 'functions\adminfunc\');
+        addpath(strcat(eeglabFolder, 'functions\popfunc\'));
+        addpath(strcat(eeglabFolder, 'functions\adminfunc\'));
     end
 end
-
-%instead of loading the interface by [ALLEEG EEG CURRENTSET ALLCOM] = eeglab
-ALLCOM = {};
-ALLEEG = [];
-CURRENTSET = 0;
-EEG = [];
 
 %Give here the source folder of the .set files to be run ICA with
 [FilesList, pathName, filterIndex] = uigetfile('*.set',...
@@ -64,16 +58,22 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
     newFileName = strcat(fileName, '_ICAWeights.set');
 
     if isempty(strVerify)
-        newFilePath = strcat(pathName, 'ICAWeights/');
+        newFilePath(strcat(pathName, 'ICAWeights/'));
     else
-        newFilePath = strcat(pathName, 'ICAWeights\');
+        newFilePath(strcat(pathName, 'ICAWeights\'));
     end
 
     %Check if dataset has already been run ICA on
     existsFile = exist ([newFilePath, newFileName], 'file');
 
     if existsFile ~= 2
-
+        
+        ALLCOM = {};
+        ALLEEG = [];
+        CURRENTSET = 0;
+        EEG = [];
+        [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
+        
         %Function to load .set into EEGLAB
         EEG = pop_loadset('filename',fileNameComplete,'filepath',pathName);
 

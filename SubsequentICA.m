@@ -1,6 +1,6 @@
 %Search for EEGLAB folder
 locateEeglab = which('eeglab.m');
-eeglabFolder = erase(locateEeglab, "eeglab.m");
+eeglabFolder = erase(locateEeglab, 'eeglab.m');
 
 %Determine which system Matlab runs on
 strSystem = computer;

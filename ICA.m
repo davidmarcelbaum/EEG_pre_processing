@@ -71,6 +71,8 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
 
     if existsFile ~= 2
         
+        close all;
+        
         ALLCOM = {};
         ALLEEG = [];
         CURRENTSET = 0;

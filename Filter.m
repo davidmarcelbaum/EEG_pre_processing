@@ -70,7 +70,9 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
     existsFile = exist ([newFilePath, newFileName], 'file');
 
     if existsFile ~= 2
-
+        
+        close all;
+        
         %Initialize EEGLAB, this seems to be necessary in order to get
         %error-free filtering
         [ALLEEG EEG CURRENTSET ALLCOM] = eeglab;

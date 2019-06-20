@@ -47,7 +47,7 @@ if existsPreProcessing ~= 7
 end
 
 conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
-    'Base name structure', 1, FilesList(1,1)));
+    'Base name structure', 1, FilesList(1)));
 
 for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
 

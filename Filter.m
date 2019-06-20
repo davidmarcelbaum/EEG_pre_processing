@@ -106,9 +106,8 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
 
 end
 
-close all;
-
 %Display end message
 if Filenum == numel(FilesList)
+    close all;
     displayedMessage = msgbox('Operation Completed');
 end

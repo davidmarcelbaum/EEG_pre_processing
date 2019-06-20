@@ -47,8 +47,8 @@ if existsICAWeights ~= 7
     mkdir (pathName, 'ICAWeights');
 end
 
-conservedCharacters = str2double(inputdlg({char(FilesList(1,1))},...
-    'Number of characters to conserve in file name'));
+conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure'},...
+    'Base name structure', 1, FilesList(1,1)));
 
 for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
 

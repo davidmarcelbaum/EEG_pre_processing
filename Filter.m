@@ -46,11 +46,14 @@ if existsPreProcessing ~= 7
     mkdir (pathName, 'preProcessing');
 end
 
+conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
+    'Base name structure', 1, FilesList(1,1)));
+
 for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
 
     %Function to get the file name
     fileNameComplete = FilesList(Filenum).name;
-    fileName = fileNameComplete(1:12);
+    fileName = fileNameComplete(1:conservedCharacters);
 
     %Append ICAWeights to file names and set path for future save to
     %"daughter folder" ICAClean

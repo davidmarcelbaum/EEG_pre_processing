@@ -112,10 +112,6 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         %Saving new file name to ICAWeights folder created earlier
         EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',newFilePath);
         EEG = eeg_checkset( EEG );
-
-        %Purge dataset from memory in order to avoid unnecessary filling of system memory.
-        [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
-        EEG = pop_delset( EEG, [1] );
     end
 
 end

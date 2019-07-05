@@ -107,7 +107,12 @@ existsPreProcessing = exist([pathName, 'preProcessing'], 'dir');
 if existsPreProcessing ~= 7
     mkdir (pathName, 'preProcessing');
 end
-preProcessingFolder = strcat(pathName, 'preProcessing', slashSys);
+
+if contains(pathName, 'preProcessing')
+     preProcessingFolder = pathName;
+else
+     preProcessingFolder = strcat(pathName, 'preProcessing', slashSys);
+end
 
 folderRAW = strcat(preProcessingFolder, 'RAW', slashSys);
 folderFilt = strcat(preProcessingFolder, 'Filtered', slashSys);

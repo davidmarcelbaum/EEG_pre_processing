@@ -424,7 +424,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
                 'Base name structure', 1, FilesList(1,1)));
             
-            msgbox('Will start script after closing this window.');
+            msgbox('Starting script. You can close this window');
             
             Filenum = 0;
             for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
@@ -503,7 +503,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
                 'Base name structure', 1, FilesList(1,1)));
             
-            msgbox('Will start script after closing this window.');
+            msgbox('Starting script. You can close this window');
             
             Filenum = 0;
             %For every file that has been charged into the FilesList variable:
@@ -596,7 +596,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
                 'Base name structure', 1, FilesList(1,1)));
             
-            msgbox('Starting script.');
+           msgbox('Starting script. You can close this window');
             
             Filenum = 0;
             %For every file that has been charged into the FilesList variable:

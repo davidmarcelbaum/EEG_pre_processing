@@ -7,10 +7,10 @@
 % .. _Filt(0,1-45): Filtering highpass o.1Hz and lowpass 45Hz           ###
 % ... _Re-reference: referenced to user-chosen reference                ###
 % .... _ChInterpol: Interpolating noisy channels                        ###
-% ..... _Epochs: Cutting dataset into epochs                            ###
-% ...... _SelectedEpochs: Noisy epochs have been rejected               ###
-% ....... _ICAWeights: ICA has been performed on dataset                ###
-% ........ _ICAClean: Artefactial IC removed                            ###
+% ..... _ICAWeights: ICA has been performed on dataset                  ###
+% ...... _ICAClean: Artefactial IC removed                              ###
+% ....... _EpochsICAWeights: Cutting dataset into epochs                ###
+% ........ _SelectedEpochs: Noisy epochs have been rejected             ###
 
 % ### This script will proecss ALL datasets of the same type of a given ###
 % ### folder. Many options will automatically be determined by the first###
@@ -20,7 +20,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%% Some prerequisities in order for the script to function %%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     
+
 %Since the path to EEGLAB differs between systems, locate EEGLAB and its functions.
 locateEeglab = which('eeglab.m');
 eeglabFolder = erase(locateEeglab, 'eeglab.m');
@@ -48,7 +48,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%% Beginning of user inputs %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
+
 %Give here the source folder of the datasets to be imported
 pathName = uigetdir(matlabroot,'Choose the folder that contains the datasets');
 
@@ -56,7 +56,6 @@ pathName = strcat(pathName, slashSys);
 
 %Based on what the user chooses, the import and load functions of the datasets are impacted
 chooseFileFormat = {'.set','.mff folders'}; %DO NOT CHANGE ORDER OF FORMATS, adding is ok, though !!!
-
 [fileFormat,tfFiles] = listdlg('PromptString','What is the format of your datasets?','SelectionMode','single','ListSize',[150,150],'ListString',chooseFileFormat);
 fileFormatTranslation = fileFormat;
 
@@ -79,7 +78,7 @@ conservedCharacters = strlength(inputdlg({'Delete parts of file name that are no
     'Base name structure', 1, cellstr(dataList(dataMatch(1)).name)));
 
 %This will deselect steps of the script that are not needed.
-chooseScriptParts = {'RAWing, Filtering and/or re-referencing','Interpolation of noisy channels','Epoching','ICA'};
+chooseScriptParts = {'RAWing, Filtering and/or re-referencing','Interpolation of noisy channels','ICA','Epoching'};
 
 [scriptPart,tfParts] = listdlg('PromptString','What do you want to do with the files in the selected folder?','SelectionMode','single','ListSize',[500,150],'ListString',chooseScriptParts);
 
@@ -90,7 +89,7 @@ chooseScriptParts = {'RAWing, Filtering and/or re-referencing','Interpolation of
 
 %Check if all information has been provided that will be used in the script
 if ~isempty(pathName) && ~isempty(fileFormat) && ~isempty(conservedCharacters) && ~isempty(scriptPart)
-
+    
 else
     %End the script if information is missing
     warning('Some information necessary for the script is missing! Run the script again and provide all information.')
@@ -103,15 +102,14 @@ Filenum = 0;
 FilesList = {};
 
 %Creates preProcessing folder and subfolders if they don't not exist. This is essential for saving the datasets later
-existsPreProcessing = exist([pathName, 'preProcessing'], 'dir');
-if existsPreProcessing ~= 7
-    mkdir (pathName, 'preProcessing');
-end
-
 if contains(pathName, 'preProcessing')
-     preProcessingFolder = pathName;
+    preProcessingFolder = pathName;
 else
-     preProcessingFolder = strcat(pathName, 'preProcessing', slashSys);
+    existsPreProcessing = exist([pathName, 'preProcessing'], 'dir');
+    if existsPreProcessing ~= 7
+        mkdir (pathName, 'preProcessing');
+    end
+    preProcessingFolder = strcat(pathName, 'preProcessing', slashSys);
 end
 
 folderRAW = strcat(preProcessingFolder, 'RAW', slashSys);
@@ -130,10 +128,10 @@ RAWed = 1;
 Filtered = 2;
 Rereferenced = 3;
 ChInterpolated = 4;
-Epoched = 5;
-SelEpoched = 6;
-ICAWeighted = 7;
-ICACleaned = 8;
+ICAWeighted = 5;
+ICACleaned = 6;
+Epoched = 7;
+SelEpoched = 8;
 
 %Define stepLevel based on dataset names
 %dataMatch = find(contains({dataList.name}, fileFormatTranslation));
@@ -147,23 +145,27 @@ elseif contains(string(dataList(dataMatch(1)).name), '_Re-reference')
     stepLevel = Rereferenced;
 elseif contains(string(dataList(dataMatch(1)).name), '_ChInterpol')
     stepLevel = ChInterpolated;
-elseif contains(string(dataList(dataMatch(1)).name), '_Epochs')
-    stepLevel = Epoched;
-elseif contains(string(dataList(dataMatch(1)).name), '_SelectedEpochs')
-    stepLevel = SelEpoched;
 elseif contains(string(dataList(dataMatch(1)).name), '_ICAWeights')
     stepLevel = ICAWeighted;
 elseif contains(string(dataList(dataMatch(1)).name), '_ICAClean')
     stepLevel = ICACleaned;
+elseif contains(string(dataList(dataMatch(1)).name), '_Epochs')
+    stepLevel = Epoched;
+elseif contains(string(dataList(dataMatch(1)).name), '_SelectedEpochs')
+    stepLevel = SelEpoched;
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%% Setting up last variables %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     case 1 %In case "RAWing, Filtering and/or re-referencing" selected %%%%
         
-        % check for script part-specific subfolders in preProcessing %%%%%%
+        % check for script part-specific subfolders in preProcessing
         if exist(folderRAW, 'dir') ~= 7 && stepLevel < 1
             mkdir (folderRAW);
         end
@@ -174,9 +176,50 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             mkdir (folderReference);
         end
         
+        if stepLevel > 3
+            warning('Your datasets seem to be RAWed, Filtered, and Re-referenced. If you want to run these steps anyway, you have to adapt the section that initializes the stepLevel values')
+            return
+        end
+        
+        %Load one dataset into EEGLAB. This is necessary for the
+        %EEG.chanlocs.labels afterwards
+        msgbox('The next step will take a while depending on the size of your first dataset. The EEGLAB window will close automatically')
+        ALLCOM = {};
+        ALLEEG = [];
+        CURRENTSET = 0;
+        EEG = [];
+        [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
+        
+        switch fileFormat
+            case 1
+                EEG = pop_loadset('filename',dataList(dataMatch(1)).name,'filepath',pathName);
+            case 2
+                EEG = pop_mffimport([pathName, dataList(dataMatch(1)).name], {'classid' 'code' 'description' 'label' 'mffkey_cidx' 'mffkey_gidx' 'mffkeys' 'mffkeysbackup' 'relativebegintime' 'sourcedevice'});
+        end
+        EEG = eeg_checkset( EEG );
+        [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
+        EEG = eeg_checkset( EEG );
+        close all;
+        
+        %Define the channel to be excluded during the referencing step
+        if stepLevel < 3
+            referenceChannel = questdlg('Channel used for reference during recording?', ...
+                'Choose reference', ...
+                'Common','Specific electrode','Do not know','Do not know');
+            
+            if contains(referenceChannel,'Specific electrode')
+                referenceChannel = str2double(inputdlg({'Number of reference electrode?'},...
+                    'Put a number', [1 50], {'129'})');
+            end
+            channelList = {EEG.chanlocs.labels}';
+            [rejectedChannelIndex,tf] = listdlg('PromptString',[{'Select channels to exclude from re-ferenceing:'} {''} {''}],'ListString', channelList);
+        end
+        
+        msgbox('Starting script. You can close this window');
+        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         if fileFormat == 2 %Import steps for .mff folder datasets and saving as set
-           
+            
             FilesList = dir([pathName,'*.mff']);
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
@@ -226,9 +269,6 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         if fileFormat == 1
             
-            %This is important because EEGLAB after completing the task leaves some windows open.
-            close all;
-            
             % Files will be loaded from intitial dataset folder if .set
             % were chosen during fileFormat question and in subfolder
             % folderRAW if initial file format was 2 (.mff).
@@ -238,15 +278,6 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 FilesList = dir([pathName,'*.set']);
             end
             
-            %Initializes the variables EEG and ALLEEG that are needed later. For some reason,
-            %the functions work better when EEGLAB initializes the variables itself, which is
-            %why I added the last line.
-            ALLCOM = {};
-            ALLEEG = [];
-            CURRENTSET = 0;
-            EEG = [];
-            [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
-            
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             Filenum = 0;
             for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
@@ -254,9 +285,6 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %Extract the base file name in order to append extensions afterwards
                 fileNameComplete = char(FilesList(Filenum).name);
                 fileName = fileNameComplete(1:conservedCharacters);
-                
-                %This is important because EEGLAB after completing the task leaves some windows open.
-                close all;
                 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %Append _RAW to name of dataset
@@ -267,6 +295,18 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 if existsFile ~= 2 && stepLevel < 1 %Checks whether _RAW dataset exists
+                    
+                    %This is important because EEGLAB after completing the task leaves some windows open.
+                    close all;
+                    
+                    %Initializes the variables EEG and ALLEEG that are needed later. For some reason,
+                    %the functions work better when EEGLAB initializes the variables itself, which is
+                    %why I added the last line.
+                    ALLCOM = {};
+                    ALLEEG = [];
+                    CURRENTSET = 0;
+                    EEG = [];
+                    [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
                     
                     EEG = pop_loadset('filename',fileNameComplete,'filepath',pathName);
                     [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
@@ -294,7 +334,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     if stepLevel == 0
                         EEG = pop_loadset('filename',previousFileName,'filepath',folderRAW);
                     elseif stepLevel == 1
-                        EEG = pop_loadset('filename',fileName,'filepath',pathName);
+                        EEG = pop_loadset('filename',strcat(fileName, '.set'),'filepath',pathName);
                     end
                     %[ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
                     EEG = pop_eegfiltnew(EEG, 'locutoff',0.1,'hicutoff',45, 'filtorder', 33000);
@@ -306,6 +346,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     %Save dataset _Filt(0,1-45) to ./preProcessing/Filt/
                     EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderFilt);
                 end
+                
+                stepLevel = Filtered;
                 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %Exchange _Filt with _Re-reference and append
@@ -321,9 +363,19 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 if existsFile ~= 2 && stepLevel < 3 %Checks whether _Re-reference dataset exsists
                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     %Re-reference to average excluding the electrode used for reference DURING recording.
-                    referenceChanRec = erase(EEG.ref, 'E');
-                    referenceChanRec = erase(referenceChanRec, ' ');
-                    EEG = pop_reref( EEG, [],'exclude',referenceChanRec);
+                    if  referenceChannel == 'Common'
+                        EEG = pop_reref( EEG, [], 'exclude', rejectedChannelIndex);
+                    elseif referenceChannel == 'Do not know'
+                        if ~isempty(EEG.ref)
+                            referenceChannel = erase(EEG.ref, 'E');
+                            referenceChannel = erase(referenceChanRec, ' ');
+                            EEG = pop_reref( EEG, [], 'exclude', [rejectedChannelIndex referenceChannel]);
+                        else
+                            EEG = pop_reref( EEG, []);
+                        end
+                    else
+                        EEG = pop_reref( EEG, [], 'exclude', [rejectedChannelIndex referenceChannel]);
+                    end
                     
                     if stepLevel == 1
                         EEG = pop_loadset('filename',previousFileName,'filepath',folderFilt);
@@ -339,18 +391,21 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     EEG = eeg_checkset( EEG );
                     EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderReference);
                 end
+                stepLevel = Rereferenced;
+                
             end
+            close all;
         end
         
-        
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %In case "Interpolation of noisy channels" selected
-    case 2
+    case 2 %In case "Interpolation of noisy channels" selected
         
         uiwait(msgbox({'You have chosen Channel Interpolation.';...
-            'If you have a text file containing information about the'; ...
+            'If you have a text file (single line single space) containing information about the'; ...
             'channels to interpolate, name it as the dataset with the appendix'; ...
-            '"_ChInterpol" and save it as .txt. in the same folder as the datasets.' }, ...
+            '"_ChInterpol" and save it as .txt. in the same folder as the datasets.'; ...
+            'If the channels to interpolate are CB1 or CB2, DO NOT INTERPOLATE THEM'; ...
+            'since this will delete channel location information!'}, ...
             'Known channels to interpolate','modal'));
         
         % check for script part-specific subfolders in preProcessing %%%%%%
@@ -360,53 +415,160 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         if fileFormat == 1
             
-            %This is important because EEGLAB after completing the task leaves some windows open.
+            % Files will be loaded from intitial dataset folder if .set
+            % were chosen during fileFormat question and in subfolder
+            % folderRAW if initial file format was 2 (.mff)
+            FilesList = dir([pathName,'*.set']);
+            
+            %This is an attempt to dynamically adapt the script to different file name types and lengths.
+            conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
+                'Base name structure', 1, FilesList(1,1)));
+            
+            msgbox('Will start script after closing this window.');
+            
+            Filenum = 0;
+            for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
+                
+                %This is important because EEGLAB after completing the task leaves some windows open.
+                close all;
+                
+                %Initializes the variables EEG and ALLEEG that are needed later. For some reason,
+                %the functions work better when EEGLAB initializes the variables itself, which is
+                %why I added the last line.
+                ALLCOM = {};
+                ALLEEG = [];
+                CURRENTSET = 0;
+                EEG = [];
+                [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
+            
+                %Extract the base file name in order to append extensions afterwards
+                fileNameComplete = char(FilesList(Filenum).name);
+                fileName = fileNameComplete(1:conservedCharacters);
+                
+                % Function for loading
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %Append _ChInterpol to name of dataset
+                newFileName = strcat(fileName, '_ChInterpol.set');
+                
+                %This avoids re-running RAWing on already RAWed datasets.
+                existsFile = exist ([folderChInterpol, newFileName], 'file');
+                
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                if existsFile ~= 2 && stepLevel < 4 %Checks whether _ChInterpol dataset exists
+                    
+                    EEG = pop_loadset('filename',fileName,'filepath',pathName);
+                    
+                    [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
+                    EEG = eeg_checkset( EEG );
+                    
+                end
+                
+                %Function to look for available text files with channel
+                %information inside and load them as "double" variable
+                ChInterpolTextFile = strcat(fileName, '_ChInterpol.txt');
+                ChToInterpolate = textread(ChInterpolTextFile);
+                
+                % Function for processing
+                EEG = pop_interp(EEG, ChToInterpolate, 'spherical');
+                EEG = eeg_checkset( EEG );
+                
+                % Function for appending _ChInterpol
+                EEG = pop_editset(EEG, 'setname', newFileName);
+                EEG = eeg_checkset( EEG );
+                
+                % Function for saving
+                EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderChInterpol);
+                
+                %Function to save information of which channels have been interpolated.
+            end
             close all;
+        end
+        
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    case 3 %In case "ICA" selected
+        
+        % check for script part-specific subfolders in preProcessing %%%%%%
+        if exist(folderICAWeights, 'dir') ~= 7 && stepLevel < 5
+            mkdir (folderICAWeights);
+        end
+        
+        if fileFormat == 1
             
             % Files will be loaded from intitial dataset folder if .set
             % were chosen during fileFormat question and in subfolder
             % folderRAW if initial file format was 2 (.mff)
             FilesList = dir([pathName,'*.set']);
             
-            %Initializes the variables EEG and ALLEEG that are needed later. For some reason,
-            %the functions work better when EEGLAB initializes the variables itself, which is
-            %why I added the last line.
-            ALLCOM = {};
-            ALLEEG = [];
-            CURRENTSET = 0;
-            EEG = [];
-            [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
+            %This is an attempt to dynamically adapt the script to different file name types and lengths.
+            conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
+                'Base name structure', 1, FilesList(1,1)));
+            
+            msgbox('Will start script after closing this window.');
             
             Filenum = 0;
+            %For every file that has been charged into the FilesList variable:
             for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
                 
                 %Extract the base file name in order to append extensions afterwards
-                fileNameComplete = char(FilesList(Filenum).name);
+                fileNameComplete = char(FilesList(Filenum));
                 fileName = fileNameComplete(1:conservedCharacters);
                 
-                % Function for loading
-                EEG = pop_loadset('filename',fileName,'filepath',pathName);
-                EEG = eeg_checkset( EEG );
+                %In order to make this clean, it saves files in a new ICAWeights directory of the mother directory
+                newFileName = strcat(fileName, '_ICAWeights.set');
                 
-                %Function to look for available text files with channel information inside
+                %This avoids re-running ICA on datasets that ICA has already been run on.
+                existsFile = exist ([folderICAWeights, newFileName], 'file');
                 
-                % Function for processing
+                if existsFile ~= 2
+                    
+                    %This is important because EEGLAB after completing the task leaves some windows open.
+                    close all;
+                    
+                    %Initializes the variables EEG and ALLEEG that are needed later. For some reason,
+                    %the functions work better when EEGLAB initializes the variables itself, which is
+                    %why I added the last line.
+                    ALLCOM = {};
+                    ALLEEG = [];
+                    CURRENTSET = 0;
+                    EEG = [];
+                    [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
+                    
+                    %Function to load .set into EEGLAB
+                    EEG = pop_loadset('filename',fileNameComplete,'filepath',pathName);
+                    
+                    %Stores daataset in first (0) slot.
+                    [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
+                    EEG = eeg_checkset( EEG );
+                    
+                    %Look if dataset contains Trigger channel because ICA should not be run on this channel.
+                    %This only works if Trigger channel, if present, is located in the last row of the EEG.data variable
+                    searchTrigger = strfind(strcat(EEG.chanlocs.labels), 'Trigger');
+                    
+                    if isempty(searchTrigger)
+                        ChannelsICA = EEG.nbchan;
+                    else
+                        ChannelsICA = EEG.nbchan-1;
+                    end
+                    
+                    %Function to run ICA with specific parameters
+                    EEG = pop_runica(EEG, 'icatype', 'runica', 'extended',1,'interrupt','off','chanind',1:ChannelsICA);
+                    EEG = eeg_checkset( EEG );
+                    
+                    %Append "ICAWeights" to filename in order to not overwrite existing datasets.
+                    EEG = pop_editset(EEG, 'setname', newFileName);
+                    EEG = eeg_checkset( EEG );
+                    
+                    %Saving new file name to ICAWeights folder created earlier
+                    EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderICAWeights);
+                    EEG = eeg_checkset( EEG );
+                end
                 
-                % Function for setname
-                EEG = pop_editset(EEG, 'setname', newFileName);
-                EEG = eeg_checkset( EEG );
-                
-                % Function for saving
-                EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderReference);
-                
-                %Function to save information of which channels have been interpolated.
             end
-            
+            close all;
         end
         
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %In case "Epoching" selected
-    case 3
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    case 4 %In case "Epoching" selected
         
         %Do not delete the transpose at the end of the function.
         epochDimensions = str2double(inputdlg({'Seconds before trigger?','Seconds after trigger?'},...
@@ -418,17 +580,74 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             epochDimensions(2) = -epochDimensions(2);
         end
         
+        % check for script part-specific subfolders in preProcessing %%%%%%
+        if exist(folderEpochs, 'dir') ~= 7 && stepLevel < 7
+            mkdir (folderEpochs);
+        end
         
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %In case "ICA" selected
-        %case 4
+        if fileFormat == 1
+            
+            % Files will be loaded from intitial dataset folder if .set
+            % were chosen during fileFormat question and in subfolder
+            % folderRAW if initial file format was 2 (.mff)
+            FilesList = dir([pathName,'*.set']);
+            
+            %This is an attempt to dynamically adapt the script to different file name types and lengths.
+            conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
+                'Base name structure', 1, FilesList(1,1)));
+            
+            msgbox('Starting script.');
+            
+            Filenum = 0;
+            %For every file that has been charged into the FilesList variable:
+            for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
+                
+                %Extract the base file name in order to append extensions afterwards
+                fileNameComplete = char(FilesList(Filenum));
+                fileName = fileNameComplete(1:conservedCharacters);
+                
+                %In order to make this clean, it saves files in a new ICAWeights directory of the mother directory
+                newFileName = strcat(fileName, '_Epochs.set');
+                
+                %This avoids re-running ICA on datasets that ICA has already been run on.
+                existsFile = exist ([folderEpochs, newFileName], 'file');
+                
+                if existsFile ~= 2
+                    
+                    %This is important because EEGLAB after completing the task leaves some windows open.
+                    close all;
+                    
+                    %Initializes the variables EEG and ALLEEG that are needed later. For some reason,
+                    %the functions work better when EEGLAB initializes the variables itself, which is
+                    %why I added the last line.
+                    ALLCOM = {};
+                    ALLEEG = [];
+                    CURRENTSET = 0;
+                    EEG = [];
+                    [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
+                    
+                    %Function to load .set into EEGLAB
+                    EEG = pop_loadset('filename',fileNameComplete,'filepath',pathName);
+                    
+                    %Stores daataset in first (0) slot.
+                    [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
+                    EEG = eeg_checkset( EEG );
+                    
+                    %This will extract epochs from ALL triggers ("{ }"). This needs to
+                    %be changed in order to adapt
+                    EEG = pop_epoch( EEG, {  }, epochDimensions, 'newname', newFileName, 'epochinfo', 'yes');
+                    EEG = eeg_checkset( EEG );
+                    EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderEpochs);
+                    EEG = eeg_checkset( EEG );
+                    
+                end
+            end
+            close all;
+        end
         
-        
-         
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %If nothing has been selected or "Cancel" button clicked
-    otherwise
-        warning('No option has been choosen');
+    otherwise %If nothing has been selected or "Cancel" button clicked
+        warning('No option for pre-processing has been choosen');
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

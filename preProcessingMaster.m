@@ -231,7 +231,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             end
         end
 
-        msgbox('Starting script. You can close this window');
+        uiwait(msgbox('Starting script after closing this window'));
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         if fileFormat == 2 %Import steps for .mff folder datasets and saving as set
@@ -480,7 +480,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
             %   'Base name structure', 1, {FilesList(1).name}));
 
-            msgbox('Starting script. You can close this window');
+            uiwait(msgbox('Starting script after closing this window'));
 
             Filenum = 0;
             for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
@@ -522,11 +522,11 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %Function to look for available text files with channel
                 %information inside and load them as "double" variable
                 ChInterpolTextFile = strcat(fileName, '_ChInterpol.txt');
-                ChToInterpolate = textread(ChInterpolTextFile);
-
-                % Function for processing
-                EEG = pop_interp(EEG, ChToInterpolate, 'spherical');
-                EEG = eeg_checkset( EEG );
+                if exist(ChInterpolTextFile, 'file')
+                    ChToInterpolate = textread(ChInterpolTextFile);
+                    EEG = pop_interp(EEG, ChToInterpolate, 'spherical');
+                    EEG = eeg_checkset( EEG );
+                end
 
                 % Function for appending _ChInterpol
                 EEG = pop_editset(EEG, 'setname', newFileName);
@@ -561,7 +561,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
             %    'Base name structure', 1, {FilesList(1).name}));
 
-            msgbox('Starting script. You can close this window');
+            uiwait(msgbox('Starting script after closing this window'));
 
             Filenum = 0;
             %For every file that has been charged into the FilesList variable:
@@ -664,7 +664,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
             %    'Base name structure', 1, {FilesList(1).name}));
 
-           msgbox('Starting script. You can close this window');
+           uiwait(msgbox('Starting script after closing this window'));
 
             Filenum = 0;
             %For every file that has been charged into the FilesList variable:

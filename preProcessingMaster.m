@@ -78,7 +78,7 @@ conservedCharacters = strlength(inputdlg({'Delete parts of file name that are no
     'Base name structure', 1, cellstr(dataList(dataMatch(1)).name)));
 
 %This will deselect steps of the script that are not needed.
-chooseScriptParts = {'RAWing, Filtering and/or re-referencing','Interpolation of noisy channels','ICA','Epoching'};
+chooseScriptParts = {'RAWing, Filtering and/or re-referencing','Interpolation of noisy channels','ICA','Epoching','Extract channel interpolation information'};
 
 [scriptPart,tfParts] = listdlg('PromptString','What type of pre-processing do you want to perform?','SelectionMode','single','ListSize',[500,150],'ListString',chooseScriptParts);
 
@@ -101,8 +101,8 @@ end
 Filenum = 0;
 FilesList = {};
 
-%Creates preProcessing folder and subfolders if they don't not exist. This is essential for saving the datasets later.
-%If datasets are already in a pre-processing folder, then do not create further pre-processing folders in order to
+%Creates preProcessing folder and subfolders if they do not exist. This is essential for saving the datasets later.
+%Otherwise, the script will put subfolders in existing preProcessing folder in order to
 %avoid digging the folder paths too deep and coming out on the other end of Earth.
 if contains(pathName, 'preProcessing')
     preProcessingFolder = replace(pathName,extractAfter(pathName,"preProcessing"),slashSys);
@@ -712,7 +712,66 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             end
             close all;
         end
+        
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    case 5 %In case "Extract channel interpolation information" selected
+        
+      if fileFormat == 1
 
+            % Files will be loaded from intitial dataset folder if .set
+            % were chosen during fileFormat question and in subfolder
+            % folderRAW if initial file format was 2 (.mff)
+            FilesList = dir([pathName,'*.set']);
+            
+            for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
+
+                %Extract the base file name in order to append extensions afterwards
+                fileNameComplete = char(FilesList(Filenum).name);
+                fileName = fileNameComplete(1:conservedCharacters);
+
+                %In order to make this clean, it saves files in a new ICAWeights directory of the mother directory
+                ChInterpolFile = strcat(fileName, '_ChInterpol.txt');
+
+                %This avoids re-running ICA on datasets that ICA has already been run on.
+                existsFile = exist ([pathName, ChInterpolFile], 'file');
+
+                if existsFile ~= 2
+
+                    %This is important because EEGLAB after completing the task leaves some windows open.
+                    close all;
+
+                    %Initializes the variables EEG and ALLEEG that are needed later. For some reason,
+                    %the functions work better when EEGLAB initializes the variables itself, which is
+                    %why I added the last line.
+                    ALLCOM = {};
+                    ALLEEG = [];
+                    CURRENTSET = 0;
+                    EEG = [];
+                    [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
+
+                    %Function to load .set into EEGLAB
+                    EEG = pop_loadset('filename',fileNameComplete,'filepath',pathName);
+
+                    %Stores daataset in first (0) slot.
+                    [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
+                    EEG = eeg_checkset( EEG );
+
+                    %This will check whether channels had been interpolated
+                    %in this dataset.
+                    haveBeenInterpol = strfind(EEG.history,'pop_interp');
+                    
+                    if ~isempty(haveBeenInterpol)
+                        interpolInfo = [extractBetween(EEG.history, "EEG = pop_interp(EEG, [","], 'spherical'")];
+                        save(ChInterpolFile, interpolInfo, '-ASCII');
+                    end
+
+                end
+            end
+            close all;
+            
+      end
+        
+        
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     otherwise %If nothing has been selected or "Cancel" button clicked
         warning('No option for pre-processing has been choosen');

@@ -54,10 +54,21 @@ pathName = uigetdir(cd,'Choose the folder that contains the datasets');
 
 pathName = strcat(pathName, slashSys);
 
+%This will deselect steps of the script that are not needed.
+chooseScriptParts = {'RAWing, Filtering and/or re-referencing','Interpolation of noisy channels','ICA','Epoching','Extract channel interpolation information'};
+
+[scriptPart,tfParts] = listdlg('PromptString','What type of pre-processing do you want to perform?','SelectionMode','single','ListSize',[500,150],'ListString',chooseScriptParts);
+
 %Based on what the user chooses, the import and load functions of the datasets are impacted
-chooseFileFormat = {'.set','.mff folders'}; %DO NOT CHANGE ORDER OF FORMATS, adding is ok, though !!!
-[fileFormat,tfFiles] = listdlg('PromptString','What is the format of your datasets?','SelectionMode','single','ListSize',[150,150],'ListString',chooseFileFormat);
-fileFormatTranslation = fileFormat;
+switch scriptPart
+    case 1
+        chooseFileFormat = {'.set','.mff folders'}; %DO NOT CHANGE ORDER OF FORMATS, adding is ok, though !!!
+        [fileFormat,tfFiles] = listdlg('PromptString','What is the format of your datasets?','SelectionMode','single','ListSize',[150,150],'ListString',chooseFileFormat);
+        fileFormatTranslation = fileFormat;
+    otherwise
+        fileFormat = 1;
+        fileFormatTranslation = fileFormat;
+end
 
 %Translate the indices of the fileFormat back to strings. This string is
 %used to search for files in the folder that match the file format. For
@@ -76,12 +87,6 @@ dataMatch = find(contains({dataList.name}, fileFormatTranslation));
 
 conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
     'Base name structure', 1, cellstr(dataList(dataMatch(1)).name)));
-
-%This will deselect steps of the script that are not needed.
-chooseScriptParts = {'RAWing, Filtering and/or re-referencing','Interpolation of noisy channels','ICA','Epoching','Extract channel interpolation information'};
-
-[scriptPart,tfParts] = listdlg('PromptString','What type of pre-processing do you want to perform?','SelectionMode','single','ListSize',[500,150],'ListString',chooseScriptParts);
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% Setting up environment for script %%%%%%%%%%%%%%%%%%%%
@@ -123,6 +128,7 @@ folderICAWeights = strcat(preProcessingFolder, 'ICAWeights', slashSys);
 folderICAClean = strcat(preProcessingFolder, 'ICAClean', slashSys);
 folderEpochs = strcat(preProcessingFolder, 'Epochs', slashSys);
 folderSelEpochs = strcat(preProcessingFolder, 'SelectedEpochs', slashSys);
+folderInterpolInfo = strcat(preProcessingFolder, 'ChannelInterpolation', slashSys);
 
 %Set up initial stepLevel value so that later, pre-processing of datasets
 %is only forward and not reverse
@@ -723,6 +729,10 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % folderRAW if initial file format was 2 (.mff)
             FilesList = dir([pathName,'*.set']);
             
+            if exist(folderInterpolInfo, 'dir') ~= 7
+                mkdir (folderInterpolInfo);
+            end
+            
             for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
 
                 %Extract the base file name in order to append extensions afterwards
@@ -762,7 +772,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     
                     if ~isempty(haveBeenInterpol)
                         interpolInfo = [extractBetween(EEG.history, "EEG = pop_interp(EEG, [","], 'spherical'")];
-                        save(ChInterpolFile, interpolInfo, '-ASCII');
+                        save([folderInterpolInfo ChInterpolFile], interpolInfo, '-ASCII');
                     end
 
                 end

@@ -219,12 +219,13 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
 
         %Ask to reject absent channels
-        [emptyChannelIndex] = listdlg('PromptString',[{'Do you have channels that have NOT been used?'} {''} {''}],'ListString', channelList);
+        [emptyChannelIndex, emptyChannelAnswer] = listdlg('PromptString',[{'Do you have channels that have NOT been used?'} {''} {''}],'ListString', channelList);
 
         %Ask whether to change channel locations if not present.
+        questLocateChannels = [];
         if isempty(EEG.chanlocs(1).X)
             questLocateChannels = questdlg('Do you want to locate channels?','Locate channels','Yes','No','Yes');
-            if questLocateChannels = 'Yes'
+            if strcmpi(questLocateChannels, 'Yes')
               [channelLocationsFile, channelLocationsPath] = uigetfile('*.elp','Look for channel locations file',eeglabFolder);
               channelLocationsInfo = strcat(channelLocationsPath, channelLocationsFile);
             end
@@ -271,14 +272,14 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
                     %Stores daataset in first (0) slot.
                     [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
-                    EEG = eeg_checkset( EEG
+                    EEG = eeg_checkset( EEG );
 
-                    if questLocateChannels = 'Yes'
+                    if strcmpi(questLocateChannels, 'Yes')
                       EEG=pop_chanedit(EEG, 'lookup',channelLocationsInfo);
                       EEG = eeg_checkset( EEG );
                     end
 
-                    if ~isempty(emptyChannelIndex)
+                    if ~isempty(emptyChannelIndex) || emptyChannelAnswer == 1
                       EEG = pop_select( EEG, 'nochannel', emptyChannelIndex);
                       EEG = eeg_checkset( EEG );
                     end
@@ -332,12 +333,12 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     EEG = eeg_checkset( EEG );
                     EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderRAW);
 
-                    if questLocateChannels = 'Yes'
+                    if strcmpi(questLocateChannels, 'Yes')
                       EEG=pop_chanedit(EEG, 'lookup',channelLocationsInfo);
                       EEG = eeg_checkset( EEG );
                     end
 
-                    if ~isempty(emptyChannelIndex)
+                    if ~isempty(emptyChannelIndex) || emptyChannelAnswer == 1
                       EEG = pop_select( EEG, 'nochannel', emptyChannelIndex);
                       EEG = eeg_checkset( EEG );
                     end

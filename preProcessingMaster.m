@@ -105,7 +105,7 @@ FilesList = {};
 %If datasets are already in a pre-processing folder, then do not create further pre-processing folders in order to
 %avoid digging the folder paths too deep and coming out on the other end of Earth.
 if contains(pathName, 'preProcessing')
-    preProcessingFolder = pathName;
+    preProcessingFolder = replace(pathName,extractAfter(pathName,"preProcessing"),slashSys);
 else
     existsPreProcessing = exist([pathName, 'preProcessing'], 'dir');
     if existsPreProcessing ~= 7

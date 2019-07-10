@@ -185,7 +185,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
 
         %Load one dataset into EEGLAB. This is necessary for the
-        %EEG.chanlocs.labels afterwards (until line 218)
+        %EEG.chanlocs afterwards (until line 231)
         msgbox('The next step will take a while depending on the size of your first dataset. The EEGLAB window will close automatically. You can close this here window.')
         ALLCOM = {};
         ALLEEG = [];
@@ -215,7 +215,19 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %        'Put a number', [1 50], {'129'})');
             %end
             channelList = {EEG.chanlocs.labels}';
-            [rejectedChannelIndex] = listdlg('PromptString',[{'Select channels (such as VEO, HEO, M1, M2 or Trigger) to exclude from re-ferenceing:'} {''} {''}],'ListString', channelList);
+            [rejectedChannelIndex] = listdlg('PromptString',[{'Select channels (such as VEO, HEO, M1, M2 or Trigger) to exclude from re-ferencing:'} {''} {''} {''}],'ListString', channelList);
+        end
+
+        %Ask to reject absent channels
+        [emptyChannelIndex] = listdlg('PromptString',[{'Do you have channels that have NOT been used?'} {''} {''}],'ListString', channelList);
+
+        %Ask whether to change channel locations if not present.
+        if isempty(EEG.chanlocs(1).X)
+            questLocateChannels = questdlg('Do you want to locate channels?','Locate channels','Yes','No','Yes');
+            if questLocateChannels = 'Yes'
+              [channelLocationsFile, channelLocationsPath] = uigetfile('*.elp','Look for channel locations file',eeglabFolder);
+              channelLocationsInfo = strcat(channelLocationsPath, channelLocationsFile);
+            end
         end
 
         msgbox('Starting script. You can close this window');
@@ -259,7 +271,17 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
                     %Stores daataset in first (0) slot.
                     [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
-                    EEG = eeg_checkset( EEG );
+                    EEG = eeg_checkset( EEG
+
+                    if questLocateChannels = 'Yes'
+                      EEG=pop_chanedit(EEG, 'lookup',channelLocationsInfo);
+                      EEG = eeg_checkset( EEG );
+                    end
+
+                    if ~isempty(emptyChannelIndex)
+                      EEG = pop_select( EEG, 'nochannel', emptyChannelIndex);
+                      EEG = eeg_checkset( EEG );
+                    end
 
                     %Rename the dataset with _RAW appendix and save to preProcessing folder
                     EEG = pop_editset(EEG, 'setname', newFileName);
@@ -307,7 +329,19 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
                     %Rename the dataset with _RAW appendix and save to preProcessing folder
                     EEG = pop_editset(EEG, 'setname', newFileName);
+                    EEG = eeg_checkset( EEG );
                     EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderRAW);
+
+                    if questLocateChannels = 'Yes'
+                      EEG=pop_chanedit(EEG, 'lookup',channelLocationsInfo);
+                      EEG = eeg_checkset( EEG );
+                    end
+
+                    if ~isempty(emptyChannelIndex)
+                      EEG = pop_select( EEG, 'nochannel', emptyChannelIndex);
+                      EEG = eeg_checkset( EEG );
+                    end
+
                 end
 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

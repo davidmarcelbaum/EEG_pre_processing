@@ -477,8 +477,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %This is an attempt to dynamically adapt the script to different file name types and lengths.
             %conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
             %    'Base name structure', 1, FilesList(1,1)));
-            conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
-                'Base name structure', 1, {FilesList(1).name}));
+            %conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
+            %   'Base name structure', 1, {FilesList(1).name}));
 
             msgbox('Starting script. You can close this window');
 
@@ -558,8 +558,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %This is an attempt to dynamically adapt the script to different file name types and lengths.
             %conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
             %    'Base name structure', 1, {FilesList(1).name}));
-            conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
-                'Base name structure', 1, {FilesList(1).name}));
+            %conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
+            %    'Base name structure', 1, {FilesList(1).name}));
 
             msgbox('Starting script. You can close this window');
 
@@ -568,7 +568,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
 
                 %Extract the base file name in order to append extensions afterwards
-                fileNameComplete = char(FilesList(Filenum));
+                fileNameComplete = char(FilesList(Filenum).name);
                 fileName = fileNameComplete(1:conservedCharacters);
 
                 %In order to make this clean, it saves files in a new ICAWeights directory of the mother directory
@@ -661,8 +661,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %This is an attempt to dynamically adapt the script to different file name types and lengths.
             %conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
             %    'Base name structure', 1, FilesList(1,1)));
-            conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
-                'Base name structure', 1, {FilesList(1).name}));
+            %conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
+            %    'Base name structure', 1, {FilesList(1).name}));
 
            msgbox('Starting script. You can close this window');
 
@@ -671,7 +671,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
 
                 %Extract the base file name in order to append extensions afterwards
-                fileNameComplete = char(FilesList(Filenum));
+                fileNameComplete = char(FilesList(Filenum).name);
                 fileName = fileNameComplete(1:conservedCharacters);
 
                 %In order to make this clean, it saves files in a new ICAWeights directory of the mother directory

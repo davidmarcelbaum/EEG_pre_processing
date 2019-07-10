@@ -297,7 +297,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             Filenum = 0;
             for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
-
+                
                 %Extract the base file name in order to append extensions afterwards
                 fileNameComplete = char(FilesList(Filenum).name);
                 fileName = fileNameComplete(1:conservedCharacters);
@@ -314,7 +314,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
                     %This is important because EEGLAB after completing the task leaves some windows open.
                     close all;
-
+                    
                     %Initializes the variables EEG and ALLEEG that are needed later. For some reason,
                     %the functions work better when EEGLAB initializes the variables itself, which is
                     %why I added the last line.
@@ -323,7 +323,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     CURRENTSET = 0;
                     EEG = [];
                     [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
-
+                    
                     EEG = pop_loadset('filename',fileNameComplete,'filepath',pathName);
                     [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
                     EEG = eeg_checkset( EEG );
@@ -331,8 +331,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     %Rename the dataset with _RAW appendix and save to preProcessing folder
                     EEG = pop_editset(EEG, 'setname', newFileName);
                     EEG = eeg_checkset( EEG );
-                    EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderRAW);
-
+                    
                     if strcmpi(questLocateChannels, 'Yes')
                       EEG=pop_chanedit(EEG, 'lookup',channelLocationsInfo);
                       EEG = eeg_checkset( EEG );
@@ -342,6 +341,9 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                       EEG = pop_select( EEG, 'nochannel', emptyChannelIndex);
                       EEG = eeg_checkset( EEG );
                     end
+                    
+                    EEG = eeg_checkset( EEG );
+                    EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderRAW);
 
                 end
 
@@ -357,7 +359,19 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 if existsFile ~= 2 && stepLevel < 2 %Checks whether _Filt(0,1-45) dataset exists
-                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    
+                    %This is important because EEGLAB after completing the task leaves some windows open.
+                    close all;
+                    
+                    %Initializes the variables EEG and ALLEEG that are needed later. For some reason,
+                    %the functions work better when EEGLAB initializes the variables itself, which is
+                    %why I added the last line.
+                    ALLCOM = {};
+                    ALLEEG = [];
+                    CURRENTSET = 0;
+                    EEG = [];
+                    [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
+                    
                     %Filter dataset
                     if stepLevel == 0
                         EEG = pop_loadset('filename',previousFileName,'filepath',folderRAW);
@@ -402,6 +416,18 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     %else
                     %    EEG = pop_reref( EEG, [], 'exclude', [rejectedChannelIndex referenceChannel]);
                     %end
+                    
+                    %This is important because EEGLAB after completing the task leaves some windows open.
+                    close all;
+                    
+                    %Initializes the variables EEG and ALLEEG that are needed later. For some reason,
+                    %the functions work better when EEGLAB initializes the variables itself, which is
+                    %why I added the last line.
+                    ALLCOM = {};
+                    ALLEEG = [];
+                    CURRENTSET = 0;
+                    EEG = [];
+                    [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
 
                     if stepLevel < 2
                         EEG = pop_loadset('filename',previousFileName,'filepath',folderFilt);
@@ -456,19 +482,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             Filenum = 0;
             for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
-
-                %This is important because EEGLAB after completing the task leaves some windows open.
-                close all;
-
-                %Initializes the variables EEG and ALLEEG that are needed later. For some reason,
-                %the functions work better when EEGLAB initializes the variables itself, which is
-                %why I added the last line.
-                ALLCOM = {};
-                ALLEEG = [];
-                CURRENTSET = 0;
-                EEG = [];
-                [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
-
+                
                 %Extract the base file name in order to append extensions afterwards
                 fileNameComplete = char(FilesList(Filenum).name);
                 fileName = fileNameComplete(1:conservedCharacters);
@@ -484,6 +498,18 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 if existsFile ~= 2 && stepLevel < 4 %Checks whether _ChInterpol dataset exists
 
+                    %This is important because EEGLAB after completing the task leaves some windows open.
+                    close all;
+                    
+                    %Initializes the variables EEG and ALLEEG that are needed later. For some reason,
+                    %the functions work better when EEGLAB initializes the variables itself, which is
+                    %why I added the last line.
+                    ALLCOM = {};
+                    ALLEEG = [];
+                    CURRENTSET = 0;
+                    EEG = [];
+                    [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
+                    
                     EEG = pop_loadset('filename',fileName,'filepath',pathName);
 
                     [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );

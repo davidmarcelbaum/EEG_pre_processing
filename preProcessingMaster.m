@@ -475,8 +475,10 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             FilesList = dir([pathName,'*.set']);
 
             %This is an attempt to dynamically adapt the script to different file name types and lengths.
+            %conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
+            %    'Base name structure', 1, FilesList(1,1)));
             conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
-                'Base name structure', 1, FilesList(1,1)));
+                'Base name structure', 1, {FilesList(1).name}));
 
             msgbox('Starting script. You can close this window');
 
@@ -554,8 +556,10 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             FilesList = dir([pathName,'*.set']);
 
             %This is an attempt to dynamically adapt the script to different file name types and lengths.
+            %conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
+            %    'Base name structure', 1, {FilesList(1).name}));
             conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
-                'Base name structure', 1, FilesList(1,1)));
+                'Base name structure', 1, {FilesList(1).name}));
 
             msgbox('Starting script. You can close this window');
 
@@ -655,8 +659,10 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             FilesList = dir([pathName,'*.set']);
 
             %This is an attempt to dynamically adapt the script to different file name types and lengths.
+            %conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
+            %    'Base name structure', 1, FilesList(1,1)));
             conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
-                'Base name structure', 1, FilesList(1,1)));
+                'Base name structure', 1, {FilesList(1).name}));
 
            msgbox('Starting script. You can close this window');
 

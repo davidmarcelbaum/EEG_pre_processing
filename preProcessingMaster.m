@@ -771,8 +771,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     haveBeenInterpol = strfind(EEG.history,'pop_interp');
                     
                     if ~isempty(haveBeenInterpol)
-                        interpolInfo = [extractBetween(EEG.history, "EEG = pop_interp(EEG, [","], 'spherical'")];
-                        save([folderInterpolInfo ChInterpolFile], interpolInfo, '-ASCII');
+                        interpolInfo = string(extractBetween(EEG.history, "EEG = pop_interp(EEG, [","], 'spherical'"));
+                        save([folderInterpolInfo ChInterpolFile], 'interpolInfo', '-ASCII');
                     end
 
                 end

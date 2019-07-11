@@ -192,7 +192,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
         %Load one dataset into EEGLAB. This is necessary for the
         %EEG.chanlocs afterwards (until line 231)
-        msgbox('The next step will take a while depending on the size of your first dataset. The EEGLAB window will close automatically. You can close this here window.')
+        msgbox('The next step will take a while depending on the size of your first dataset. The EEGLAB window will close automatically. You can close this window.')
         ALLCOM = {};
         ALLEEG = [];
         CURRENTSET = 0;
@@ -560,7 +560,27 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % were chosen during fileFormat question and in subfolder
             % folderRAW if initial file format was 2 (.mff)
             FilesList = dir([pathName,'*.set']);
-
+            
+            %Load one dataset into EEGLAB. This is necessary for the
+            %EEG.chanlocs afterwards (until line 231)
+            msgbox('The next step will take a while depending on the size of your first dataset. The EEGLAB window will close automatically. You can close this window.')
+            ALLCOM = {};
+            ALLEEG = [];
+            CURRENTSET = 0;
+            EEG = [];
+            [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
+            
+            EEG = pop_loadset('filename',FilesList(1).name,'filepath',pathName);
+                
+            EEG = eeg_checkset( EEG );
+            [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
+            EEG = eeg_checkset( EEG );
+            close all;
+            
+            %Ask user to select channels for ICA
+            channelListICA = {EEG.chanlocs.labels}';
+            [selectedChannels] = listdlg('PromptString',[{'Please select the cannels you would like to include.'} {''} {''}],'ListString', channelListICA);
+            
             %This is an attempt to dynamically adapt the script to different file name types and lengths.
             %conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
             %    'Base name structure', 1, {FilesList(1).name}));
@@ -606,13 +626,13 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
                     %Look if dataset contains Trigger channel because ICA should not be run on this channel.
                     %This only works if Trigger channel, if present, is located in the last row of the EEG.data variable
-                    searchTrigger = strfind(strcat(EEG.chanlocs.labels), 'Trigger');
+                    %searchTrigger = strfind(strcat(EEG.chanlocs.labels), 'Trigger');
 
-                    if isempty(searchTrigger)
-                        ChannelsICA = EEG.nbchan;
-                    else
-                        ChannelsICA = EEG.nbchan-1;
-                    end
+                    %if isempty(searchTrigger)
+                    %    ChannelsICA = EEG.nbchan;
+                    %else
+                    %    ChannelsICA = EEG.nbchan-1;
+                    %end
 
                     %Calculate the sum of each row in EEG.data in order to identify the channel used for reference during recording
                     %(This one will always be "0" at any time point)
@@ -623,7 +643,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     %end
 
                     %Function to run ICA with specific parameters
-                    EEG = pop_runica(EEG, 'icatype', 'runica', 'extended',1,'interrupt','off','chanind',1:ChannelsICA);
+                    EEG = pop_runica(EEG, 'icatype', 'runica', 'extended',1,'interrupt','off','chanind',selectedChannels);
                     EEG = eeg_checkset( EEG );
 
                     %Append "ICAWeights" to filename in order to not overwrite existing datasets.

@@ -237,7 +237,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             end
         end
 
-        uiwait(msgbox('Starting script after closing this window'));
+        uiwait(msgbox('Starting script after closing this window...'));
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         if fileFormat == 2 %Import steps for .mff folder datasets and saving as set
@@ -486,7 +486,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
             %   'Base name structure', 1, {FilesList(1).name}));
 
-            uiwait(msgbox('Starting script after closing this window'));
+            uiwait(msgbox('Starting script after closing this window...'));
 
             Filenum = 0;
             for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
@@ -567,7 +567,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
             %    'Base name structure', 1, {FilesList(1).name}));
 
-            uiwait(msgbox('Starting script after closing this window'));
+            uiwait(msgbox('Starting script after closing this window...'));
 
             Filenum = 0;
             %For every file that has been charged into the FilesList variable:
@@ -670,7 +670,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %conservedCharacters = strlength(inputdlg({'Delete parts of file name that are not part of base name structure (Delete last underscore if there)'},...
             %    'Base name structure', 1, {FilesList(1).name}));
 
-           uiwait(msgbox('Starting script after closing this window'));
+           uiwait(msgbox('Starting script after closing this window...'));
 
             Filenum = 0;
             %For every file that has been charged into the FilesList variable:
@@ -720,7 +720,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
         
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    case 5 %In case "Extract channel interpolation information" selected
+    case 5 %In case "Extract channel interpolation information" selected  
         
       if fileFormat == 1
 
@@ -732,6 +732,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             if exist(folderInterpolInfo, 'dir') ~= 7
                 mkdir (folderInterpolInfo);
             end
+            
+            uiwait(msgbox('Starting script after closing this window...'));
             
             for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
 

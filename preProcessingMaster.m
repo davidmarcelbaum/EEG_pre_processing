@@ -763,7 +763,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 fileName = fileNameComplete(1:conservedCharacters);
 
                 %In order to make this clean, it saves files in a new ICAWeights directory of the mother directory
-                ChInterpolFile = strcat(fileName, '_ChInterpol.txt');
+                ChInterpolFile = strcat(fileName, '_ChInterpolInfo.txt');
 
                 %This avoids re-running ICA on datasets that ICA has already been run on.
                 existsFile = exist ([pathName, ChInterpolFile], 'file');
@@ -794,8 +794,11 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     haveBeenInterpol = strfind(EEG.history,'pop_interp');
                     
                     if ~isempty(haveBeenInterpol)
-                        interpolInfo = string(extractBetween(EEG.history, "EEG = pop_interp(EEG, [","], 'spherical'"));
-                        save([folderInterpolInfo ChInterpolFile], 'interpolInfo', '-ASCII');
+                        ChInterpol = edit([folderInterpolInfo ChInterpolFile]);
+                        ChInterpolInfo = extractBetween(EEG.history, "EEG = pop_interp(EEG, [","], 'spherical'");
+                        ChInterpol = fopen(ChInterpol);
+                        fprintf(ChInterpol,ChInterpolInfo);
+                        save([folderInterpolInfo ChInterpolFile],ChInterpolInfo);
                     end
 
                 end

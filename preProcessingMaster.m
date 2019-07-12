@@ -55,7 +55,7 @@ pathName = uigetdir(cd,'Choose the folder that contains the datasets');
 pathName = strcat(pathName, slashSys);
 
 %This will deselect steps of the script that are not needed.
-chooseScriptParts = {'RAWing, Filtering and/or re-referencing','Interpolation of noisy channels','ICA','Epoching','Extract channel interpolation information'};
+chooseScriptParts = {'RAWing, Filtering and/or re-referencing','Interpolation of noisy channels','ICA','Epoching','Extract channel interpolation information','Compute dipoles using dipfit (Nonlinear least-square fit regression curve)'};
 
 [scriptPart,tfParts] = listdlg('PromptString','What type of pre-processing do you want to perform?','SelectionMode','single','ListSize',[500,150],'ListString',chooseScriptParts);
 
@@ -129,6 +129,7 @@ folderICAClean = strcat(preProcessingFolder, 'ICAClean', slashSys);
 folderEpochs = strcat(preProcessingFolder, 'Epochs', slashSys);
 folderSelEpochs = strcat(preProcessingFolder, 'SelectedEpochs', slashSys);
 folderInterpolInfo = strcat(preProcessingFolder, 'ChannelInterpolation', slashSys);
+folderDipoles = strcat(preProcessingFolder, 'Dipoles', slashSys);
 
 %Set up initial stepLevel value so that later, pre-processing of datasets
 %is only forward and not reverse
@@ -802,7 +803,79 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             close all;
             
       end
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    case 6 %In case "Compute dipoles ..." selected
         
+        if fileFormat == 1
+            
+            FilesList = dir([pathName,'*.set']);
+            
+            %Load one dataset into EEGLAB. This is necessary for the
+            %EEG.chanlocs afterwards (until line 231)
+            msgbox('The next step will take a while depending on the size of your first dataset. The EEGLAB window will close automatically. You can close this window.')
+            ALLCOM = {};
+            ALLEEG = [];
+            CURRENTSET = 0;
+            EEG = [];
+            [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
+            
+            EEG = pop_loadset('filename',FilesList(1).name,'filepath',pathName);
+            EEG = eeg_checkset( EEG );
+            [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
+            EEG = eeg_checkset( EEG );
+            close all;
+            
+            %Search for standard MRI
+            stdVolume = strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'standard_vol.mat');
+            
+            %Search for standard electrode for 10-20 system
+            stdElectrodes = strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'elec', slashSys, 'standard_1005.elc');
+            
+            %Search for MRI anatomy folder of subjects
+            subjAnatFolder = uigetdir(cd,'Choose folder containing subjects anatomy *** IN .MAT FORMAT ***');
+            subjAnat = dir([subjAnatFolder,'*.mat']);
+            
+            if exist(folderDipoles, 'dir') ~= 7
+                mkdir (folderDipoles);
+            end
+            
+            uiwait(msgbox('Starting script after closing this window...'));
+            
+            for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
+                
+                %Extract the base file name in order to append extensions afterwards
+                fileNameComplete = char(FilesList(Filenum).name);
+                fileName = fileNameComplete(1:conservedCharacters);
+                
+                newFileName = strcat(fileName, '_Dipoles.set');
+                
+                %This avoids re-running ICA on datasets that ICA has already been run on.
+                existsFile = exist ([folderDipoles, newFileName], 'file');
+                
+                if existsFile ~= 2
+                    
+                    %This is important because EEGLAB after completing the task leaves some windows open.
+                    close all;
+                    
+                    EEG = pop_loadset('filename',fileNameComplete,'filepath',pathName);
+                    [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
+                    
+                    %Defines head models and electrode templates to use for
+                    %registration of channels on subject's anatomy
+                    EEG = pop_dipfit_settings( EEG, 'hdmfile',stdVolume,'coordformat','MNI','mrifile',subjAnat(Filenum),'chanfile',stdElectrodes,'coord_transform',[-0.11657 -32.9456 -1.7328 0.085065 0.0012715 -1.5698 11.582 11.0069 11.0691] ,'chansel',[1:128] );
+                    [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
+                    EEG = pop_multifit(EEG, [1:128] ,'threshold',100,'plotopt',{'normlen' 'on'});
+                    [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
+                    
+                    EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderDipoles);
+                    EEG = eeg_checkset( EEG );
+                    
+                end
+                
+            end
+            close all;
+        end
         
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     otherwise %If nothing has been selected or "Cancel" button clicked

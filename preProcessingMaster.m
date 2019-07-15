@@ -55,7 +55,7 @@ pathName = uigetdir(cd,'Choose the folder that contains the datasets');
 pathName = strcat(pathName, slashSys);
 
 %This will deselect steps of the script that are not needed.
-chooseScriptParts = {'RAWing, Filtering and/or re-referencing','Interpolation of noisy channels','ICA','Epoching','Extract channel interpolation information','Compute dipoles using dipfit (Nonlinear least-square fit regression curve)'};
+chooseScriptParts = {'RAWing, Filtering and/or re-referencing','Interpolation of noisy channels','ICA','Epoching','Extract channel interpolation information','Compute dipoles with Nonlinear least-square fit regression curve (currently broken)'};
 
 [scriptPart,tfParts] = listdlg('PromptString','What type of pre-processing do you want to perform?','SelectionMode','single','ListSize',[500,150],'ListString',chooseScriptParts);
 
@@ -763,7 +763,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 fileName = fileNameComplete(1:conservedCharacters);
 
                 %In order to make this clean, it saves files in a new ICAWeights directory of the mother directory
-                ChInterpolFile = strcat(fileName, '_ChInterpolInfo.txt');
+                ChInterpolFile = strcat(fileName, '_ChInterpolInfo.mat');
 
                 %This avoids re-running ICA on datasets that ICA has already been run on.
                 existsFile = exist ([pathName, ChInterpolFile], 'file');
@@ -794,11 +794,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     haveBeenInterpol = strfind(EEG.history,'pop_interp');
                     
                     if ~isempty(haveBeenInterpol)
-                        ChInterpol = edit([folderInterpolInfo ChInterpolFile]);
-                        ChInterpolInfo = extractBetween(EEG.history, "EEG = pop_interp(EEG, [","], 'spherical'");
-                        ChInterpol = fopen(ChInterpol);
-                        fprintf(ChInterpol,ChInterpolInfo);
-                        save([folderInterpolInfo ChInterpolFile],ChInterpolInfo);
+                        interpolatedChan = extractBetween(EEG.history, "EEG = pop_interp(EEG, [","], 'spherical'");
+                        save([folderInterpolInfo ChInterpolFile], 'interpolatedChan');
                     end
 
                 end

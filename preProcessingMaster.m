@@ -111,10 +111,10 @@ FilesList = {};
 %will put subfolders in existing preProcessing folder, digging into the folder paths
 %too deep and coming out on the other end of Earth: "Buongiorno!".
 if contains(pathName, 'preProcessing')
-    preProcessingFolder = replace(pathName,extractAfter(pathName,"preProcessing"),slashSys);
+    %preProcessingFolder = replace(pathName,extractAfter(pathName,"preProcessing"),slashSys);
+    preProcessingFolder = pathName;
 else
-    existsPreProcessing = exist([pathName, 'preProcessing'], 'dir');
-    if existsPreProcessing ~= 7
+    if exist([pathName, 'preProcessing'], 'dir') ~= 7
         mkdir (pathName, 'preProcessing');
     end
     preProcessingFolder = strcat(pathName, 'preProcessing', slashSys);
@@ -531,7 +531,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %information inside and load them as "double" array
                 if exist([folderInterpolInfo ChInterpolFile], 'file')
                     load ChInterpolFile;
-                    EEG = pop_interp(EEG, interpolatedChan, 'spherical');
+                    EEG = pop_interp(EEG, [string(interpolatedChan)], 'spherical');
                     EEG = eeg_checkset( EEG );
                 end
 

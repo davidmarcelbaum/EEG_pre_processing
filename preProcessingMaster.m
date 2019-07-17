@@ -106,9 +106,10 @@ end
 Filenum = 0;
 FilesList = {};
 
-%Creates preProcessing folder and subfolders if they do not exist. This is essential for saving the datasets later.
-%Otherwise, the script will put subfolders in existing preProcessing folder in order to
-%avoid digging the folder paths too deep and coming out on the other end of Earth.
+%Creates preProcessing folder and subfolders only if they do not exist.
+%This is essential for saving the datasets later, but to avoid that the script
+%will put subfolders in existing preProcessing folder, digging into the folder paths
+%too deep and coming out on the other end of Earth: "Buongiorno!".
 if contains(pathName, 'preProcessing')
     preProcessingFolder = replace(pathName,extractAfter(pathName,"preProcessing"),slashSys);
 else
@@ -498,6 +499,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
                 % Function for loading
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                ChInterpolFile = strcat(fileName, '_ChInterpolInfo.mat');
+                
                 %Append _ChInterpol to name of dataset
                 newFileName = strcat(fileName, '_ChInterpol.set');
 
@@ -524,14 +527,11 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
                     EEG = eeg_checkset( EEG );
 
-                end
-
                 %Function to look for available text files with channel
-                %information inside and load them as "double" variable
-                ChInterpolTextFile = strcat(fileName, '_ChInterpol.txt');
-                if exist(ChInterpolTextFile, 'file')
-                    ChToInterpolate = textread(ChInterpolTextFile);
-                    EEG = pop_interp(EEG, ChToInterpolate, 'spherical');
+                %information inside and load them as "double" array
+                if exist([folderInterpolInfo ChInterpolFile], 'file')
+                    load ChInterpolFile;
+                    EEG = pop_interp(EEG, interpolatedChan, 'spherical');
                     EEG = eeg_checkset( EEG );
                 end
 
@@ -543,6 +543,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderChInterpol);
 
                 %Function to save information of which channels have been interpolated.
+                end
             end
             close all;
         end
@@ -863,6 +864,11 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     
                     %Defines head models and electrode templates to use for
                     %registration of channels on subject's anatomy
+                    
+                    %The function below needs to be corrected in order to
+                    %exclude co-reg step: should be coord_transform,
+                    %because coordinates are added AFTER manually adjusting
+                    %channel electrodes on head model.
                     EEG = pop_dipfit_settings( EEG, 'hdmfile',stdVolume,'coordformat','MNI','mrifile',subjAnat(Filenum),'chanfile',stdElectrodes,'coord_transform',[-0.11657 -32.9456 -1.7328 0.085065 0.0012715 -1.5698 11.582 11.0069 11.0691] ,'chansel',[1:128] );
                     [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
                     EEG = pop_multifit(EEG, [1:128] ,'threshold',100,'plotopt',{'normlen' 'on'});

@@ -530,7 +530,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %Function to look for available text files with channel
                 %information inside and load them as "double" array
                 if exist([folderInterpolInfo ChInterpolFile], 'file')
-                    load ChInterpolFile;
+                    load [folderInterpolInfo ChInterpolFile];
                     EEG = pop_interp(EEG, [string(interpolatedChan)], 'spherical');
                     EEG = eeg_checkset( EEG );
                 end

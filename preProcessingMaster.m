@@ -916,7 +916,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     %threshold.
                     EEG = pop_dipfit_settings( EEG, 'hdmfile',[stdHeadModelPath, stdHeadModel],'coordformat','MNI','mrifile',[subjAnatFolder, subjAnat(Filenum).name],'chanfile',[stdElectrodesPath, stdElectrodes],'chansel',[1:EEG.nbchan] );
                     [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
-                    EEG = pop_multifit(EEG, [1:numel(EEG.icaact(:,1))] ,'threshold',100,'plotopt',{'normlen' 'on'});
+                    EEG = pop_multifit(EEG, [1:size(EEG.icaweights,1)] ,'threshold',100,'plotopt',{'normlen' 'on'});
                     [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
                     
                     EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderDipoles);

@@ -56,7 +56,7 @@ pathName = uigetdir(cd,'Choose the folder that contains the datasets');
 pathName = strcat(pathName, slashSys);
 
 %This will deselect steps of the script that are not needed.
-chooseScriptParts = {'RAWing, Filtering and/or re-referencing','Interpolation of noisy channels','ICA','Epoching','Extract channel interpolation information','Compute dipoles with Nonlinear least-square fit regression curve (currently broken)','Organize Triggers'};
+chooseScriptParts = {'RAWing, Filtering and/or re-referencing','Interpolation of noisy channels','ICA','Epoching','Extract channel interpolation information','Compute dipoles with Nonlinear least-square fit regression curve (currently broken)','Organize Triggers','Reject empty channels'};
 
 [scriptPart,tfParts] = listdlg('PromptString','What type of pre-processing do you want to perform?','SelectionMode','single','ListSize',[500,150],'ListString',chooseScriptParts);
 
@@ -133,6 +133,7 @@ folderSelEpochs = strcat(preProcessingFolder, 'SelectedEpochs', slashSys);
 folderInterpolInfo = strcat(preProcessingFolder, 'ChannelInterpolation', slashSys);
 folderDipoles = strcat(preProcessingFolder, 'Dipoles', slashSys);
 folderOrganizeTriggers = strcat(preProcessingFolder, 'OrganizeTriggers', slashSys);
+folderRejEmptyChan = strcat(preProcessingFolder, 'RejEmptyChannel', slashSys);
 
 %Set up initial stepLevel value so that later, pre-processing of datasets
 %is only forward and not reverse
@@ -933,7 +934,6 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     case 7 %In case "Organize Triggers" selected
         
-        
         FilesList = dir([pathName,'*.set']);
         Filenum = [];
         cyclesRun = 0;
@@ -946,12 +946,12 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         for Filenum = 1:numel(FilesList)
             
             fileNameComplete = char(FilesList(Filenum).name);
-            newFileName = fileNameComplete(1:conservedCharacters);
-            fileNameOdor = strcat(newFileName, '_OdorOn.set');
-            fileNamePlacebo = strcat(newFileName, '_PlaceboOn.set');
+            fileName = fileNameComplete(1:conservedCharacters);
+            fileNameOdor = strcat(fileName, '_OdorOn.set');
+            fileNamePlacebo = strcat(fileName, '_PlaceboOn.set');
             
             %This avoids re-running ICA on datasets that ICA has already been run on.
-            existsFile = exist ([folderOrganizeTriggers, newFileName], 'file');
+            existsFile = exist ([folderOrganizeTriggers, fileNameOdor], 'file');
             if existsFile ~= 2
                 
                 %Initializes the variables EEG and ALLEEG
@@ -1007,6 +1007,65 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 cyclesRun = cyclesRun + 1;
             end
             
+        end
+        close all;
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    case 8 %In case "Reject empty channels" selected
+        
+        FilesList = dir([pathName,'*.set']);
+        Filenum = [];
+        cyclesRun = 0;
+        
+        if exist(folderRejEmptyChan, 'dir') ~= 7
+            mkdir (folderRejEmptyChan);
+        end
+        
+        %Loop going from the 1st element in the folder, to the total elements
+        for Filenum = 1:numel(FilesList)
+            
+            close all;
+            
+            fileNameComplete = char(FilesList(Filenum).name);
+            fileName = fileNameComplete(1:conservedCharacters);
+            nezFileName = strcat(fileName, '_ChanRej.set');
+           
+            existsFile = exist ([folderRejEmptyChan, newFileName], 'file');
+            if existsFile ~= 2
+                
+                %Initializes the variables EEG and ALLEEG
+                ALLCOM = {};
+                ALLEEG = [];
+                CURRENTSET = 0;
+                EEG = [];
+                [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
+                
+                %load data set
+                EEG = pop_loadset('filename',fileNameComplete,'filepath',pathName);
+                [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
+                EEG = eeg_checkset( EEG );
+                
+                channelNum = 0;
+                noChan = [];
+                
+                for channelNum = 1:size(EEG.data,1)
+                   if istrue(EEG.data(channelNum) == zeros)
+                       noChan(end+1) = channelNum;
+                   end
+                end
+                
+                if ~isempty(noChan)
+                %Reject channel
+                EEG = pop_select( EEG, 'nochannel',{noChan});
+                
+                EEG = eeg_checkset( EEG );
+                EEG = pop_saveset( EEG, 'filename',fileNameOdor,'filepath',folderOrganizeTriggers);
+                EEG = eeg_checkset( EEG );
+                
+                cyclesRun = cyclesRun + 1;
+                end
+                
+            end
         end
         close all;
         

@@ -298,6 +298,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     
                     %Rename the dataset with _RAW appendix and save to preProcessing folder
                     EEG = pop_editset(EEG, 'setname', newFileName);
+                    EEG = eeg_checkset( EEG );
                     EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderRAW);
                     EEG = eeg_checkset( EEG );
                     
@@ -403,9 +404,9 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     
                     %Rename dataset
                     EEG = pop_editset(EEG, 'setname', newFileName);
-                    EEG = eeg_checkset( EEG );
                     
                     %Save dataset _Filt(0,1-45) to ./preProcessing/Filt/
+                    EEG = eeg_checkset( EEG );
                     EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderFilt);
                     
                     cyclesRunFilt = cyclesRunFilt + 1;
@@ -462,8 +463,6 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     EEG = pop_reref( EEG, [], 'exclude', rejectedChannelIndex);
                     EEG = eeg_checkset( EEG );
                     
-                    %Rename and save the dataset in "./preProcessing/RAW/" folder
-                    %Exchange _RAW with _Filt(0,1-45) and append "Filt(0,1-45)" to filename
                     EEG = pop_editset(EEG, 'setname', newFileName);
                     EEG = eeg_checkset( EEG );
                     EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderReference);
@@ -558,9 +557,9 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     
                     % Function for appending _ChInterpol
                     EEG = pop_editset(EEG, 'setname', newFileName);
-                    EEG = eeg_checkset( EEG );
                     
                     % Function for saving
+                    EEG = eeg_checkset( EEG );
                     EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderChInterpol);
                     
                     cyclesRun = cyclesInterpolation;
@@ -673,9 +672,9 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     
                     %Append "ICAWeights" to filename in order to not overwrite existing datasets.
                     EEG = pop_editset(EEG, 'setname', newFileName);
-                    EEG = eeg_checkset( EEG );
                     
                     %Saving new file name to ICAWeights folder created earlier
+                    EEG = eeg_checkset( EEG );
                     EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderICAWeights);
                     EEG = eeg_checkset( EEG );
                     
@@ -920,6 +919,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     EEG = pop_multifit(EEG, [1:size(EEG.icaweights,1)] ,'threshold',100,'plotopt',{'normlen' 'on'});
                     [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
                     
+                    EEG = eeg_checkset( EEG );
                     EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderDipoles);
                     EEG = eeg_checkset( EEG );
                     

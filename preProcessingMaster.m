@@ -112,7 +112,7 @@ FilesList = {};
 %too deep and coming out on the other end of Earth: "Buongiorno!".
 if contains(pathName, 'preProcessing')
     %preProcessingFolder = replace(pathName,extractAfter(pathName,"preProcessing"),slashSys);
-    preProcessingFolder = pathName;
+    preProcessingFolder = replace(pathName, extractAfter(pathName, 'preProcessing'), slashSys);
 else
     if exist([pathName, 'preProcessing'], 'dir') ~= 7
         mkdir (pathName, 'preProcessing');
@@ -166,9 +166,8 @@ elseif contains(string(dataList(dataMatch(1)).name), '_SelectedEpochs')
     stepLevel = SelEpoched;
 end
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%% Setting up last variables %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%% Integrating last inputs and starting script %%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -187,8 +186,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             mkdir (folderReference);
         end
 
-        if stepLevel > 3
-            warning('Your datasets seem to be RAWed, Filtered, and Re-referenced. If you want to run these steps anyway, you have to adapt the section that initializes the stepLevel values')
+        if stepLevel == 3 || stepLevel > 3
+            warning('Your datasets seem to be RAWed, Filtered, and Re-referenced. If you want to run these steps anyway, you have to adapt the section that initializes the "stepLevel" values')
             return
         end
 
@@ -223,7 +222,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %        'Put a number', [1 50], {'129'})');
             %end
             channelList = {EEG.chanlocs.labels}';
-            [rejectedChannelIndex] = listdlg('PromptString',[{'Select channels (such as VEO, HEO, M1, M2 or Trigger) to exclude from re-ferencing:'} {''} {''} {''}],'ListString', channelList);
+            [rejectedChannelIndex] = listdlg('PromptString',[{'Exclude channels (such as VEO, HEO, M1, M2 or Trigger) from re-ferencing:'} {''} {''} {''}],'ListString', channelList);
         end
 
         %Ask to reject absent channels
@@ -238,6 +237,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
               channelLocationsInfo = strcat(channelLocationsPath, channelLocationsFile);
             end
         end
+        
+        cyclesRunRAW = 0;
 
         uiwait(msgbox('Starting script after closing this window...'));
 
@@ -296,6 +297,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     EEG = pop_editset(EEG, 'setname', newFileName);
                     EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderRAW);
                     EEG = eeg_checkset( EEG );
+                    
+                    cyclesRunRAW = cyclesRunRAW + 1;
                 end
             end
             fileFormat = 1; %This will make the script future steps of datasets initially imported as .mff fodlers treat these datasets as .set files
@@ -304,6 +307,11 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         if fileFormat == 1
 
             Filenum = 0;
+            cyclesRunFilt = 0;
+            cyclesRunReref = 0;
+            
+            FilesList = dir([pathName,'*.set']);
+            
             for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
                 
                 %Extract the base file name in order to append extensions afterwards
@@ -352,7 +360,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     
                     EEG = eeg_checkset( EEG );
                     EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderRAW);
-
+                    
+                    cyclesRunRAW = cyclesRunRAW + 1;
                 end
 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -384,7 +393,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     if stepLevel == 0
                         EEG = pop_loadset('filename',previousFileName,'filepath',folderRAW);
                     elseif stepLevel == 1
-                        EEG = pop_loadset('filename',strcat(fileName, '.set'),'filepath',pathName);
+                        EEG = pop_loadset('filename',fileNameComplete,'filepath',pathName);
                     end
                     %[ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
                     EEG = pop_eegfiltnew(EEG, 'locutoff',0.1,'hicutoff',45, 'filtorder', 33000);
@@ -395,6 +404,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
                     %Save dataset _Filt(0,1-45) to ./preProcessing/Filt/
                     EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderFilt);
+                    
+                    cyclesRunFilt = cyclesRunFilt + 1;
                 end
 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -440,7 +451,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     if stepLevel < 2
                         EEG = pop_loadset('filename',previousFileName,'filepath',folderFilt);
                     elseif stepLevel == 2
-                        EEG = pop_loadset('filename',fileName,'filepath',pathName);
+                        EEG = pop_loadset('filename',fileNameComplete,'filepath',pathName);
                     end
                     % [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
                     EEG = eeg_checkset( EEG );
@@ -453,6 +464,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     EEG = pop_editset(EEG, 'setname', newFileName);
                     EEG = eeg_checkset( EEG );
                     EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderReference);
+                    
+                    cyclesRunReref = cyclesRunReref + 1;
                 end
 
             end
@@ -491,6 +504,9 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             uiwait(msgbox('Starting script after closing this window...'));
 
             Filenum = 0;
+            cyclesRun = 0;
+            cyclesInterpolation = 0;
+            
             for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
                 
                 %Extract the base file name in order to append extensions afterwards
@@ -522,7 +538,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     EEG = [];
                     [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
                     
-                    EEG = pop_loadset('filename',fileName,'filepath',pathName);
+                    EEG = pop_loadset('filename',fileNameComplete,'filepath',pathName);
 
                     [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
                     EEG = eeg_checkset( EEG );
@@ -533,6 +549,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     load [folderInterpolInfo ChInterpolFile];
                     EEG = pop_interp(EEG, [string(interpolatedChan)], 'spherical');
                     EEG = eeg_checkset( EEG );
+                    
+                    cyclesInterpolation = cyclesInterpolation + 1;
                 end
 
                 % Function for appending _ChInterpol
@@ -541,8 +559,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
                 % Function for saving
                 EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderChInterpol);
-
-                %Function to save information of which channels have been interpolated.
+                
+                cyclesRun = cyclesInterpolation;
                 end
             end
             close all;
@@ -592,6 +610,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             uiwait(msgbox('Starting script after closing this window...'));
 
             Filenum = 0;
+            cyclesRun = 0;
+           
             %For every file that has been charged into the FilesList variable:
             for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
 
@@ -655,6 +675,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     %Saving new file name to ICAWeights folder created earlier
                     EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderICAWeights);
                     EEG = eeg_checkset( EEG );
+                    
+                    cyclesRun = cyclesRun + 1;
                 end
 
             end
@@ -695,6 +717,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
            uiwait(msgbox('Starting script after closing this window...'));
 
             Filenum = 0;
+            cyclesRun = 0;
+            
             %For every file that has been charged into the FilesList variable:
             for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
 
@@ -735,7 +759,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     EEG = eeg_checkset( EEG );
                     EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderEpochs);
                     EEG = eeg_checkset( EEG );
-
+                    
+                    cyclesRun = cyclesRun + 1;
                 end
             end
             close all;
@@ -754,6 +779,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             if exist(folderInterpolInfo, 'dir') ~= 7
                 mkdir (folderInterpolInfo);
             end
+            
+            cyclesRun = 0;
             
             uiwait(msgbox('Starting script after closing this window...'));
             
@@ -798,7 +825,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         interpolatedChan = extractBetween(EEG.history, "EEG = pop_interp(EEG, [","], 'spherical'");
                         save([folderInterpolInfo ChInterpolFile], 'interpolatedChan');
                     end
-
+                    
+                    cyclesRun = cyclesRun + 1;
                 end
             end
             close all;
@@ -841,6 +869,8 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 mkdir (folderDipoles);
             end
             
+            cyclesRun = 0;
+            
             uiwait(msgbox('Starting script after closing this window...'));
             
             for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
@@ -879,6 +909,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     
                 end
                 
+                cyclesRun = cyclesRun + 1;
             end
             close all;
         end
@@ -894,33 +925,49 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%% End of script execution %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if Filenum == numel(FilesList)
+if Filenum == numel(FilesList) && Filenum ~= 0
     switch scriptPart
         case 1 %In case "RAWing, Filtering and/or re-referencing" selected %%%%
             msgbox({'Operation Completed',...
+                'Script RAWed ' cyclesRunRAW ' of ' numel(FilesList) ' datasets',...
+                'Script filtered ' cyclesRunFilt ' of ' numel(FilesList) ' datasets',...
+                'Script re-referenced ' cyclesRunReref ' of ' numel(FilesList) ' datasets',...
+                ' ',...
                 'Datasets have been saved in:',...
                 folderRAW,...
                 folderFilt,...
                 folderReference});
         case 2 %In case "Interpolation of noisy channels" selected
             msgbox({'Operation Completed',...
+                'Script processed ' cyclesRun ' of ' numel(FilesList) ' datasets',...
+                ' ',...
                 'Datasets have been saved in:',...
                 folderChInterpol});
         case 3 %In case "ICA" selected
             msgbox({'Operation Completed',...
+                'Script processed ' cyclesRun ' of ' numel(FilesList) ' datasets',...
+                ' ',...
                 'Datasets have been saved in:',...
                 folderICAWeights});
         case 4 %In case "Epoching" selected
             msgbox({'Operation Completed',...
+                'Script processed ' cyclesRun ' of ' numel(FilesList) ' datasets',...
+                ' ',...
                 'Datasets have been saved in:',...
                 folderEpochs});
         case 5 %In case "Extract channel interpolation information" selected
             msgbox({'Operation Completed',...
+                'Script processed ' cyclesRun ' of ' numel(FilesList) ' datasets',...
+                ' ',...
                 'Datasets have been saved in:',...
                 folderInterpolInfo});
         case 6 %In case "Compute dipoles ..." selected
             msgbox({'Operation Completed',...
+                'Script processed ' cyclesRun ' of ' numel(FilesList) ' datasets',...
+                ' ',...
                 'Datasets have been saved in:',...
                 folderDipoles});
     end
+elseif Filenum == 0
+    msgbox({'The folder you pointed to does not seem to contain any datasets.'});
 end

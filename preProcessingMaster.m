@@ -51,6 +51,7 @@ end
 
 %Give here the source folder of the datasets to be imported
 pathName = uigetdir(cd,'Choose the folder that contains the datasets');
+%[filesPreProcess, pathName] = uigetfile(cd,'Choose one dataset to build pathways','*.*','multiselect','off');
 
 pathName = strcat(pathName, slashSys);
 
@@ -856,14 +857,18 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             close all;
             
             %Search for standard MRI
-            stdVolume = strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'standard_vol.mat');
+            [stdHeadModel, stdHeadModelPath] = uigetfile('*.mat','Look for standard head model',strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'standard_vol.mat'));
             
             %Search for standard electrode for 10-20 system
-            stdElectrodes = strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'elec', slashSys, 'standard_1005.elc');
+            [stdElectrodes, stdElectrodesPath] = uigetfile('*.elc','Look for channel locations file',strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'elec', slashSys, 'standard_1020.elc'));
             
             %Search for MRI anatomy folder of subjects
-            subjAnatFolder = uigetdir(cd,'Choose folder containing subjects anatomy *** IN .MAT FORMAT ***');
-            subjAnat = dir([subjAnatFolder,'*.mat']);
+            subjAnatFolder = [uigetdir(cd,'Choose folder containing subjects anatomy *** IN .HDR / .IMG FORMAT ***'), slashSys];
+            subjAnat = dir([subjAnatFolder, '*.hdr']);
+            
+            %Search for channel locations folder of subjects
+            chanLocFolder = [uigetdir(cd,'Choose folder containing subjects channel locations *** IN MATLAB .XYZ FORMAT ***'), slashSys];
+            chanLocFiles = dir([chanLocFolder, '*.xyz']);
             
             if exist(folderDipoles, 'dir') ~= 7
                 mkdir (folderDipoles);
@@ -892,24 +897,33 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     EEG = pop_loadset('filename',fileNameComplete,'filepath',pathName);
                     [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
                     
-                    %Defines head models and electrode templates to use for
-                    %registration of channels on subject's anatomy
-                    
-                    %The function below needs to be corrected in order to
-                    %exclude co-reg step: should be coord_transform,
-                    %because coordinates are added AFTER manually adjusting
-                    %channel electrodes on head model.
-                    EEG = pop_dipfit_settings( EEG, 'hdmfile',stdVolume,'coordformat','MNI','mrifile',subjAnat(Filenum),'chanfile',stdElectrodes,'coord_transform',[-0.11657 -32.9456 -1.7328 0.085065 0.0012715 -1.5698 11.582 11.0069 11.0691] ,'chansel',[1:128] );
+                    %Set channel locations based on export from Brainstorm
+                    %after "fiducialing". Should be saved as Matlab .xyz
+                    %file.
+                    %"'rplurchanloc',1" overwrites channel location info
+                    %with newly provided information
+                    % *** Please confirm that settings make sense!!! ***
+                    EEG=pop_chanedit(EEG, 'rplurchanloc',1,'load',[],'load',{[chanLocFolder, chanLocFiles(Filenum).name] 'filetype' 'autodetect'},'setref',{'1:128' 'average'});
                     [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
-                    EEG = pop_multifit(EEG, [1:128] ,'threshold',100,'plotopt',{'normlen' 'on'});
+                    EEG = eeg_checkset( EEG );
+                    
+                    %Compute dipoles on all components of ICA (EEG.icaact),
+                    %threshold of residual variance set to 100% in order to
+                    %compute ALL dipoles. Otherwise,
+                    %EEG.dipfit.model.areadk will not store area
+                    %information of dipole from atlas of dipolesabove
+                    %threshold.
+                    EEG = pop_dipfit_settings( EEG, 'hdmfile',[stdHeadModelPath, stdHeadModel],'coordformat','MNI','mrifile',[subjAnatFolder, subjAnat(Filenum).name],'chanfile',[stdElectrodesPath, stdElectrodes],'chansel',[1:EEG.nbchan] );
+                    [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
+                    EEG = pop_multifit(EEG, [1:numel(EEG.icaact(:,1))] ,'threshold',100,'plotopt',{'normlen' 'on'});
                     [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
                     
                     EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderDipoles);
                     EEG = eeg_checkset( EEG );
                     
+                    cyclesRun = cyclesRun + 1;
                 end
                 
-                cyclesRun = cyclesRun + 1;
             end
             close all;
         end

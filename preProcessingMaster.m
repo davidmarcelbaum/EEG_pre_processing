@@ -1028,7 +1028,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
             fileNameComplete = char(FilesList(Filenum).name);
             fileName = fileNameComplete(1:conservedCharacters);
-            nezFileName = strcat(fileName, '_ChanRej.set');
+            newFileName = strcat(fileName, '_ChanRej.set');
            
             existsFile = exist ([folderRejEmptyChan, newFileName], 'file');
             if existsFile ~= 2
@@ -1046,17 +1046,17 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 EEG = eeg_checkset( EEG );
                 
                 channelNum = 0;
-                noChan = [];
+                noChan = {};
                 
                 for channelNum = 1:size(EEG.data,1)
                    if istrue(EEG.data(channelNum) == zeros)
-                       noChan(end+1) = channelNum;
+                       noChan(end+1) = {EEG.urchanlocs(channelNum).labels};
                    end
                 end
                 
                 if ~isempty(noChan)
                 %Reject channel
-                EEG = pop_select( EEG, 'nochannel',{noChan});
+                EEG = pop_select( EEG, 'nochannel',noChan);
                 
                 EEG = eeg_checkset( EEG );
                 EEG = pop_saveset( EEG, 'filename',fileNameOdor,'filepath',folderOrganizeTriggers);
@@ -1128,6 +1128,12 @@ if Filenum == numel(FilesList) && Filenum ~= 0
                 ' ',...
                 'Datasets have been saved in:',...
                 folderOrganizeTriggers});
+        case 8 %In case empty channels rejection selected
+            msgbox({'Operation Completed',...
+                'Script processed ' string(cyclesRun) ' of ' string(numel(FilesList)) ' datasets',...
+                ' ',...
+                'Datasets have been saved in:',...
+                folderRejEmptyChan});
     end
 elseif Filenum == 0
     msgbox({'The folder you pointed to does not seem to contain any datasets.'});

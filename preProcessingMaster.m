@@ -1034,6 +1034,13 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
                 EEG = eeg_checkset( EEG );
                 
+                % Some epochs might contain two trigger events. In this
+                % case, the script will not work
+                if ~istrue (size(EEG.event,2) == EEG.trials)
+                    error(strcat('There are more trigger events than trials (epochs) in', fileNameComplete));
+                    return
+                end
+                
                 
                 %%%%%%%%run OrganizeTrigggers%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 

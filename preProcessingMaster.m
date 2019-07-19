@@ -874,6 +874,15 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder, to the total elements
             
+            %This avoids exporting anatomy files for same subjects twice
+            %for each dataset. realFilenum will be used for calling the
+            %head models, mri and channel locations.
+            if contains(FilesList(Filenum).name,'Placebo')
+                realFilenum = Filenum -1;
+            else
+                realFilenum = Filenum;
+            end
+            
             %Extract the base file name in order to append extensions afterwards
             fileNameComplete = char(FilesList(Filenum).name);
             fileName = fileNameComplete(1:conservedCharacters);
@@ -896,7 +905,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %"'rplurchanloc',1" overwrites channel location info with
                 %newly provided information
                 % *** Please confirm that settings make sense!!! ***
-                EEG=pop_chanedit(EEG, 'rplurchanloc',1,'load',[],'load',{[chanLocFolder, chanLocFilesXYZ(Filenum).name] 'filetype' 'autodetect'},'setref',{'1:128' 'average'});
+                EEG=pop_chanedit(EEG, 'rplurchanloc',1,'load',[],'load',{[chanLocFolder, chanLocFilesXYZ(realFilenum).name] 'filetype' 'autodetect'},'setref',{'1:128' 'average'});
                 [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
                 EEG = eeg_checkset( EEG );
                 
@@ -906,7 +915,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %EEG.dipfit.model.areadk will not store area
                 %information of dipole from atlas of dipolesabove
                 %threshold.
-                EEG = pop_dipfit_settings( EEG, 'hdmfile',[stdHeadModelPath, stdHeadModel],'coordformat','MNI','mrifile',[subjAnatFolder, subjAnat(Filenum).name],'chanfile',[chanLocFolder, chanLocFilesELC(Filenum).name],'chansel',[1:EEG.nbchan] );
+                EEG = pop_dipfit_settings( EEG, 'hdmfile',[stdHeadModelPath, stdHeadModel],'coordformat','MNI','mrifile',[subjAnatFolder, subjAnat(realFilenum).name],'chanfile',[chanLocFolder, chanLocFilesELC(realFilenum).name],'chansel',[1:EEG.nbchan] );
                 [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
                 EEG = pop_multifit(EEG, [1:size(EEG.icaweights,1)] ,'threshold',100,'plotopt',{'normlen' 'on'});
                 [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
@@ -915,7 +924,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%% This is extracted from the eeg_compatlas.m of the %%%
                 %%%% dipfit plugin                                     %%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                function EEG = eeg_compatlas(EEG, varargin)
+                %function EEG = eeg_compatlas(EEG, varargin)
                 
                 if nargin < 1
                     help eeg_compatlas;
@@ -934,7 +943,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 if isstr(g), error(g); end;
                 
                 % loading hm file
-                hm = [folderHM, FilesListHM(Filenum).name];
+                hm = [folderHM, FilesListHM(realFilenum).name];
                 
                 if isdeployed
                     stdHM = load('-mat', fullfile( ctfroot, 'functions', 'supportfiles', 'head_modelColin27_5003_Standard-10-5-Cap339.mat'));
@@ -983,7 +992,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         end
                     end
                 end
-                end
+                %end
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -1,3 +1,7 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%% Some prerequisities in order for the script to function %%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %Since the path to EEGLAB differs between systems, locate EEGLAB and its functions.
 locateEeglab = which('eeglab.m');
 eeglabFolder = erase(locateEeglab, 'eeglab.m');

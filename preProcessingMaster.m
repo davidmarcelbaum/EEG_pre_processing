@@ -23,7 +23,7 @@
 
 %This will avoid asking again each time the script is restarted unless the
 %user chooses to.
-if exist('pathName', 'var') && exist('conservedCharacters', 'var') && exist('scriptPart', 'var')
+if exist('pathName', 'var') && exist('conservedCharacters', 'var') && exist('scriptPart', 'var') && exist('preProcessingFolder', 'var') && exist('stepLevel', 'var')
     startPointScript = questdlg('Do you want to (re)initialize variables?', ...
         'Start from scratch?', ...
         'Yes','No','No');

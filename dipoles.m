@@ -2,35 +2,38 @@ FilesList = dir([pathName,'*.set']);
 
 %Load one dataset into EEGLAB. This is necessary for the
 %EEG.chanlocs afterwards (until line 231)
-msgbox('The next step will take a while depending on the size of your first dataset. The EEGLAB window will close automatically. You can close this window.')
-ALLCOM = {};
-ALLEEG = [];
-CURRENTSET = 0;
-EEG = [];
-[ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
-
-EEG = pop_loadset('filename',FilesList(1).name,'filepath',pathName);
-EEG = eeg_checkset( EEG );
-[ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
-EEG = eeg_checkset( EEG );
-close all;
-
-%Search for Head Model (HM)
-% Instead, look for BEM-generated head model [stdHeadModel, stdHeadModelPath] = uigetfile('*.mat','Look for standard head model',strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'standard_vol.mat'));
-folderHM = [uigetdir(cd,'Choose folder containing subjects head models *** IN .MAT FORMAT ***'), slashSys];
-FilesListHM = dir([folderHM,'*.mat']);
-
-%Search for standard electrode for 10-20 system
-% Exchanged for "chanLocFileELC" [stdElectrodes, stdElectrodesPath] = uigetfile('*.elc','Look for channel locations file',strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'elec', slashSys, 'standard_1020.elc'));
-
-%Search for MRI anatomy folder of subjects
-subjAnatFolder = [uigetdir(cd,'Choose folder containing subjects anatomy *** IN .HDR / .IMG FORMAT ***'), slashSys];
-subjAnat = dir([subjAnatFolder, '*.hdr']);
-
-%Search for channel locations folder of subjects
-chanLocFolder = [uigetdir(cd,'Choose folder containing subjects channel locations *** IN MATLAB .XYZ FORMAT ***'), slashSys];
-chanLocFilesXYZ = dir([chanLocFolder, '*.xyz']);
-chanLocFilesELC = dir([chanLocFolder, '*.elc']);
+if ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
+    msgbox('The next step will take a while depending on the size of your first dataset. The EEGLAB window will close automatically. You can close this window.')
+    ALLCOM = {};
+    ALLEEG = [];
+    CURRENTSET = 0;
+    EEG = [];
+    [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
+    
+    EEG = pop_loadset('filename',FilesList(1).name,'filepath',pathName);
+    EEG = eeg_checkset( EEG );
+    [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
+    EEG = eeg_checkset( EEG );
+    close all;
+    
+    %Search for Head Model (HM)
+    [stdHeadModel, stdHeadModelPath] = uigetfile('*.mat','Look for standard head model',strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'standard_vol.mat'));
+    %folderHM = strcat([uigetdir(cd,'Choose folder containing subjects head models *** IN .MAT FORMAT ***'), slashSys]);
+    %FilesListHM = dir([folderHM,'*.mat']);
+    
+    %Search for standard electrode for 10-20 system
+    % Exchanged for "chanLocFileELC" [stdElectrodes, stdElectrodesPath] = uigetfile('*.elc','Look for channel locations file',strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'elec', slashSys, 'standard_1020.elc'));
+    
+    %Search for MRI anatomy folder of subjects
+    subjAnatFolder = [uigetdir(folderHM,'Choose folder containing subjects anatomy *** IN .HDR / .IMG FORMAT ***'), slashSys];
+    subjAnat = dir([subjAnatFolder, '*.hdr']);
+    
+    %Search for channel locations folder of subjects
+    chanLocFolder = [uigetdir(subjAnatFolder,'Choose folder containing subjects channel locations *** IN BOTH .ELC AND .XYZ FORMAT ***'), slashSys];
+    chanLocFilesXYZ = dir([chanLocFolder, '*.xyz']);
+    chanLocFilesELC = dir([chanLocFolder, '*.elc']);
+    
+end
 
 if exist(folderDipoles, 'dir') ~= 7
     mkdir (folderDipoles);
@@ -65,6 +68,12 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         %This is important because EEGLAB after completing the task leaves some windows open.
         close all;
         
+        ALLCOM = {};
+        ALLEEG = [];
+        CURRENTSET = 0;
+        EEG = [];
+        [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
+        
         EEG = pop_loadset('filename',fileNameComplete,'filepath',pathName);
         [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
         
@@ -83,7 +92,8 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         %EEG.dipfit.model.areadk will not store area
         %information of dipole from atlas of dipolesabove
         %threshold.
-        EEG = pop_dipfit_settings( EEG, 'hdmfile',[folderHM, FilesListHM(realFilenum).name],'coordformat','MNI','mrifile',[subjAnatFolder, subjAnat(realFilenum).name],'chanfile',[chanLocFolder, chanLocFilesELC(realFilenum).name],'chansel',[1:EEG.nbchan] );
+        EEG = pop_dipfit_settings( EEG, 'hdmfile',[stdHeadModelPath, stdHeadModel],'coordformat','MNI','mrifile',[subjAnatFolder, subjAnat(realFilenum).name],'chanfile',[chanLocFolder, chanLocFilesELC(realFilenum).name],'chansel',[1:EEG.nbchan] );
+        %EEG = pop_dipfit_settings( EEG, 'hdmfile',[folderHM, FilesListHM(realFilenum).name],'coordformat','MNI','mrifile',[subjAnatFolder, subjAnat(realFilenum).name],'chanfile',[chanLocFolder, chanLocFilesELC(realFilenum).name],'chansel',[1:EEG.nbchan] );
         [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
         EEG = pop_multifit(EEG, [1:size(EEG.icaweights,1)] ,'threshold',100,'plotopt',{'normlen' 'on'});
         [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
@@ -94,10 +104,10 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %function EEG = eeg_compatlas(EEG, varargin)
         
-        if nargin < 1
-            help eeg_compatlas;
-            return
-        end
+        %if nargin < 1
+        %    help eeg_compatlas;
+        %    return
+        %end
         
         if ~isfield(EEG, 'dipfit') || isempty(EEG.dipfit) || ~isfield(EEG.dipfit, 'model') || isempty(EEG.dipfit.model)
             error('You must run dipole localization first');
@@ -105,23 +115,23 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         
         % decode options
         % --------------
-        g = finputcheck(varargin, ...
-            { 'atlas'      'string'    {'dk' }     'dk';
-            'components' 'integer'   []          [1:size(EEG.icaweights,1)] });
-        if isstr(g), error(g); end;
+        %g = finputcheck(varargin, ...
+        %    { 'atlas'      'string'    {'dk' }     'dk';
+        %    'components' 'integer'   []          [1:size(EEG.icaweights,1)] });
+        %if isstr(g), error(g); end;
         
         % loading hm file
-        hm = [folderHM, FilesListHM(realFilenum).name];
+        hm = load([folderHM, FilesListHM(realFilenum).name]);
         
-        %                 if isdeployed
-        %                     stdHM = load('-mat', fullfile( ctfroot, 'functions', 'supportfiles', 'head_modelColin27_5003_Standard-10-5-Cap339.mat'));
-        %                     if ~exist(meshfile)
-        %                         error(sprintf('headplot(): deployed mesh file "%s" not found\n','head_modelColin27_5003_Standard-10-5-Cap339.mat'));
-        %                     end
-        %                 else
-        %                     p  = fileparts(which('eeglab.m'));
-        %                     stdHM = load('-mat', fullfile( p, 'functions', 'supportfiles', 'head_modelColin27_5003_Standard-10-5-Cap339.mat'));
-        %                 end
+        if isdeployed
+            stdHM = load('-mat', fullfile( eeglabFolder, 'functions', 'supportfiles', 'head_modelColin27_5003_Standard-10-5-Cap339.mat'));
+            if ~exist(meshfile)
+                error(sprintf('headplot(): deployed mesh file "%s" not found\n','head_modelColin27_5003_Standard-10-5-Cap339.mat'));
+            end
+        else
+            p  = fileparts(which('eeglab.m'));
+            stdHM = load('-mat', fullfile( p, 'functions', 'supportfiles', 'head_modelColin27_5003_Standard-10-5-Cap339.mat'));
+        end
         
         
         % coord transform to the HM file space
@@ -136,12 +146,14 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         
         % scan dipoles
         fprintf('Looking up brain area in the Desikan-Killiany Atlas\n');
-        for iComp = g.components(:)'
+        for iComp = [1:size(EEG.icaweights,1)] %Default is: iComp = g.components(:)'
             if size(EEG.dipfit.model(iComp).posxyz,1) == 1
                 atlascoord = tfinv * [EEG.dipfit.model(iComp).posxyz 1]';
                 
                 % find close location in Atlas
                 distance = sqrt(sum((hm.Vertices-repmat(atlascoord(1:3)', [size(hm.Vertices,1) 1])).^2,2));
+                % distance = sqrt(sum((hm.VertNormals-repmat(atlascoord(1:3)', [size(hm.VertNormals,1) 1])).^2,2));
+
                 
                 % compute distance to each brain area
                 [~,selectedPt] = min( distance );

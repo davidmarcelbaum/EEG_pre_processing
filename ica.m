@@ -10,19 +10,22 @@ FilesList = dir([pathName,'*.set']);
 
 %Load one dataset into EEGLAB. This is necessary for the
 %EEG.chanlocs afterwards (until line 231)
-msgbox('The next step will take a while depending on the size of your first dataset. The EEGLAB window will close automatically. You can close this window.')
-ALLCOM = {};
-ALLEEG = [];
-CURRENTSET = 0;
-EEG = [];
-[ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
-
-EEG = pop_loadset('filename',FilesList(1).name,'filepath',pathName);
-
-EEG = eeg_checkset( EEG );
-[ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
-EEG = eeg_checkset( EEG );
-close all;
+if ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
+    msgbox('The next step will take a while depending on the size of your first dataset. The EEGLAB window will close automatically. You can close this window.')
+    ALLCOM = {};
+    ALLEEG = [];
+    CURRENTSET = 0;
+    EEG = [];
+    [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
+    
+    EEG = pop_loadset('filename',FilesList(1).name,'filepath',pathName);
+    
+    EEG = eeg_checkset( EEG );
+    [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
+    EEG = eeg_checkset( EEG );
+    close all;
+    
+end
 
 %Ask user to select channels for ICA
 channelListICA = {EEG.chanlocs.labels}';

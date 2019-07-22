@@ -915,7 +915,7 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %EEG.dipfit.model.areadk will not store area
                 %information of dipole from atlas of dipolesabove
                 %threshold.
-                EEG = pop_dipfit_settings( EEG, 'hdmfile',[stdHeadModelPath, stdHeadModel],'coordformat','MNI','mrifile',[subjAnatFolder, subjAnat(realFilenum).name],'chanfile',[chanLocFolder, chanLocFilesELC(realFilenum).name],'chansel',[1:EEG.nbchan] );
+                EEG = pop_dipfit_settings( EEG, 'hdmfile',[folderHM, FilesListHM(realFilenum).name],'coordformat','MNI','mrifile',[subjAnatFolder, subjAnat(realFilenum).name],'chanfile',[chanLocFolder, chanLocFilesELC(realFilenum).name],'chansel',[1:EEG.nbchan] );
                 [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
                 EEG = pop_multifit(EEG, [1:size(EEG.icaweights,1)] ,'threshold',100,'plotopt',{'normlen' 'on'});
                 [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
@@ -945,15 +945,16 @@ switch scriptPart %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % loading hm file
                 hm = [folderHM, FilesListHM(realFilenum).name];
                 
-                if isdeployed
-                    stdHM = load('-mat', fullfile( ctfroot, 'functions', 'supportfiles', 'head_modelColin27_5003_Standard-10-5-Cap339.mat'));
-                    if ~exist(meshfile)
-                        error(sprintf('headplot(): deployed mesh file "%s" not found\n','head_modelColin27_5003_Standard-10-5-Cap339.mat'));
-                    end
-                else
-                    p  = fileparts(which('eeglab.m'));
-                    stdHM = load('-mat', fullfile( p, 'functions', 'supportfiles', 'head_modelColin27_5003_Standard-10-5-Cap339.mat'));
-                end
+%                 if isdeployed
+%                     stdHM = load('-mat', fullfile( ctfroot, 'functions', 'supportfiles', 'head_modelColin27_5003_Standard-10-5-Cap339.mat'));
+%                     if ~exist(meshfile)
+%                         error(sprintf('headplot(): deployed mesh file "%s" not found\n','head_modelColin27_5003_Standard-10-5-Cap339.mat'));
+%                     end
+%                 else
+%                     p  = fileparts(which('eeglab.m'));
+%                     stdHM = load('-mat', fullfile( p, 'functions', 'supportfiles', 'head_modelColin27_5003_Standard-10-5-Cap339.mat'));
+%                 end
+                
                 
                 % coord transform to the HM file space
                 if strcmpi(EEG.dipfit.coordformat, 'MNI')

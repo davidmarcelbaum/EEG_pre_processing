@@ -16,10 +16,13 @@ if ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
     EEG = eeg_checkset( EEG );
     close all;
     
-    %Search for Head Model (HM)
+    %Search for Head Model (HM): Standard and cortex. The latter is
+    %actually used for atlas-to-dipole area assignation. The first is just
+    %used for co-registration of electrodes on headmodel --> not needed
+    %here, already done in Brainstorm.
     [stdHeadModel, stdHeadModelPath] = uigetfile('*.mat','Look for standard head model',strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'standard_vol.mat'));
-    %folderHM = strcat([uigetdir(cd,'Choose folder containing subjects head models *** IN .MAT FORMAT ***'), slashSys]);
-    %FilesListHM = dir([folderHM,'*.mat']);
+    folderHM = strcat([uigetdir(cd,'Choose folder containing subjects head models for cortex or brainstem *** IN .MAT FORMAT ***'), slashSys]);
+    FilesListHM = dir([folderHM,'*.mat']);
     
     %Search for standard electrode for 10-20 system
     % Exchanged for "chanLocFileELC" [stdElectrodes, stdElectrodesPath] = uigetfile('*.elc','Look for channel locations file',strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'elec', slashSys, 'standard_1020.elc'));
@@ -32,6 +35,19 @@ if ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
     chanLocFolder = [uigetdir(subjAnatFolder,'Choose folder containing subjects channel locations *** IN BOTH .ELC AND .XYZ FORMAT ***'), slashSys];
     chanLocFilesXYZ = dir([chanLocFolder, '*.xyz']);
     chanLocFilesELC = dir([chanLocFolder, '*.elc']);
+    
+    atlasComput = questdlg('Which atlas will be used for dipole fitting?', ...
+        'Choose atlas', ...
+        'Desikan-Killiany','Automated Anatomical Labeling','Desikan-Killiany');
+    if isempty(atlasComput)
+        error('Must choose atlas');
+    else
+        fprintf('Will use the %s atlas', atlasComput);
+    end
+    
+    if ~istrue(size(FilesList,1) == 2*size(FilesListHM,1)) || ~istrue(size(FilesList,1) == 2*size(subjAnat,1)) || ~istrue(size(FilesList,1) == 2*size(chanLocFilesXYZ,1)) || ~istrue(size(FilesList,1) == 2*size(chanLocFilesELC,1))
+        warning('HAVE FOUND MISMATCH BETWEEN NUMBER OF DATASETS AND NUMBER OF HEAD MODELS, ANATOMY OR CHANNEL LOCATION FILES!')
+    end
     
 end
 
@@ -95,89 +111,25 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         EEG = pop_dipfit_settings( EEG, 'hdmfile',[stdHeadModelPath, stdHeadModel],'coordformat','MNI','mrifile',[subjAnatFolder, subjAnat(realFilenum).name],'chanfile',[chanLocFolder, chanLocFilesELC(realFilenum).name],'chansel',[1:EEG.nbchan] );
         %EEG = pop_dipfit_settings( EEG, 'hdmfile',[folderHM, FilesListHM(realFilenum).name],'coordformat','MNI','mrifile',[subjAnatFolder, subjAnat(realFilenum).name],'chanfile',[chanLocFolder, chanLocFilesELC(realFilenum).name],'chansel',[1:EEG.nbchan] );
         [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
+        %The next line assigns areas to the dipoles because the functions
+        %calls for the Desikan-Killiany atlas for the DEFAULT HEAD MODEL
+        %AND CORTEX. This will later be replaced by the code that calls for
+        %the atlas computation.
         EEG = pop_multifit(EEG, [1:size(EEG.icaweights,1)] ,'threshold',100,'plotopt',{'normlen' 'on'});
         [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
         
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%% This is extracted from the eeg_compatlas.m of the %%%
-        %%%% dipfit plugin                                     %%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %function EEG = eeg_compatlas(EEG, varargin)
-        
-        %if nargin < 1
-        %    help eeg_compatlas;
-        %    return
-        %end
-        
-        if ~isfield(EEG, 'dipfit') || isempty(EEG.dipfit) || ~isfield(EEG.dipfit, 'model') || isempty(EEG.dipfit.model)
-            error('You must run dipole localization first');
-        end
-        
-        % decode options
-        % --------------
-        %g = finputcheck(varargin, ...
-        %    { 'atlas'      'string'    {'dk' }     'dk';
-        %    'components' 'integer'   []          [1:size(EEG.icaweights,1)] });
-        %if isstr(g), error(g); end;
-        
-        % loading hm file
-        hm = load([folderHM, FilesListHM(realFilenum).name]);
-        
-        if isdeployed
-            stdHM = load('-mat', fullfile( eeglabFolder, 'functions', 'supportfiles', 'head_modelColin27_5003_Standard-10-5-Cap339.mat'));
-            if ~exist(meshfile)
-                error(sprintf('headplot(): deployed mesh file "%s" not found\n','head_modelColin27_5003_Standard-10-5-Cap339.mat'));
-            end
+        if strcmp(atlasComput, 'Desikan-Killiany')
+            %Calling for Desikan-Killiany dipole-to-area assignation.
+            %This atlas only computes cortical areas!
+            desikan_killiany_atlas
+        elseif strcmp(atlasComput, 'Automated Anatomical Labeling')
+            automated_anatomical_labeling
         else
-            p  = fileparts(which('eeglab.m'));
-            stdHM = load('-mat', fullfile( p, 'functions', 'supportfiles', 'head_modelColin27_5003_Standard-10-5-Cap339.mat'));
+            warning('dipole area asignation has NOT been updated after calling pop_multifit');
         end
         
-        
-        % coord transform to the HM file space
-        if strcmpi(EEG.dipfit.coordformat, 'MNI')
-            tf = traditionaldipfit([0.0000000000 -26.6046230000 -46.0000000000 0.1234625600 0.0000000000 -1.5707963000 1000.0000000000 1000.0000000000 1000.0000000000]);
-        elseif strcmpi(EEG.dipfit.coordformat, 'spherical')
-            tf = traditionaldipfit([-5.658258      1.039259     -42.80596   -0.00981033    0.03362692   0.004391199      860.8199      926.6112       858.162]);
-        else
-            error('Unknown coordinate format')
-        end
-        tfinv = pinv(tf); % the transformation is from HM to MNI (we need to invert it)
-        
-        % scan dipoles
-        fprintf('Looking up brain area in the Desikan-Killiany Atlas\n');
-        for iComp = [1:size(EEG.icaweights,1)] %Default is: iComp = g.components(:)'
-            if size(EEG.dipfit.model(iComp).posxyz,1) == 1
-                atlascoord = tfinv * [EEG.dipfit.model(iComp).posxyz 1]';
-                
-                % find close location in Atlas
-                distance = sqrt(sum((hm.Vertices-repmat(atlascoord(1:3)', [size(hm.Vertices,1) 1])).^2,2));
-                % distance = sqrt(sum((hm.VertNormals-repmat(atlascoord(1:3)', [size(hm.VertNormals,1) 1])).^2,2));
-
-                
-                % compute distance to each brain area
-                [~,selectedPt] = min( distance );
-                area = stdHM.atlas.colorTable(selectedPt);
-                if area > 0
-                    EEG.dipfit.model(iComp).areadk = stdHM.atlas.label{area};
-                else
-                    EEG.dipfit.model(iComp).areadk = 'no area';
-                end
-                
-                fprintf('Component %d: area %s\n', iComp, EEG.dipfit.model(iComp).areadk);
-            else
-                if ~isempty(EEG.dipfit.model(iComp).posxyz)
-                    fprintf('Component %d: cannot find brain area for bilateral dipoles\n', iComp);
-                else
-                    fprintf('Component %d: no location (RV too high)\n', iComp);
-                end
-            end
-        end
-        %end
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
+        %EEG.dipfit.model.posXYZ will now contain the updated areas for
+        %each dipole (according to set threshold)
         EEG = eeg_checkset( EEG );
         EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderDipoles);
         EEG = eeg_checkset( EEG );

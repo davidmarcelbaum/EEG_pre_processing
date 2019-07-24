@@ -43,6 +43,20 @@ if ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
         error('Must choose atlas');
     else
         fprintf('Will use the %s atlas', atlasComput);
+        if strcmp(atlasComput, 'Desikan-Killiany')
+            atlasAcronym = '_DKA';
+        elseif strcmp(atlasComput, 'Automated Anatomical Labeling')
+            atlasAcronym = '_ALL';
+        end
+    end
+    
+    brainComput = questdlg('Will you compute cortical or subcortical areas?', ...
+        'Choose brain part', ...
+        'Cortical','Subcortical','Cortical');
+    if strcmp(brainComput, 'Cortical')
+        folderAtlas = strcat(folderAtlas, 'Cortex', slashSys);
+    elseif strcmp(brainComput, 'Subcortical')
+        folderAtlas = strcat(folderAtlas, 'Brainstem', slashSys);
     end
     
     if ~istrue(size(FilesList,1) == 2*size(FilesListHM,1)) || ~istrue(size(FilesList,1) == 2*size(subjAnat,1)) || ~istrue(size(FilesList,1) == 2*size(chanLocFilesXYZ,1)) || ~istrue(size(FilesList,1) == 2*size(chanLocFilesELC,1))
@@ -54,8 +68,12 @@ end
 if exist(folderDipoles, 'dir') ~= 7
     mkdir (folderDipoles);
 end
+if exist(folderAtlas, 'dir') ~= 7
+    mkdir (folderAtlas);
+end
 
-cyclesRun = 0;
+cyclesRunDipfit = 0;
+cyclesRunAtlas = 0;
 
 uiwait(msgbox('Starting script after closing this window...'));
 
@@ -72,7 +90,11 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
     
     %Extract the base file name in order to append extensions afterwards
     fileNameComplete = char(FilesList(Filenum).name);
-    fileName = fileNameComplete(1:conservedCharacters);
+    if contains(FilesList(Filenum).name,'Placebo')
+        fileName = fileNameComplete(1:(conservedCharacters+3));
+    else
+        fileName = fileNameComplete(1:conservedCharacters);
+    end
     
     newFileName = strcat(fileName, '_Dipoles.set');
     
@@ -118,6 +140,24 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         EEG = pop_multifit(EEG, [1:size(EEG.icaweights,1)] ,'threshold',100,'plotopt',{'normlen' 'on'});
         [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
         
+        %Save this step since it takes such a long time. Atlas computations
+        %saved as different datasets.
+        EEG = pop_editset(EEG, 'setname', newFileName);
+        EEG = eeg_checkset( EEG );
+        EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderDipoles);
+        EEG = eeg_checkset( EEG );
+        
+        cyclesRunDipfit = cyclesRunDipfit + 1;
+        
+    end
+    
+    newFileName = strcat(insertBefore(newFileName, '.set', atlasAcronym));
+    
+    %This avoids re-running ICA on datasets that ICA has already been run on.
+    existsFile = exist ([folderAtlas, newFileName], 'file');
+    
+    if existsFile ~= 2
+        
         if strcmp(atlasComput, 'Desikan-Killiany')
             %Calling for Desikan-Killiany dipole-to-area assignation.
             %This atlas only computes cortical areas!
@@ -131,10 +171,13 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         %EEG.dipfit.model.posXYZ will now contain the updated areas for
         %each dipole (according to set threshold)
         EEG = eeg_checkset( EEG );
-        EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderDipoles);
+        EEG = pop_editset(EEG, 'setname', newFileName);
+        EEG = eeg_checkset( EEG );
+        EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderAtlas);
         EEG = eeg_checkset( EEG );
         
-        cyclesRun = cyclesRun + 1;
+        cyclesRunAtlas = cyclesRunAtlas + 1;
+        
     end
     
 end

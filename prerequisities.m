@@ -37,7 +37,7 @@ pathName = uigetdir(cd,'Choose the folder that contains the datasets');
 pathName = strcat(pathName, slashSys);
 
 %This will deselect steps of the script that are not needed.
-chooseScriptParts = {'RAWing, Filtering and/or re-referencing','Interpolation of noisy channels','ICA','Epoching','Extract channel interpolation information','Compute dipoles with Nonlinear least-square fit regression curve (currently broken)','Organize Triggers','Reject empty channels','Transform chanlocs.xyz to .elc'};
+chooseScriptParts = {'RAWing, Filtering and/or re-referencing','Interpolation of noisy channels','ICA','Epoching','Extract channel interpolation information','Compute dipoles with Nonlinear least-square fit regression curve followed by atlas computation','Organize Triggers','Reject empty channels','Transform chanlocs.xyz to .elc'};
 
 [scriptPart,tfParts] = listdlg('PromptString','What type of pre-processing do you want to perform?','SelectionMode','single','ListSize',[800,300],'ListString',chooseScriptParts);
 
@@ -116,6 +116,7 @@ folderInterpolInfo = strcat(preProcessingFolder, 'ChannelInterpolation', slashSy
 folderDipoles = strcat(preProcessingFolder, 'Dipoles', slashSys);
 folderOrganizeTriggers = strcat(preProcessingFolder, 'OrganizeTriggers', slashSys);
 folderRejEmptyChan = strcat(preProcessingFolder, 'RejEmptyChannel', slashSys);
+folderAtlas = strcat(preProcessingFolder, 'AtlasUpdate');
 
 %Set up initial stepLevel value so that later, pre-processing of datasets
 %is only forward and not reverse

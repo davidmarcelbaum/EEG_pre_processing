@@ -65,6 +65,8 @@ for Filenum = 1:numel(FilesList)
         %Save new data set and file
         [ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, 1,'setname',fileNameOdor);
         EEG = eeg_checkset( EEG );
+        EEG = pop_editset(EEG, 'setname', fileNameOdor);
+        EEG = eeg_checkset( EEG );
         EEG = pop_saveset( EEG, 'filename',fileNameOdor,'filepath',folderOrganizeTriggers);
         
         %return to original dataset
@@ -73,6 +75,8 @@ for Filenum = 1:numel(FilesList)
         
         %Select placebo on epochs and save file
         EEG = pop_select( EEG, 'trial',PlaceboOn );
+        EEG = pop_editset(EEG, 'setname', fileNamePlacebo);
+        EEG = eeg_checkset( EEG );
         EEG = pop_saveset( EEG, 'filename',fileNamePlacebo,'filepath',folderOrganizeTriggers);
         
         cyclesRun = cyclesRun + 1;

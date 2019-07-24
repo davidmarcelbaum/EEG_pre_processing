@@ -101,16 +101,21 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
     %This avoids re-running ICA on datasets that ICA has already been run on.
     existsFile = exist ([folderDipoles, newFileName], 'file');
     
+    %This is important because EEGLAB after completing the task leaves some windows open.
+    close all;
+    eeglabDeployed = 0;
+    
     if existsFile ~= 2
-        
-        %This is important because EEGLAB after completing the task leaves some windows open.
-        close all;
         
         ALLCOM = {};
         ALLEEG = [];
         CURRENTSET = 0;
         EEG = [];
         [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
+        
+        %This is used in order to not reopen EEGLAB (and delete current
+        %EEG variable) if the above if-end section has been entered.
+        eeglabDeployed = 1;
         
         EEG = pop_loadset('filename',fileNameComplete,'filepath',pathName);
         [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
@@ -151,12 +156,24 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         
     end
     
+    previousFileName = newFileName;
     newFileName = strcat(insertBefore(newFileName, '.set', atlasAcronym));
     
     %This avoids re-running ICA on datasets that ICA has already been run on.
     existsFile = exist ([folderAtlas, newFileName], 'file');
     
     if existsFile ~= 2
+        
+        if eeglabDeployed == 0
+            ALLCOM = {};
+            ALLEEG = [];
+            CURRENTSET = 0;
+            EEG = [];
+            [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
+            
+            EEG = pop_loadset('filename',previousFileName,'filepath',folderDipoles);
+            [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
+        end
         
         if strcmp(atlasComput, 'Desikan-Killiany')
             %Calling for Desikan-Killiany dipole-to-area assignation.

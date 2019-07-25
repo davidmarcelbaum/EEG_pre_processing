@@ -3,38 +3,30 @@ FilesList = dir([pathName,'*.set']);
 %Load one dataset into EEGLAB. This is necessary for the
 %EEG.chanlocs afterwards (until line 231)
 if ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
-    msgbox('The next step will take a while depending on the size of your first dataset. The EEGLAB window will close automatically. You can close this window.')
-    ALLCOM = {};
-    ALLEEG = [];
-    CURRENTSET = 0;
-    EEG = [];
-    [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
-    
-    EEG = pop_loadset('filename',FilesList(1).name,'filepath',pathName);
-    EEG = eeg_checkset( EEG );
-    [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
-    EEG = eeg_checkset( EEG );
-    close all;
     
     %Search for Head Model (HM): Standard and cortex. The latter is
     %actually used for atlas-to-dipole area assignation. The first is just
     %used for co-registration of electrodes on headmodel --> not needed
     %here, already done in Brainstorm.
-    [stdHeadModel, stdHeadModelPath] = uigetfile('*.mat','Look for standard head model',strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'standard_vol.mat'));
+    if ~contains(FilesList(1).name, 'Dipoles.set')
+        [stdHeadModel, stdHeadModelPath] = uigetfile('*.mat','Look for standard head model',strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'standard_vol.mat'));
+    end
     folderHM = strcat([uigetdir(cd,'Choose folder containing subjects head models for cortex or brainstem *** IN .MAT FORMAT ***'), slashSys]);
     FilesListHM = dir([folderHM,'*.mat']);
     
     %Search for standard electrode for 10-20 system
     % Exchanged for "chanLocFileELC" [stdElectrodes, stdElectrodesPath] = uigetfile('*.elc','Look for channel locations file',strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'elec', slashSys, 'standard_1020.elc'));
     
-    %Search for MRI anatomy folder of subjects
-    subjAnatFolder = [uigetdir(folderHM,'Choose folder containing subjects anatomy *** IN .HDR / .IMG FORMAT ***'), slashSys];
-    subjAnat = dir([subjAnatFolder, '*.hdr']);
-    
-    %Search for channel locations folder of subjects
-    chanLocFolder = [uigetdir(subjAnatFolder,'Choose folder containing subjects channel locations *** IN BOTH .ELC AND .XYZ FORMAT ***'), slashSys];
-    chanLocFilesXYZ = dir([chanLocFolder, '*.xyz']);
-    chanLocFilesELC = dir([chanLocFolder, '*.elc']);
+    if ~contains(FilesList(1).name, 'Dipoles.set')
+        %Search for MRI anatomy folder of subjects
+        subjAnatFolder = [uigetdir(folderHM,'Choose folder containing subjects anatomy *** IN .HDR / .IMG FORMAT ***'), slashSys];
+        subjAnat = dir([subjAnatFolder, '*.hdr']);
+        
+        %Search for channel locations folder of subjects
+        chanLocFolder = [uigetdir(subjAnatFolder,'Choose folder containing subjects channel locations *** IN BOTH .ELC AND .XYZ FORMAT ***'), slashSys];
+        chanLocFilesXYZ = dir([chanLocFolder, '*.xyz']);
+        chanLocFilesELC = dir([chanLocFolder, '*.elc']);
+    end
     
     atlasComput = questdlg('Which atlas will be used for dipole fitting?', ...
         'Choose atlas', ...
@@ -46,7 +38,7 @@ if ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
         if strcmp(atlasComput, 'Desikan-Killiany')
             atlasAcronym = '_DKA';
         elseif strcmp(atlasComput, 'Automated Anatomical Labeling')
-            atlasAcronym = '_ALL';
+            atlasAcronym = '_ALL2';
         end
     end
     
@@ -59,8 +51,10 @@ if ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
         folderAtlas = strcat(folderAtlas, 'Brainstem', slashSys);
     end
     
-    if ~istrue(size(FilesList,1) == 2*size(FilesListHM,1)) || ~istrue(size(FilesList,1) == 2*size(subjAnat,1)) || ~istrue(size(FilesList,1) == 2*size(chanLocFilesXYZ,1)) || ~istrue(size(FilesList,1) == 2*size(chanLocFilesELC,1))
+    if ~contains(FilesList(1).name, 'Dipoles.set') && ( ~istrue(size(FilesList,1) == 2*size(FilesListHM,1)) || ~istrue(size(FilesList,1) == 2*size(subjAnat,1)) || ~istrue(size(FilesList,1) == 2*size(chanLocFilesXYZ,1)) || ~istrue(size(FilesList,1) == 2*size(chanLocFilesELC,1)) )
         warning('HAVE FOUND MISMATCH BETWEEN NUMBER OF DATASETS AND NUMBER OF HEAD MODELS, ANATOMY OR CHANNEL LOCATION FILES!')
+    elseif contains(FilesList(1).name, 'Dipoles.set') && ~istrue(size(FilesList,1) == 2*size(FilesListHM,1))
+        warning('HAVE FOUND MISMATCH BETWEEN NUMBER OF DATASETS AND NUMBER OF HEAD MODELS FILES!')
     end
     
 end
@@ -102,7 +96,8 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
     close all;
     eeglabDeployed = 0;
     
-    if existsFile ~= 2
+    if existsFile ~= 2 && ~contains(FilesList(Filenum).name, 'Dipoles.set') %double condition
+        %is necessary since fileName and existsFile will not match
         
         ALLCOM = {};
         ALLEEG = [];
@@ -154,7 +149,11 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
     end
     
     previousFileName = newFileName;
-    newFileName = strcat(insertBefore(newFileName, '.set', atlasAcronym));
+    if contains(fileNameComplete, 'Dipoles.set')
+        newFileName = strcat(extractBefore(newFileName, '_Dipoles.set'), atlasAcronym, '.set');
+    else
+        newFileName = strcat(insertBefore(newFileName, '.set', atlasAcronym));
+    end
     
     %This avoids re-running ICA on datasets that ICA has already been run on.
     existsFile = exist ([folderAtlas, newFileName], 'file');

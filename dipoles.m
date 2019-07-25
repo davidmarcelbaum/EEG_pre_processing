@@ -11,8 +11,6 @@ if ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
     if ~contains(FilesList(1).name, 'Dipoles.set')
         [stdHeadModel, stdHeadModelPath] = uigetfile('*.mat','Look for standard head model',strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'standard_vol.mat'));
     end
-    folderHM = strcat([uigetdir(cd,'Choose folder containing subjects head models for cortex or brainstem *** IN .MAT FORMAT ***'), slashSys]);
-    FilesListHM = dir([folderHM,'*.mat']);
     
     %Search for standard electrode for 10-20 system
     % Exchanged for "chanLocFileELC" [stdElectrodes, stdElectrodesPath] = uigetfile('*.elc','Look for channel locations file',strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'elec', slashSys, 'standard_1020.elc'));
@@ -26,34 +24,6 @@ if ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
         chanLocFolder = [uigetdir(subjAnatFolder,'Choose folder containing subjects channel locations *** IN BOTH .ELC AND .XYZ FORMAT ***'), slashSys];
         chanLocFilesXYZ = dir([chanLocFolder, '*.xyz']);
         chanLocFilesELC = dir([chanLocFolder, '*.elc']);
-    end
-    
-    atlasComput = questdlg('Which atlas will be used for dipole fitting?', ...
-        'Choose atlas', ...
-        'Desikan-Killiany','Automated Anatomical Labeling','Desikan-Killiany');
-    if isempty(atlasComput)
-        error('Must choose atlas');
-    else
-        fprintf('Will use the %s atlas', atlasComput);
-        if strcmp(atlasComput, 'Desikan-Killiany')
-            atlasAcronym = '_DKA';
-        elseif strcmp(atlasComput, 'Automated Anatomical Labeling')
-            atlasAcronym = '_ALL2';
-        end
-    end
-    
-    brainComput = questdlg('Will you compute cortical or subcortical areas?', ...
-        'Choose brain part', ...
-        'Cortical','Subcortical','Both','Cortical');
-    if strcmp(brainComput, 'Cortical')
-        folderAtlas = strcat(folderAtlas, 'Cortex', slashSys);
-        findAtlas = 2;
-    elseif strcmp(brainComput, 'Subcortical')
-        folderAtlas = strcat(folderAtlas, 'Brainstem', slashSys);
-        findAtlas = 2;
-    elseif strcmp(brainComput, 'Both')
-        folderAtlas = strcat(folderAtlas, 'BrainstemAndCortex', slashSys);
-        findAtlas = 4;
     end
     
     if ~contains(FilesList(1).name, 'Dipoles.set') && ( ~istrue(size(FilesList,1) == 2*size(FilesListHM,1)) || ~istrue(size(FilesList,1) == 2*size(subjAnat,1)) || ~istrue(size(FilesList,1) == 2*size(chanLocFilesXYZ,1)) || ~istrue(size(FilesList,1) == 2*size(chanLocFilesELC,1)) )
@@ -71,8 +41,7 @@ if exist(folderAtlas, 'dir') ~= 7
     mkdir (folderAtlas);
 end
 
-cyclesRunDipfit = 0;
-cyclesRunAtlas = 0;
+cyclesRun = 0;
 realFilenumDecimal = 1;
 
 uiwait(msgbox('Starting script after closing this window...'));
@@ -99,7 +68,6 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
     
     %This is important because EEGLAB after completing the task leaves some windows open.
     close all;
-    eeglabDeployed = 0;
     
     if existsFile ~= 2 && ~contains(FilesList(Filenum).name, 'Dipoles.set') %double condition
         %is necessary since fileName and existsFile will not match
@@ -109,10 +77,6 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         CURRENTSET = 0;
         EEG = [];
         [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
-        
-        %This is used in order to not reopen EEGLAB (and delete current
-        %EEG variable) if the above if-end section has been entered.
-        eeglabDeployed = 1;
         
         EEG = pop_loadset('filename',fileNameComplete,'filepath',pathName);
         [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
@@ -142,6 +106,10 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         EEG = pop_multifit(EEG, [1:size(EEG.icaweights,1)] ,'threshold',100,'plotopt',{'normlen' 'on'});
         [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
         
+        %This line removes the area asignation from the default head model
+        EEG.dipfit.model = rmfield(EEG.dipfit.model, 'areadk');
+        EEG = eeg_checkset( EEG );
+        
         %Save this step since it takes such a long time. Atlas computations
         %saved as different datasets.
         EEG = pop_editset(EEG, 'setname', newFileName);
@@ -149,61 +117,7 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderDipoles);
         EEG = eeg_checkset( EEG );
         
-        cyclesRunDipfit = cyclesRunDipfit + 1;
-        
-    end
-    
-    previousFileName = newFileName;
-    if contains(fileNameComplete, 'Dipoles.set')
-        newFileName = strcat(extractBefore(newFileName, '_Dipoles.set'), atlasAcronym, '.set');
-    else
-        newFileName = strcat(insertBefore(newFileName, '.set', atlasAcronym));
-    end
-    
-    %This avoids re-running ICA on datasets that ICA has already been run on.
-    existsFile = exist ([folderAtlas, newFileName], 'file');
-    
-    if existsFile ~= 2
-        
-        if eeglabDeployed == 0
-            ALLCOM = {};
-            ALLEEG = [];
-            CURRENTSET = 0;
-            EEG = [];
-            [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
-            
-            if contains(FilesList(Filenum).name, 'Dipoles.set')
-                EEG = pop_loadset('filename',FilesList(Filenum).name,'filepath',pathName);
-            else
-                EEG = pop_loadset('filename',previousFileName,'filepath',folderDipoles);
-            end
-            [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
-        end
-        
-        if strcmp(atlasComput, 'Desikan-Killiany')
-            %Calling for Desikan-Killiany dipole-to-area assignation.
-            %This atlas only computes cortical areas!
-            desikan_killiany_atlas
-        elseif strcmp(atlasComput, 'Automated Anatomical Labeling')
-            %call for AAL atlas. The structure of the head models of the
-            %brainstem and the cortex exported from brainstorm have the
-            %same structure: Atlas(2).Scouts(:).Vertices or .Label and are
-            %appliable to cortex and to brainstorm area asignation of the
-            %dipoles.
-            autom_anat_labeling
-        else
-            warning('dipole area asignation has NOT been updated after calling pop_multifit');
-        end
-        
-        %EEG.dipfit.model.posXYZ will now contain the updated areas for
-        %each dipole (according to set threshold)
-        EEG = eeg_checkset( EEG );
-        EEG = pop_editset(EEG, 'setname', newFileName);
-        EEG = eeg_checkset( EEG );
-        EEG = pop_saveset( EEG, 'filename',newFileName,'filepath',folderAtlas);
-        EEG = eeg_checkset( EEG );
-        
-        cyclesRunAtlas = cyclesRunAtlas + 1;
+        cyclesRun = cyclesRun + 1;
         
     end
     

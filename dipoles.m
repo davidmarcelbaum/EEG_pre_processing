@@ -181,7 +181,12 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
             %This atlas only computes cortical areas!
             desikan_killiany_atlas
         elseif strcmp(atlasComput, 'Automated Anatomical Labeling')
-            automated_anatomical_labeling
+            %call for AAL atlas. The structure of the head models of the
+            %brainstem and the cortex exported from brainstorm have the
+            %same structure: Atlas(2).Scouts(:).Vertices or .Label and are
+            %appliable to cortex and to brainstorm area asignation of the
+            %dipoles.
+            autom_anat_labeling
         else
             warning('dipole area asignation has NOT been updated after calling pop_multifit');
         end

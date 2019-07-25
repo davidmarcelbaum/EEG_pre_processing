@@ -74,6 +74,7 @@ end
 
 cyclesRunDipfit = 0;
 cyclesRunAtlas = 0;
+realFilenumDecimal = 1;
 
 uiwait(msgbox('Starting script after closing this window...'));
 
@@ -82,11 +83,7 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
     %This avoids exporting anatomy files for same subjects twice
     %for each dataset. realFilenum will be used for calling the
     %head models, mri and channel locations.
-    if contains(FilesList(Filenum).name,'Placebo')
-        realFilenum = Filenum -1;
-    else
-        realFilenum = Filenum;
-    end
+    realFilenum = floor(realFilenumDecimal);
     
     %Extract the base file name in order to append extensions afterwards
     fileNameComplete = char(FilesList(Filenum).name);
@@ -171,7 +168,11 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
             EEG = [];
             [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
             
-            EEG = pop_loadset('filename',previousFileName,'filepath',folderDipoles);
+            if contains(FilesList(Filenum).name, 'Dipoles.set')
+                EEG = pop_loadset('filename',FilesList(Filenum).name,'filepath',pathName);
+            else
+                EEG = pop_loadset('filename',previousFileName,'filepath',folderDipoles);
+            end
             [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
         end
         
@@ -196,6 +197,8 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         cyclesRunAtlas = cyclesRunAtlas + 1;
         
     end
+    
+    realFilenumDecimal = realFilenumDecimal + 0.5;
     
 end
 close all;

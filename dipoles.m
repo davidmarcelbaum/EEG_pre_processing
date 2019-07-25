@@ -44,11 +44,16 @@ if ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
     
     brainComput = questdlg('Will you compute cortical or subcortical areas?', ...
         'Choose brain part', ...
-        'Cortical','Subcortical','Cortical');
+        'Cortical','Subcortical','Both','Cortical');
     if strcmp(brainComput, 'Cortical')
         folderAtlas = strcat(folderAtlas, 'Cortex', slashSys);
+        findAtlas = 2;
     elseif strcmp(brainComput, 'Subcortical')
         folderAtlas = strcat(folderAtlas, 'Brainstem', slashSys);
+        findAtlas = 2;
+    elseif strcmp(brainComput, 'Both')
+        folderAtlas = strcat(folderAtlas, 'BrainstemAndCortex', slashSys);
+        findAtlas = 4;
     end
     
     if ~contains(FilesList(1).name, 'Dipoles.set') && ( ~istrue(size(FilesList,1) == 2*size(FilesListHM,1)) || ~istrue(size(FilesList,1) == 2*size(subjAnat,1)) || ~istrue(size(FilesList,1) == 2*size(chanLocFilesXYZ,1)) || ~istrue(size(FilesList,1) == 2*size(chanLocFilesELC,1)) )

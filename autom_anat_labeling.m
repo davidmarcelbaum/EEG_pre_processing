@@ -23,17 +23,17 @@ for iComp = [1:size(EEG.icaweights,1)] %Default is: iComp = g.components(:)'
         [~,selectedPt] = min( distance );
         
         whichVertex = [];
-        for vertRow = 1:size(hm.Atlas(2).Scouts,2)
-           [~, colLocateVertex] = find(hm.Atlas(2).Scouts(vertRow).Vertices == selectedPt);
-            if istrue(find(hm.Atlas(2).Scouts(vertRow).Vertices == selectedPt))
+        for vertRow = 1:size(hm.Atlas(findAtlas).Scouts,2)
+           [~, colLocateVertex] = find(hm.Atlas(findAtlas).Scouts(vertRow).Vertices == selectedPt);
+            if istrue(find(hm.Atlas(findAtlas).Scouts(vertRow).Vertices == selectedPt))
                 whichVertex = [whichVertex; vertRow];
             end
         end
         
         if ~isempty(whichVertex)
-            EEG.dipfit.model(iComp).areaAAL = hm.Atlas(2).Scouts(whichVertex).Label;
+            EEG.dipfit.model(iComp).areaAAL = hm.Atlas(findAtlas).Scouts(whichVertex).Label;
         else
-            EEG.dipfit.model(iComp).areaAAL = 'no area found';
+            EEG.dipfit.model(iComp).areaAAL = 'no area';
         end
         
 end

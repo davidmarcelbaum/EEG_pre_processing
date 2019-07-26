@@ -21,6 +21,7 @@ end
 %if isstr(g), error(g); end;
 
 % loading hm file
+FilesListHM = dir([folderAtlas,'*head_model.mat']);
 hm = load([folderHM, FilesListHM(realFilenum).name]);
 
 if isdeployed

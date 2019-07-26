@@ -3,7 +3,8 @@
 %%%% into the head model file via Brainstorm           %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-hm = load([folderHM, FilesListHM(realFilenum).name]);
+FilesListHM = dir([folderAtlas,'*head_model.mat']);
+hm = load([folderAtlas, FilesListHM(realFilenum).name]);
 
 if strcmpi(EEG.dipfit.coordformat, 'MNI')
     tf = traditionaldipfit([0.0000000000 -26.6046230000 -46.0000000000 0.1234625600 0.0000000000 -1.5707963000 1000.0000000000 1000.0000000000 1000.0000000000]);

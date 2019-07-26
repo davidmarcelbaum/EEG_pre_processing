@@ -17,7 +17,7 @@ if ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
     
     if ~contains(FilesList(1).name, 'Dipoles.set')
         %Search for MRI anatomy folder of subjects
-        subjAnatFolder = [uigetdir(folderHM,'Choose folder containing subjects anatomy *** IN .HDR / .IMG FORMAT ***'), slashSys];
+        subjAnatFolder = [uigetdir(cd,'Choose folder containing subjects anatomy *** IN .HDR / .IMG FORMAT ***'), slashSys];
         subjAnat = dir([subjAnatFolder, '*.hdr']);
         
         %Search for channel locations folder of subjects
@@ -26,19 +26,16 @@ if ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
         chanLocFilesELC = dir([chanLocFolder, '*.elc']);
     end
     
-    if ~contains(FilesList(1).name, 'Dipoles.set') && ( ~istrue(size(FilesList,1) == 2*size(FilesListHM,1)) || ~istrue(size(FilesList,1) == 2*size(subjAnat,1)) || ~istrue(size(FilesList,1) == 2*size(chanLocFilesXYZ,1)) || ~istrue(size(FilesList,1) == 2*size(chanLocFilesELC,1)) )
-        warning('HAVE FOUND MISMATCH BETWEEN NUMBER OF DATASETS AND NUMBER OF HEAD MODELS, ANATOMY OR CHANNEL LOCATION FILES!')
-    elseif contains(FilesList(1).name, 'Dipoles.set') && ~istrue(size(FilesList,1) == 2*size(FilesListHM,1))
-        warning('HAVE FOUND MISMATCH BETWEEN NUMBER OF DATASETS AND NUMBER OF HEAD MODELS FILES!')
+    if ~istrue(size(FilesList,1) == 2*size(subjAnat,1)) || ~istrue(size(FilesList,1) == 2*size(chanLocFilesXYZ,1)) || ~istrue(size(FilesList,1) == 2*size(chanLocFilesELC,1))
+        warning('FOUND MISMATCH BETWEEN NUMBER OF DATASETS AND NUMBER OF HEAD MODELS, ANATOMY OR CHANNEL LOCATION FILES!')
+    elseif contains(FilesList(1).name, 'Dipoles.set')
+        warning('Datasets seem to have been computed for dipoles already')
     end
     
 end
 
 if exist(folderDipoles, 'dir') ~= 7
     mkdir (folderDipoles);
-end
-if exist(folderAtlas, 'dir') ~= 7
-    mkdir (folderAtlas);
 end
 
 cyclesRun = 0;

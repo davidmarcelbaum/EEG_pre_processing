@@ -1,7 +1,18 @@
 FilesList = dir([pathName,'*.set']);
 
-folderHM = strcat([uigetdir(cd,'Choose folder containing subjects head models for cortex or brainstem *** IN .MAT FORMAT ***'), slashSys]);
-    FilesListHM = dir([folderHM,'*.mat']);
+%Setting up Head models. This part extracts vertices from various branstorm
+%files that contain either Subcortex or Cortex.
+anatPath = uigetdir(cd,'Locate the parent ("anat") folder of anatomies');
+anatList = dir(anatPath);
+[subjAnat,answerSubjAnat] = listdlg('PromptString','Select subject folders','SelectionMode','multiple','ListSize',[150,150],'ListString',{anatList.name});
+
+%Replaced by automated combination of Brainstorm-exported files
+%folderHM = strcat([uigetdir(cd,'Choose folder containing subjects head models for cortex or brainstem *** IN .MAT FORMAT ***'), slashSys]);
+%FilesListHM = dir([folderHM,'*.mat']);
+
+if ~istrue(size(FilesList,1) == 2*size(FilesListHM,1))
+    warning('FOUND MISMATCH BETWEEN NUMBER OF DATASETS AND NUMBER OF HEAD MODEL FILES!')
+end
 
 if ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
     
@@ -30,6 +41,10 @@ if ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
     
 end
 
+if exist(folderAtlas, 'dir') ~= 7
+    mkdir (folderAtlas);
+end
+
 cyclesRun = 0;
 realFilenumDecimal = 1;
 
@@ -41,6 +56,30 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
     %for each dataset. realFilenum will be used for calling the
     %head models, mri and channel locations.
     realFilenum = floor(realFilenumDecimal);
+    
+    Foldernum = subjAnat(realFilenum);
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %Loading subject's anatomy files and combine them into one file to
+    %compute atlas2area assignation. Brainstorm saves Brainstem and
+    %Cerebrum separate from Cortex.
+    SubjAnatPath = strcat(anatPath, slashSys, anatList(Foldernum).name, slashSys);
+    
+    subcortexFile = dir(fullfile(SubjAnatPath,'*MPRAGE_GRAPPA2_t1.svreg.label.nii.mat'));
+    getSubcortexFile = load(strcat(subcortexFile.folder, slashSys, subcortexFile.name));
+   
+    cortexFile = dir(fullfile(SubjAnatPath,'tess_cortex_pial_02.mat'));
+    getCortexFile = load(strcat(cortexFile.folder, slashSys, cortexFile.name));
+
+    combinedFiles.Vertices = [getCortexFile.Vertices; getSubcortexFile.Vertices];
+    combinedFiles.Atlas = [getCortexFile.Atlas(4).Scouts, getSubcortexFile.Atlas(2).Scouts];
+    
+    if ~size(combineFiles.Vertices,1) == size(getSubcortexFile.Vertices,1) + size(getCortexFile.Vertices,1)
+        error('Something went wrong during Vertex concatenation')
+    end
+
+    save([folderAtlas slashSys anatList(Foldernum).name '_head_model.mat'],'combinedFiles')
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     %Extract the base file name in order to append extensions afterwards
     fileNameComplete = char(FilesList(Filenum).name);
@@ -60,6 +99,10 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
     
     EEG = pop_loadset('filename',fileNameComplete,'filepath',pathName);
     [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
+    
+    if ~isfield(EEG.dipfit, 'model')
+        error(strcat('Dataset', fileNameComplete, ' Does not contain dipole computation'));
+    end
     
     if strcmp(atlasComput, 'Desikan-Killiany')
         fieldAtlas = 'areadk';

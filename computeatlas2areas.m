@@ -1,20 +1,20 @@
 FilesList = dir([pathName,'*.set']);
 
-%Setting up Head models. This part extracts vertices from various branstorm
-%files that contain either Subcortex or Cortex.
-anatPath = uigetdir(cd,'Locate the parent ("anat") folder of anatomies');
-anatList = dir(anatPath);
-[subjAnat,answerSubjAnat] = listdlg('PromptString','Select subject folders','SelectionMode','multiple','ListSize',[150,150],'ListString',{anatList.name});
-
-%Replaced by automated combination of Brainstorm-exported files
-%folderHM = strcat([uigetdir(cd,'Choose folder containing subjects head models for cortex or brainstem *** IN .MAT FORMAT ***'), slashSys]);
-%FilesListHM = dir([folderHM,'*.mat']);
-
 if ~istrue(size(FilesList,1) == 2*size(subjAnat,2))
     warning('FOUND MISMATCH BETWEEN NUMBER OF DATASETS AND NUMBER OF HEAD MODEL FILES!')
 end
 
-if ~exist('atlasComput', 'var') || ~exist('brainComput', 'var') || (~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes'))
+if ~exist('atlasComput', 'var') || ~exist('brainComput', 'var') || ~exist('anatPath', 'var') || ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
+    
+    %Setting up Head models. This part extracts vertices from various branstorm
+    %files that contain either Subcortex or Cortex.
+    anatPath = uigetdir(cd,'Locate the parent ("anat") folder of anatomies');
+    anatList = dir(anatPath);
+    [subjAnat,answerSubjAnat] = listdlg('PromptString','Select subject folders','SelectionMode','multiple','ListSize',[150,150],'ListString',{anatList.name});
+    
+    %Replaced by automated combination of Brainstorm-exported files
+    %folderHM = strcat([uigetdir(cd,'Choose folder containing subjects head models for cortex or brainstem *** IN .MAT FORMAT ***'), slashSys]);
+    %FilesListHM = dir([folderHM,'*.mat']);
     
     atlasComput = questdlg('Which atlas will be used for dipole fitting?', ...
         'Choose atlas', ...

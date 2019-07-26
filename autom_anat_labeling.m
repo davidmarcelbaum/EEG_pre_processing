@@ -20,19 +20,19 @@ for iComp = [1:size(EEG.icaweights,1)] %Default is: iComp = g.components(:)'
     atlascoord = tfinv * [EEG.dipfit.model(iComp).posxyz 1]';
         
         % find close location in Atlas
-        distance = sqrt(sum((hm.Vertices-repmat(atlascoord(1:3)', [size(hm.Vertices,1) 1])).^2,2));
+        distance = sqrt(sum((hm.combinedFiles.Vertices-repmat(atlascoord(1:3)', [size(hm.combinedFiles.Vertices,1) 1])).^2,2));
         [~,selectedPt] = min( distance );
         
         whichVertex = [];
-        for vertRow = 1:size(hm.Atlas(findAtlas).Scouts,2)
-           [~, colLocateVertex] = find(hm.Atlas(findAtlas).Scouts(vertRow).Vertices == selectedPt);
-            if istrue(find(hm.Atlas(findAtlas).Scouts(vertRow).Vertices == selectedPt))
+        for vertRow = 1:size(hm.combinedFiles.Atlas,2)
+           [~, colLocateVertex] = find(hm.combinedFiles.Atlas(vertRow).Vertices == selectedPt);
+            if istrue(find(hm.combinedFiles.Atlas(vertRow).Vertices == selectedPt))
                 whichVertex = [whichVertex; vertRow];
             end
         end
         
         if ~isempty(whichVertex)
-            EEG.dipfit.model(iComp).areaAAL = hm.Atlas(findAtlas).Scouts(whichVertex).Label;
+            EEG.dipfit.model(iComp).areaAAL = hm.combinedFiles.Atlas(whichVertex).Label;
         else
             EEG.dipfit.model(iComp).areaAAL = 'no area';
         end

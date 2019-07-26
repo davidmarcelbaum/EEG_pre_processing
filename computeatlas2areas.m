@@ -10,11 +10,11 @@ anatList = dir(anatPath);
 %folderHM = strcat([uigetdir(cd,'Choose folder containing subjects head models for cortex or brainstem *** IN .MAT FORMAT ***'), slashSys]);
 %FilesListHM = dir([folderHM,'*.mat']);
 
-if ~istrue(size(FilesList,1) == 2*size(FilesListHM,1))
+if ~istrue(size(FilesList,1) == 2*size(subjAnat,2))
     warning('FOUND MISMATCH BETWEEN NUMBER OF DATASETS AND NUMBER OF HEAD MODEL FILES!')
 end
 
-if ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
+if ~exist('atlasComput', 'var') || ~exist('brainComput', 'var') || (~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes'))
     
     atlasComput = questdlg('Which atlas will be used for dipole fitting?', ...
         'Choose atlas', ...
@@ -30,13 +30,13 @@ if ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
         'Cortical','Subcortical','Both','Cortical');
     if strcmp(brainComput, 'Cortical')
         folderAtlas = strcat(folderAtlas, 'Cortex', slashSys);
-        findAtlas = 2;
+        %findAtlas = 2;
     elseif strcmp(brainComput, 'Subcortical')
         folderAtlas = strcat(folderAtlas, 'Brainstem', slashSys);
-        findAtlas = 2;
+        %findAtlas = 2;
     elseif strcmp(brainComput, 'Both')
         folderAtlas = strcat(folderAtlas, 'BrainstemAndCortex', slashSys);
-        findAtlas = 4;
+        %findAtlas = 4;
     end
     
 end
@@ -138,6 +138,8 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         cyclesRun = cyclesRun + 1;
         
     end
+    
+    realFilenumDecimal = realFilenumDecimal + 0.5;
     
     close all;
 end

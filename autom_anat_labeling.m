@@ -17,22 +17,33 @@ tfinv = pinv(tf); % the transformation is from HM to MNI (we need to invert it)
 
 for iComp = [1:size(EEG.icaweights,1)] %Default is: iComp = g.components(:)'
     
-    atlascoord = tfinv * [EEG.dipfit.model(iComp).posxyz 1]';
-        
+    atlascoord = tfinv * [EEG.dipfit.model(iComp).posxyz 1]'; %This seems rights, since in Brainstorm coordinates XYZ are in MNI format.
+    %dipoles coordinates (posxyz) are now atlascoordinates MNIxyz (based on fiducials)
+    
         % find close location in Atlas
         distance = sqrt(sum((hm.Vertices-repmat(atlascoord(1:3)', [size(hm.Vertices,1) 1])).^2,2));
         [~,selectedPt] = min( distance );
         
-        whichVertex = [];
+        rowContainsVertex = [];
         for vertRow = 1:size(hm.Atlas,2)
            [~, colLocateVertex] = find(hm.Atlas(vertRow).Vertices == selectedPt);
             if istrue(find(hm.Atlas(vertRow).Vertices == selectedPt))
-                whichVertex = [whichVertex; vertRow];
+                rowContainsVertex = [rowContainsVertex; vertRow];
             end
         end
         
-        if ~isempty(whichVertex)
-            EEG.dipfit.model(iComp).areaAAL = hm.Atlas(whichVertex).Label;
+        if ~isempty(rowContainsVertex)
+            
+            areaCatenation = [];
+            for Stringnum = 1:size(rowContainsVertex,1) %For some vertices, the atlas contains more than one area
+                %Usually, these areas are adjacent, but still would like to
+                %check!
+                %This code makes sure we do not loose any area information.
+                
+                areaCatenation = [areaCatenation, ' ', hm.Atlas(rowContainsVertex(Stringnum)).Label];
+            end
+                %EEG.dipfit.model(iComp).areaAAL = hm.Atlas(rowContainsVertex).Label;
+                EEG.dipfit.model(iComp).areaAAL = areaCatenation;
         else
             EEG.dipfit.model(iComp).areaAAL = 'no area';
         end

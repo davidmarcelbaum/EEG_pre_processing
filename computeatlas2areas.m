@@ -1,6 +1,6 @@
 FilesList = dir([pathName,'*.set']);
 
-if ~exist('atlasComput', 'var') || ~exist('brainComput', 'var') || ~exist('anatPath', 'var') || ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
+if ~exist('atlasComput', 'var') || ~exist('brainCompute', 'var') || ~exist('anatPath', 'var') || ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
 %Skip questions if already answered and user chose to NOT reinitialize variables in master file.
 
     %Setting up Head models. This part extracts vertices from various branstorm

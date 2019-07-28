@@ -40,7 +40,7 @@ for iComp = [1:size(EEG.icaweights,1)] %Default is: iComp = g.components(:)'
                 %check!
                 %This code makes sure we do not loose any area information.
                 
-                areaCatenation = [areaCatenation, ' ', hm.Atlas(rowContainsVertex(Stringnum)).Label];
+                areaCatenation = [areaCatenation, ', ', hm.Atlas(rowContainsVertex(Stringnum)).Label];
             end
                 %EEG.dipfit.model(iComp).areaAAL = hm.Atlas(rowContainsVertex).Label;
                 EEG.dipfit.model(iComp).areaAAL = areaCatenation;

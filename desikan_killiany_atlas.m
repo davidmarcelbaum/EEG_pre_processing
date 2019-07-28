@@ -20,10 +20,6 @@ end
 %    'components' 'integer'   []          [1:size(EEG.icaweights,1)] });
 %if isstr(g), error(g); end;
 
-% loading hm file
-FilesListHM = dir([folderAtlas,'*head_model.mat']);
-hm = load([folderHM, FilesListHM(realFilenum).name]);
-
 if isdeployed
     stdHM = load('-mat', fullfile( eeglabFolder, 'functions', 'supportfiles', 'head_modelColin27_5003_Standard-10-5-Cap339.mat'));
     if ~exist(meshfile)

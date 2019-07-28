@@ -3,20 +3,6 @@ FilesList = dir([pathName,'*.set']);
 if ~exist('atlasComput', 'var') || ~exist('brainCompute', 'var') || ~exist('anatPath', 'var') || ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
 %Skip questions if already answered and user chose to NOT reinitialize variables in master file.
 
-    %Setting up Head models. This part extracts vertices from various branstorm
-    %files that contain either Subcortex or Cortex.
-    anatPath = uigetdir(cd,'Locate the parent ("anat") folder of anatomies');
-    anatList = dir(anatPath);
-    [subjAnat,answerSubjAnat] = listdlg('PromptString','Select subject folders','SelectionMode','multiple','ListSize',[150,150],'ListString',{anatList.name});
-    
-    if ~istrue(size(FilesList,1) == 2*size(subjAnat,2))
-    warning('FOUND MISMATCH BETWEEN NUMBER OF DATASETS AND NUMBER OF HEAD MODEL FILES!')
-    end
-    
-    %Replaced by automated combination of Brainstorm-exported files
-    %folderHM = strcat([uigetdir(cd,'Choose folder containing subjects head models for cortex or brainstem *** IN .MAT FORMAT ***'), slashSys]);
-    %FilesListHM = dir([folderHM,'*.mat']);
-    
     atlasComput = questdlg('Which atlas will be used for dipole fitting?', ...
         'Choose atlas', ...
         'Desikan-Killiany','Automated Anatomical Labeling','Desikan-Killiany');
@@ -24,8 +10,24 @@ if ~exist('atlasComput', 'var') || ~exist('brainCompute', 'var') || ~exist('anat
         error('Must choose atlas');
     else
         if strcmp(atlasComput, 'Desikan-Killiany')
+            
+            folderHM = strcat([uigetdir(cd,'Choose folder containing subjects head models for cortex or brainstem *** IN .MAT FORMAT ***'), slashSys]);
+            FilesListHM = dir([folderHM,'*.mat']);
+            
             brainCompute = 'cortex ONLY.';
+            
         elseif strcmp(atlasComput, 'Automated Anatomical Labeling')
+            
+            %Setting up Head models. This part extracts vertices from various branstorm
+            %files that contain either Subcortex or Cortex.
+            anatPath = uigetdir(cd,'Locate the parent ("anat") folder of anatomies');
+            anatList = dir(anatPath);
+            [subjAnat,answerSubjAnat] = listdlg('PromptString','Select subject folders','SelectionMode','multiple','ListSize',[150,150],'ListString',{anatList.name});
+            
+            if ~istrue(size(FilesList,1) == 2*size(subjAnat,2))
+                warning('FOUND MISMATCH BETWEEN NUMBER OF DATASETS AND NUMBER OF HEAD MODEL FILES!')
+            end
+            
             brainCompute = 'cortex AND subcortex.';
         end
         fprintf('*** Will use the %s atlas on %s ***', atlasComput, brainCompute);
@@ -52,7 +54,7 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
     Foldernum = subjAnat(realFilenum);
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    if exist([folderAtlas anatList(Foldernum).name '_head_model.mat']) ~= 2
+    if exist([folderAtlas anatList(Foldernum).name '_head_model.mat']) ~= 2 && strcmp(atlasComput, 'Automated Anatomical Labeling')
         
         %Loading subject's anatomy files and combine them into one file to
         %compute atlas2area assignation. Brainstorm saves Brainstem and
@@ -76,6 +78,18 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
 
     else
         load([folderAtlas anatList(Foldernum).name '_head_model.mat'],'hm')
+    end
+    
+    if strcmp(atlasComput, 'Desikan-Killiany')
+        
+        cortexFile = dir(fullfile(SubjAnatPath,'tess_cortex_pial_02.mat'));
+        
+        getCortexFile = load(strcat(cortexFile.folder, slashSys, cortexFile.name));
+        
+        hm.Vertices = [getCortexFile.Vertices];
+        
+        save([folderAtlas anatList(Foldernum).name '_cortex_head_model.mat'],'hm')
+        
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     

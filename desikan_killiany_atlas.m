@@ -21,8 +21,8 @@ end
 %if isstr(g), error(g); end;
 
 % loading hm file
-FilesListHM = dir([folderAtlas,'*head_model.mat']);
-hm = load([folderHM, FilesListHM(realFilenum).name]);
+% FilesListHM = dir([folderAtlas,'*head_model.mat']);
+% hm = combinedFiles; %load([folderHM, FilesListHM(realFilenum).name]);
 
 if isdeployed
     stdHM = load('-mat', fullfile( eeglabFolder, 'functions', 'supportfiles', 'head_modelColin27_5003_Standard-10-5-Cap339.mat'));

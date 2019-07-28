@@ -1,16 +1,17 @@
 FilesList = dir([pathName,'*.set']);
 
-if ~istrue(size(FilesList,1) == 2*size(subjAnat,2))
-    warning('FOUND MISMATCH BETWEEN NUMBER OF DATASETS AND NUMBER OF HEAD MODEL FILES!')
-end
-
 if ~exist('atlasComput', 'var') || ~exist('brainComput', 'var') || ~exist('anatPath', 'var') || ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
-    
+%Skip questions if already answered and user chose to NOT reinitialize variables in master file.
+
     %Setting up Head models. This part extracts vertices from various branstorm
     %files that contain either Subcortex or Cortex.
     anatPath = uigetdir(cd,'Locate the parent ("anat") folder of anatomies');
     anatList = dir(anatPath);
     [subjAnat,answerSubjAnat] = listdlg('PromptString','Select subject folders','SelectionMode','multiple','ListSize',[150,150],'ListString',{anatList.name});
+    
+    if ~istrue(size(FilesList,1) == 2*size(subjAnat,2))
+    warning('FOUND MISMATCH BETWEEN NUMBER OF DATASETS AND NUMBER OF HEAD MODEL FILES!')
+    end
     
     %Replaced by automated combination of Brainstorm-exported files
     %folderHM = strcat([uigetdir(cd,'Choose folder containing subjects head models for cortex or brainstem *** IN .MAT FORMAT ***'), slashSys]);
@@ -22,21 +23,12 @@ if ~exist('atlasComput', 'var') || ~exist('brainComput', 'var') || ~exist('anatP
     if isempty(atlasComput)
         error('Must choose atlas');
     else
-        fprintf('Will use the %s atlas', atlasComput);
-    end
-    
-    brainComput = questdlg('Will you compute cortical or subcortical areas?', ...
-        'Choose brain part', ...
-        'Cortical','Subcortical','Both','Cortical');
-    if strcmp(brainComput, 'Cortical')
-        folderAtlas = strcat(folderAtlas, 'Cortex', slashSys);
-        %findAtlas = 2;
-    elseif strcmp(brainComput, 'Subcortical')
-        folderAtlas = strcat(folderAtlas, 'Brainstem', slashSys);
-        %findAtlas = 2;
-    elseif strcmp(brainComput, 'Both')
-        folderAtlas = strcat(folderAtlas, 'BrainstemAndCortex', slashSys);
-        %findAtlas = 4;
+        if strcmp(atlasComput, 'Desikan-Killiany')
+            brainCompute = 'cortex ONLY.';
+        elseif strcmp(atlasComput, 'Automated Anatomical Labeling')
+            brainCompute = 'cortex AND subcortex.';
+        end
+        fprintf('*** Will use the %s atlas on %s ***', atlasComput, brainCompute);
     end
     
 end
@@ -60,25 +52,31 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
     Foldernum = subjAnat(realFilenum);
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %Loading subject's anatomy files and combine them into one file to
-    %compute atlas2area assignation. Brainstorm saves Brainstem and
-    %Cerebrum separate from Cortex.
-    SubjAnatPath = strcat(anatPath, slashSys, anatList(Foldernum).name, slashSys);
+    if exist([folderAtlas anatList(Foldernum).name '_head_model.mat']) ~= 2
+        
+        %Loading subject's anatomy files and combine them into one file to
+        %compute atlas2area assignation. Brainstorm saves Brainstem and
+        %Cerebrum separate from Cortex.
+        SubjAnatPath = strcat(anatPath, slashSys, anatList(Foldernum).name, slashSys);
     
-    subcortexFile = dir(fullfile(SubjAnatPath,'*MPRAGE_GRAPPA2_t1.svreg.label.nii.mat'));
-    getSubcortexFile = load(strcat(subcortexFile.folder, slashSys, subcortexFile.name));
-   
-    cortexFile = dir(fullfile(SubjAnatPath,'tess_cortex_pial_02.mat'));
-    getCortexFile = load(strcat(cortexFile.folder, slashSys, cortexFile.name));
+        subcortexFile = dir(fullfile(SubjAnatPath,'*MPRAGE_GRAPPA2_t1.svreg.label.nii.mat'));
+        cortexFile = dir(fullfile(SubjAnatPath,'tess_cortex_pial_02.mat'));
+    
+        getSubcortexFile = load(strcat(subcortexFile.folder, slashSys, subcortexFile.name));
+        getCortexFile = load(strcat(cortexFile.folder, slashSys, cortexFile.name));
 
-    combinedFiles.Vertices = [getCortexFile.Vertices; getSubcortexFile.Vertices];
-    combinedFiles.Atlas = [getCortexFile.Atlas(4).Scouts, getSubcortexFile.Atlas(2).Scouts];
+        hm.Vertices = [getCortexFile.Vertices; getSubcortexFile.Vertices];
+        hm.Atlas = [getCortexFile.Atlas(4).Scouts, getSubcortexFile.Atlas(2).Scouts];
     
-    if ~size(combineFiles.Vertices,1) == size(getSubcortexFile.Vertices,1) + size(getCortexFile.Vertices,1)
-        error('Something went wrong during Vertex concatenation')
+        if ~size(hm.Vertices,1) == size(getSubcortexFile.Vertices,1) + size(getCortexFile.Vertices,1)
+            error('Something went wrong during Vertex concatenation')
+        end
+
+        save([folderAtlas anatList(Foldernum).name '_head_model.mat'],'hm')
+
+    else
+        load([folderAtlas anatList(Foldernum).name '_head_model.mat'],'hm')
     end
-
-    save([folderAtlas slashSys anatList(Foldernum).name '_head_model.mat'],'combinedFiles')
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     %Extract the base file name in order to append extensions afterwards
@@ -97,7 +95,11 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
     EEG = [];
     [ALLCOM ALLEEG EEG CURRENTSET] = eeglab;
     
-    EEG = pop_loadset('filename',fileNameComplete,'filepath',pathName);
+    if exist([folderAtlas, newFileName], 'file')
+       EEG = pop_loadset('filename',newFileName,'filepath',folderAtlas); 
+    else
+       EEG = pop_loadset('filename',fileNameComplete,'filepath',pathName);
+    end
     [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, 0 );
     
     if ~isfield(EEG.dipfit, 'model')

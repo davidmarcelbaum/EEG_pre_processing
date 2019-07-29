@@ -24,28 +24,54 @@ for iComp = [1:size(EEG.icaweights,1)] %Default is: iComp = g.components(:)'
         distance = sqrt(sum((hm.Vertices-repmat(atlascoord(1:3)', [size(hm.Vertices,1) 1])).^2,2));
         [~,selectedPt] = min( distance );
         
-        rowContainsVertex = [];
-        for vertRow = 1:size(hm.Atlas,2)
-           [~, colLocateVertex] = find(hm.Atlas(vertRow).Vertices == selectedPt);
-            if istrue(find(hm.Atlas(vertRow).Vertices == selectedPt))
-                rowContainsVertex = [rowContainsVertex; vertRow];
+        %AAL atlas
+        rowContainsVertexAAL = [];
+        for vertRow = 1:size(hm.AtlasAAL,2)
+           [~, colLocateVertex] = find(hm.AtlasAAL(vertRow).Vertices == selectedPt);
+            if istrue(find(hm.AtlasAAL(vertRow).Vertices == selectedPt))
+                rowContainsVertexAAL = [rowContainsVertexAAL; vertRow];
             end
         end
         
-        if ~isempty(rowContainsVertex)
+        if ~isempty(rowContainsVertexAAL)
             
             areaCatenation = [];
-            for Stringnum = 1:size(rowContainsVertex,1) %For some vertices, the atlas contains more than one area
+            for Stringnum = 1:size(rowContainsVertexAAL,1) %For some vertices, the atlas contains more than one area
                 %Usually, these areas are adjacent, but still would like to
                 %check!
                 %This code makes sure we do not loose any area information.
                 
-                areaCatenation = [areaCatenation, ', ', hm.Atlas(rowContainsVertex(Stringnum)).Label];
+                areaCatenation = [areaCatenation, hm.AtlasAAL(rowContainsVertexAAL(Stringnum)).Label, ', '];
             end
                 %EEG.dipfit.model(iComp).areaAAL = hm.Atlas(rowContainsVertex).Label;
                 EEG.dipfit.model(iComp).areaAAL = areaCatenation;
         else
             EEG.dipfit.model(iComp).areaAAL = 'no area';
+        end
+        
+        %SVREG atlas
+        rowContainsVertexSVREG = [];
+        for vertRow = 1:size(hm.AtlasSVREG,2)
+           [~, colLocateVertex] = find(hm.AtlasSVREG(vertRow).Vertices == selectedPt);
+            if istrue(find(hm.AtlasSVREG(vertRow).Vertices == selectedPt))
+                rowContainsVertexSVREG = [rowContainsVertexSVREG; vertRow];
+            end
+        end
+        
+        if ~isempty(rowContainsVertexSVREG)
+            
+            areaCatenation = [];
+            for Stringnum = 1:size(rowContainsVertexSVREG,1) %For some vertices, the atlas contains more than one area
+                %Usually, these areas are adjacent, but still would like to
+                %check!
+                %This code makes sure we do not loose any area information.
+                
+                areaCatenation = [areaCatenation, hm.AtlasSVREG(rowContainsVertexSVREG(Stringnum)).Label, ', '];
+            end
+                %EEG.dipfit.model(iComp).areaAAL = hm.Atlas(rowContainsVertex).Label;
+                EEG.dipfit.model(iComp).areaSVREG = areaCatenation;
+        else
+            EEG.dipfit.model(iComp).areaSVREG = 'no area';
         end
         
 end

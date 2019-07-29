@@ -87,6 +87,13 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
         EEG = eeg_checkset( EEG );
         
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %Modifying channel locations requieres ICA afterwards for later
+        %dipole computation
+        EEG = pop_runica(EEG, 'icatype', 'runica', 'extended',1,'interrupt','off','chanind',size(EEG.chanlocs,2));
+        EEG = eeg_checkset( EEG );
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
         %Compute dipoles on all components of ICA (EEG.icaact),
         %threshold of residual variance set to 100% in order to
         %compute ALL dipoles. Otherwise,

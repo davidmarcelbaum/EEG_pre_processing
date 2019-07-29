@@ -73,12 +73,16 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
             subcortexFile = dir(fullfile(SubjAnatPath,'*MPRAGE_GRAPPA2_t1.svreg.label.nii.mat'));
             cortexFile = dir(fullfile(SubjAnatPath,'tess_cortex_pial_02.mat'));
             
-            getSubcortexFile = load(strcat(subcortexFile.folder, slashSys, subcortexFile.name));
-            getCortexFile = load(strcat(cortexFile.folder, slashSys, cortexFile.name));
+            getSubcortexFile = load(strcat(subcortexFile.folder, slashSys, subcortexFile.name), 'Atlas', 'Vertices');
+            getCortexFile = load(strcat(cortexFile.folder, slashSys, cortexFile.name), 'Atlas', 'Vertices');
             
+            %hm.Vertices = [getCortexFile.Vertices; getSubcortexFile.Vertices];
             hm.Vertices = [getCortexFile.Vertices; getSubcortexFile.Vertices];
+
             %hm.Atlas = [getCortexFile.Atlas(4).Scouts, getSubcortexFile.Atlas(2).Scouts];
-            hm.Atlas = [getCortexFile.Atlas(4).Scouts];
+            %hm.Atlas = [getCortexFile.Atlas(2).Scouts]; %Test whether SVreg compatible results with DK atlas and if error is in AAL
+            hm.AtlasAAL = [getCortexFile.Atlas(4).Scouts];
+            hm.AtlasSVREG = [getCortexFile.Atlas(2).Scouts];
             
             if ~size(hm.Vertices,1) == size(getSubcortexFile.Vertices,1) + size(getCortexFile.Vertices,1)
                 error('Something went wrong during Vertex concatenation')

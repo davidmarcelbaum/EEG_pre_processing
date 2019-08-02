@@ -36,6 +36,7 @@ end
 
 if exist(folderDipoles, 'dir') ~= 7
     mkdir (folderDipoles);
+    foldersCreated(end+1) = {folderDipoles};
 end
 
 cyclesRun = 0;

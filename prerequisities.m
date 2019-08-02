@@ -117,6 +117,7 @@ folderDipoles = strcat(preProcessingFolder, 'Dipoles', slashSys);
 folderOrganizeTriggers = strcat(preProcessingFolder, 'OrganizeTriggers', slashSys);
 folderRejEmptyChan = strcat(preProcessingFolder, 'RejEmptyChannel', slashSys);
 folderAtlas = strcat(preProcessingFolder, 'Atlas', slashSys);
+foldersCreated = {};
 
 %Set up initial stepLevel value so that later, pre-processing of datasets
 %is only forward and not reverse

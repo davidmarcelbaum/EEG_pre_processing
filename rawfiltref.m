@@ -1,12 +1,15 @@
 % check for script part-specific subfolders in preProcessing
 if exist(folderRAW, 'dir') ~= 7 && stepLevel < 1
     mkdir (folderRAW);
+    foldersCreated(end+1) = {folderRAW};
 end
 if exist(folderFilt, 'dir') ~= 7 && stepLevel < 2
     mkdir (folderFilt);
+    foldersCreated(end+1) = {folderFilt};
 end
 if exist(folderReference, 'dir') ~= 7 && stepLevel < 3
     mkdir (folderReference);
+    foldersCreated(end+1) = {folderReference};
 end
 
 if stepLevel == 3 || stepLevel > 3

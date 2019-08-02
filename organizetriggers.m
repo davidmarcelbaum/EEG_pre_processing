@@ -4,6 +4,7 @@ cyclesRun = 0;
 
 if exist(folderOrganizeTriggers, 'dir') ~= 7
     mkdir (folderOrganizeTriggers);
+    foldersCreated(end+1) = {folderOrganizeTriggers};
 end
 
 %Loop going from the 1st element in the folder, to the total elements

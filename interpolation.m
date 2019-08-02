@@ -9,6 +9,7 @@ uiwait(msgbox({'You have chosen Channel Interpolation.';...
 % check for script part-specific subfolders in preProcessing %%%%%%
 if exist(folderChInterpol, 'dir') ~= 7 && stepLevel < 4
     mkdir (folderChInterpol);
+    foldersCreated(end+1) = {folderChInterpol};
 end
 
 % Files will be loaded from intitial dataset folder if .set

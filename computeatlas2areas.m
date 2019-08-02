@@ -44,6 +44,7 @@ end
 
 if exist(folderAtlas, 'dir') ~= 7
     mkdir (folderAtlas);
+    foldersCreated(end+1) = {folderAtlas};
 end
 
 cyclesRun = 0;

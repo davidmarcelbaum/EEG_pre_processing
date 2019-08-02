@@ -11,6 +11,7 @@ end
 % check for script part-specific subfolders in preProcessing %%%%%%
 if exist(folderEpochs, 'dir') ~= 7 && stepLevel < 7
     mkdir (folderEpochs);
+    foldersCreated(end+1) = {folderEpochs};
 end
 
 % Files will be loaded from intitial dataset folder if .set

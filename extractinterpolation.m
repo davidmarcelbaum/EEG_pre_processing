@@ -5,6 +5,7 @@ FilesList = dir([pathName,'*.set']);
 
 if exist(folderInterpolInfo, 'dir') ~= 7
     mkdir (folderInterpolInfo);
+    foldersCreated(end+1) = {folderInterpolInfo};
 end
 
 cyclesRun = 0;

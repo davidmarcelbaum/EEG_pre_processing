@@ -4,6 +4,7 @@ cyclesRun = 0;
 
 if exist(folderRejEmptyChan, 'dir') ~= 7
     mkdir (folderRejEmptyChan);
+    foldersCreated(end+1) = {folderRejEmptyChan};
 end
 
 %Loop going from the 1st element in the folder, to the total elements

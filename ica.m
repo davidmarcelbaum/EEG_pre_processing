@@ -1,6 +1,7 @@
 % check for script part-specific subfolders in preProcessing %%%%%%
 if exist(folderICAWeights, 'dir') ~= 7 && stepLevel < 5
     mkdir (folderICAWeights);
+    foldersCreated(end+1) = {folderICAWeights};
 end
 
 % Files will be loaded from intitial dataset folder if .set

@@ -8,9 +8,20 @@ if ~exist('startPointScript', 'var') || strcmp(startPointScript,'Yes')
     %actually used for atlas-to-dipole area assignation. The first is just
     %used for co-registration of electrodes on headmodel --> not needed
     %here, already done in Brainstorm.
-    if ~contains(FilesList(1).name, 'Dipoles.set')
-        [stdHeadModel, stdHeadModelPath] = uigetfile('*.mat','Look for standard head model',strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'standard_vol.mat'));
+    %if ~contains(FilesList(1).name, 'Dipoles.set')
+    %    [stdHeadModel, stdHeadModelPath] = uigetfile('*.mat','Look for standard head model',strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'standard_vol.mat'));
+    %end
+    
+    [HMexampleFile, HMexamplePath] = uigetfile(cd,'Point me to a headmodel file','*.mat');
+    HMpathParts = string(strsplit(HMexamplePath,slashSys));
+    HMcommonPath = listdlg('PromptString','What is the last common path of all subjects?','SelectionMode','single','ListString',HMpathParts);    
+    
+    reconstructHMPath = [];
+    for i = 1:HMcommonPath
+        reconstructHMPath = strcat(reconstructHMPath, HMpathParts(i), slashSys);
     end
+    
+    HMFilePath = 
     
     %Search for standard electrode for 10-20 system
     % Exchanged for "chanLocFileELC" [stdElectrodes, stdElectrodesPath] = uigetfile('*.elc','Look for channel locations file',strcat(eeglabFolder, 'plugins', slashSys, 'dipfit', slashSys, 'standard_BEM', slashSys, 'elec', slashSys, 'standard_1020.elc'));

@@ -38,7 +38,7 @@ for Filenum = 1:numel(FilesList)
             return
         end
         
-        
+        %% Andrea Sánchez Corzo
         %%%%%%%%run OrganizeTrigggers%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         % Separar por DIN1 y DIN2

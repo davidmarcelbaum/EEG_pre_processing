@@ -1,3 +1,11 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Best practice is to compute as many components as channels used for
+% recording. ICA is more prone to introducing errors when underfitted 
+% (too few componenets computed) than when overfitted.
+% Artefact rejection is subjective and follows only guidelines for common
+% noise artefacts such as eye blinks and vertical eye movements.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % check for script part-specific subfolders in preProcessing %%%%%%
 if exist(folderICAWeights, 'dir') ~= 7 && stepLevel < 5
     mkdir (folderICAWeights);

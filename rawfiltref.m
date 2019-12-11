@@ -224,6 +224,8 @@ if fileFormat == 1
             end
             %[ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
             EEG = pop_eegfiltnew(EEG, 'locutoff',0.1,'hicutoff',45, 'filtorder', 33000);
+            % Filtorder = filter length - 1; filter length: how many
+            % weighted data points X compose filtered data Y
             
             %Rename dataset
             EEG = pop_editset(EEG, 'setname', newFileName);

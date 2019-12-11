@@ -6,6 +6,7 @@
 % noise artefacts such as eye blinks and vertical eye movements.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
 % check for script part-specific subfolders in preProcessing %%%%%%
 if exist(folderICAWeights, 'dir') ~= 7 && stepLevel < 5
     mkdir (folderICAWeights);

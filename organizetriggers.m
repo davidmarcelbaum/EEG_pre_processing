@@ -12,8 +12,8 @@ for Filenum = 1:numel(FilesList)
     
     fileNameComplete = char(FilesList(Filenum).name);
     fileName = fileNameComplete(1:conservedCharacters);
-    fileNameOdor = strcat(fileName, '_OdorOn.set');
-    fileNamePlacebo = strcat(fileName, '_PlaceboOn.set');
+    fileNameOdor = strcat(fileName, '_Odor.set');
+    fileNamePlacebo = strcat(fileName, '_Placebo.set');
     
     %This avoids re-running ICA on datasets that ICA has already been run on.
     existsFile = exist ([folderOrganizeTriggers, fileNameOdor], 'file');

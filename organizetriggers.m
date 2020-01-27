@@ -33,12 +33,12 @@ for Filenum = 1:numel(FilesList)
         
         % Some epochs might contain two trigger events. In this
         % case, the script will not work
-        if ~istrue (size(EEG.event,2) == EEG.trials)
+        if size(EEG.event,2) ~= EEG.trials
             error(strcat('There are more trigger events than trials (epochs) in', fileNameComplete));
             return
         end
         
-        %% Andrea Sánchez Corzo
+        %% Andrea Sï¿½nchez Corzo
         %%%%%%%%run OrganizeTrigggers%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         % Separar por DIN1 y DIN2

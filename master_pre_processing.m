@@ -17,16 +17,18 @@
 
 % This script can handle .mff and [.............] datasets
 
+
+
 %% Important user-defined variables
 %  ================================
 
-pathData            = 'E:\Sleep Project\David''s Data\Data';
+pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori/';
 % String of file path to the mother stem folder containing the datasets
 
 dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
-pathSleepScore      = 'D:\germanStudyData\Hypnograms';
+pathSleepScore      = '/home/sleep/Documents/DAVID/Datasets/Hypnograms/';
 % String of file path to the mother stem folder containing the files of
 % sleep scoring of the subjects. LEAVE EMPTY ("''") IF DOES NOT APPLY
 
@@ -68,53 +70,49 @@ separategroups      = 0;    % Separate trial series into groups. Parameters
 %                         +-------------------+
 
 
+
 %% Setting up user land
 %  ====================
 % -------------------------------------------------------------------------
 % Here we set up the list of recording files that will be processed in the 
 % script
 
-
-ls_files = dir(pathData);
+ls_files        = dir(pathData);
 
 % "dir" is also listing the command to browse current folder (".") and step
 % out of folder (".."), so we reject these here
-rej_dot = find(strcmp({ls_files.name}, '.'));
-rej_doubledot = find(strcmp({ls_files.name}, '..'));
-rej = [rej_dot rej_doubledot];
+rej_dot         = find(strcmp({ls_files.name}, '.'));
+rej_doubledot   = find(strcmp({ls_files.name}, '..'));
+rej             = [rej_dot rej_doubledot];
 
-ls_files(rej) = [];
+ls_files(rej)   = [];
 
 % Reject files that do not correspond to the user-defined format
-rej_nonformat = find(~contains({ls_files.name}, dataType));
+rej_nonformat   = find(~contains({ls_files.name}, dataType));
 
 ls_files(rej_nonformat) = [];
 
-num_files = size(ls_files, 1);
-% -------------------------------------------------------------------------
+num_files       = size(ls_files, 1);
 
 
 % -------------------------------------------------------------------------
 % Here we set up the list of sleep scoring files that will be processed in
 % the script
 
-
-ls_score = dir(pathSleepScore);
+ls_score        = dir(pathSleepScore);
 
 % "dir" is also listing the command to browse current folder (".") and step
 % out of folder (".."), so we reject these here
-rej_dot = find(strcmp({ls_score.name}, '.'));
-rej_doubledot = find(strcmp({ls_score.name}, '..'));
-rej = [rej_dot rej_doubledot];
+rej_dot         = find(strcmp({ls_score.name}, '.'));
+rej_doubledot   = find(strcmp({ls_score.name}, '..'));
+rej             = [rej_dot rej_doubledot];
 
-ls_score(rej) = [];
-% -------------------------------------------------------------------------
+ls_score(rej)   = [];
 
 
 % -------------------------------------------------------------------------
 % Here, we locate EEGLAB toolbox since the path might differ between
 % systems. This will then add the functions the script needs to MATLAB path
-
 
 locateEeglab = which('eeglab.m');
 
@@ -130,23 +128,21 @@ else
     error('EEGLAB not found')
     
 end
-% -------------------------------------------------------------------------
 
 
 % -------------------------------------------------------------------------
 % It is probably good to initialize EEGLAB variables once, although that
 % might not be necessary
 
-
 eeglab;
 close all;
-% -------------------------------------------------------------------------
 
 
 % -------------------------------------------------------------------------
 % Correcting potential error sources and clearing unnecessary variables
+
 if strcmp(pathData(end), filesep)
-    pathData(end) = [];
+    pathData(end)       = [];
 end
 
 if strcmp(pathSleepScore(end), filesep)
@@ -155,7 +151,19 @@ end
 
 clearvars rej rej_dot rej_doubledot rej_nonformat STUDY PLUGINLIST ...
     CURRENTSTUDY CURRENTSET ALLEEG ALLCOM eeglabUpdater LASTCOM globalvars
+
+
 % -------------------------------------------------------------------------
+% Create file structures for saving the datasets after processing
+
+% All data outputs will be saved in this folder
+savePath = strcat(pathData, filesep, 'preProcessing');
+
+if ~exist(savePath, 'dir')
+    
+    mkdir(savePath);
+        
+end
 % End of user land setup
 % ======================
 
@@ -169,6 +177,7 @@ for s_file = 1 : num_files
     
     
     fprintf('<!> Running %s ...\n', ls_files(s_file).name) % Report stage
+    
     
     
     %% 0. Define subject name
@@ -185,7 +194,11 @@ for s_file = 1 : num_files
     
     str_session         = str_subj(3); % Number of session
     str_subjnum     	= str_subj(1:2); % Number of subject
-    % ---------------------------------------------------------------------
+    
+    str_savefile        = extractBefore(ls_files(s_file).name, dataType);
+    str_savefile        = strcat(str_savefile, '_preProcessing.set');
+                          % The appendix "preProcessing" will be replaced
+                          % according to the last step performed later.
     % End of subject definition
     % =========================
     
@@ -217,11 +230,37 @@ for s_file = 1 : num_files
     % =============
     
     
+    
+    %% Execute pre-processing steps
+    %  ============================
     if extractsws == 1
         
         run p_extract_sws.m
         
+        % -----------------------------------------------------------------
+        % Adapt savefile name
+        
+        str_savefile = strrep(str_savefile, 'preProcessing', 'SWS');
+        
+        
     end
+    
+    
+    
+    if rejectchans == 1
+        
+        run p_chan_reject.m
+        
+        % -----------------------------------------------------------------
+        % Adapt savefile name
+        
+        str_savefile = strrep(str_savefile, 'preProcessing', 'ChanRej');
+        
+        
+    end
+    
+    
+    % At the end here pop_save from EEGLAB
        
     
 end

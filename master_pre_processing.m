@@ -180,8 +180,8 @@ for s_file = 1 : num_files
     
     
     
-    %% 0. Define subject name
-    %  ======================
+    %% 0. Define subject
+    %  =================
     % ---------------------------------------------------------------------
     % Here, we extract the string of the subject number and the recording
     % session

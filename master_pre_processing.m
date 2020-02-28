@@ -22,13 +22,13 @@
 %% Important user-defined variables
 %  ================================
 
-pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori/';
+pathData            = 'D:\germanStudyData\Ori';
 % String of file path to the mother stem folder containing the datasets
 
 dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
-pathSleepScore      = '/home/sleep/Documents/DAVID/Datasets/Hypnograms/';
+pathSleepScore      = 'D:\germanStudyData\Hypnograms';
 % String of file path to the mother stem folder containing the files of
 % sleep scoring of the subjects. LEAVE EMPTY ("''") IF DOES NOT APPLY
 
@@ -261,6 +261,7 @@ for s_file = 1 : num_files
     
     
     % At the end here pop_save from EEGLAB
-       
+    EEG = pop_saveset( EEG, 'filename', str_savefile, ...
+        'filepath', savePath);   
     
 end

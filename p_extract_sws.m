@@ -105,3 +105,10 @@ EEG.sleepscores         = v_sleepStages;
 EEG.pnts                = size(EEG.data, 2);
 EEG.times               = 1:size(EEG.data, 2); % is continuous
 EEG.timesSWS            = v_times; % are the actual time latencies extracted
+
+
+% -------------------------------------------------------------------------
+% Cleanup in order to allow loading of heavy variables afterwards (Subject
+% 091 gives Java Memory Error)
+
+clear v_data v_times

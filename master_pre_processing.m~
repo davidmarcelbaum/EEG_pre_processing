@@ -14,7 +14,7 @@
 % 13.	Rej epochs of noise and of artefactual components (ICA weights)
 % 14.	Separate trigger groups into distinct datasets
 
-% This script can handle .mff, .set and [.............] datasets
+% This script can handle .mff and [.............] datasets
 
 
 
@@ -22,11 +22,11 @@
 %  ================================
 
 % Modifiable declarations inside several files are also possible and tagged
-%   |===USER INPUT===|
+% |===USER INPUT===|
 %
-%   ...
+% ...
 %
-%          |=END USER INPUT=|
+% |=END USER INPUT=|
 
 pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori/';
 % String of file path to the mother stem folder containing the datasets
@@ -165,9 +165,8 @@ end
 
 
 % -------------------------------------------------------------------------
-% It is probably good to initialize EEGLAB variables once and also allows
-% to reinitialize the EEG structure which holds heavy variables and is
-% likely to make MATLAB throw out of memory errors.
+% It is probably good to initialize EEGLAB variables once, although that
+% might not be necessary
 
 eeglab;
 close all;
@@ -244,14 +243,11 @@ for s_file = 1 : num_files
     
     if strcmp(dataType,'.set')
         
-        
         [EEG, lst_changes{end+1,1}] = ...
             pop_loadset('filename', ls_files(s_file).name, ...
             'filepath', pathData);
         
-        
     elseif strcmp(dataType,'.mff')
-        
         
         % mff folders contain various files
         [EEG, lst_changes{end+1,1}] = ...
@@ -260,14 +256,11 @@ for s_file = 1 : num_files
             'mffkey_gidx' 'mffkeys' 'mffkeysbackup' 'relativebegintime' ...
             'sourcedevice'});
         
-        
     elseif strcmp(dataType,'.cdt')
-        
         
         [EEG, lst_changes{end+1,1}] = ...
             loadcurry([pathData, filesep, ls_files(s_file).name], ...
             'CurryLocations', 'False');
-        
         
     end
     % End of import

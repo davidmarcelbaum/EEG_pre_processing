@@ -7,6 +7,9 @@ for i = 1 : numel(chans2Rej)
 end
 
 
+Chans2keep = 
+
+
 
 % Backup time series of channels that will be rejected
 EEG.RejectedData    = EEG.data(idx_chan2reject, :);
@@ -15,8 +18,13 @@ EEG.RejectedChans   = {EEG.chanlocs(idx_chan2reject).labels};
 
 
 % Remove channels competely from dataset.
-% +----------------------------------------------+
-% |This will also remove out of bounds events    |
-% |and also adapted EEG.chanlocs to kept channels|
-% +----------------------------------------------+
-[EEG, lst_changes{end+1,1}] = pop_select( EEG, 'nochannel', idx_chan2reject);
+% +-------------------------------------------+
+% |This will also remove out of bounds events!|
+% +-------------------------------------------+
+EEG = pop_select( EEG, 'nochannel', idx_chan2reject);
+
+
+
+% This step is crucial in order to avoid false positions in channel
+% idnexing in the future
+EEG2.chanlocs   = {EEG.chanlocs(idx_chan2reject).labels};

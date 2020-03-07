@@ -45,39 +45,18 @@ sleepStages         = [2, 3, 4]; % [scalars]
 % Define the sleep stages of interest to use if scleep scoring files will
 % be sideloaded
 
-chans2Rej           = {...
-    'E57', ...
-    'E100', ...
-    'E43', ...
-    'E120', ...
-    'E25', ...
-    'E126', ...
-    'E127', ...
-    'E21', ...
-    'E8', ...
-    'E14', ...
-    'E129', ...
-    'E49', ...
-    'E48', ...
-    'E17', ...
-    'E128', ...
-    'E32', ...
-    'E1', ...
-    'E125', ...
-    'E119', ...
-    'E113', ...
-    };
-% Cell array of strings that specifies the channels to reject from datasets
-% These will be discarded from dataset entirely from very beginning and 
-% will not be accessible in subsequent steps.
+chan_Mastoids       = {'E57', 'E100'};
+chan_EOG            = {'E8', 'E14', 'E21', 'E25', 'E126', 'E127'};
+chan_EMG            = {'E43', 'E120'};
+chan_VREF           = {'E129'};
+chan_Face           = {'E49', 'E48', 'E17', 'E128', 'E32', 'E1', ...
+                        'E125', 'E119', 'E113'};
+% Cell arrays of strings that specifies the channels to reject from
+% datasets.
 
 filt_highpass       = 0.1;
 filt_lowpass        = 45;
 % Frequencies to use as boundaries for filtering
-
-lst_changes         = {};
-% This is useful in order to store the history of EEGLAB functions called
-% called duringfile processing
 
 % Choose what steps will be performed
 % MANUAL STEPS OCCUR AFTER:
@@ -99,7 +78,7 @@ interpolnoisychans  = 0;    % Interpolation of noisy channels based on
 rereference         = 0;    % Re-reference channels to choosen reference.
                             % Reference is choosen when function is called
                             % in script
-runica              = 0;    % Run ICA on datasets. This step takes a while
+performica          = 0;    % Run ICA on datasets. This step takes a while
 epoching            = 0;    % Slice datasets according to trigger edges.
                             % Parameters set when function is called in
                             % script
@@ -207,6 +186,14 @@ if ~exist(savePath, 'dir')
     mkdir(savePath);
         
 end
+
+
+% -------------------------------------------------------------------------
+% This is useful in order to store the history of EEGLAB functions called
+% called duringfile processing
+
+lst_changes         = {};
+
 % End of user land setup
 % ======================
 
@@ -293,10 +280,9 @@ for s_file = 1 : num_files
     
     
     
-    %% Execute pre-processing steps
-    %  ============================
+    %% 2. Extract Slow Wave Sleep
+    %  ==========================
     
-    % ---------------------------------------------------------------------
     if extractsws == 1
         
         run p_extract_sws.m
@@ -305,7 +291,9 @@ for s_file = 1 : num_files
     
     
     
-    % ---------------------------------------------------------------------
+    %% 3. Reject non-wanted channels
+    %  =============================
+    
     if rejectchans == 1
         
         run p_chan_reject.m
@@ -314,7 +302,9 @@ for s_file = 1 : num_files
     
     
     
-    % ---------------------------------------------------------------------
+    %% 4. Filtering
+    %  ============
+    
     if filter == 1
         
         [EEG, lst_changes{end+1}] = pop_eegfiltnew( EEG, ...
@@ -330,11 +320,13 @@ for s_file = 1 : num_files
     
     
     
-    % ---------------------------------------------------------------------
+    %% 5. Artefactual spike rejection
+    %  ==============================
+    
     if medianfilter == 1
         
-        % I am not sure about the use of the whole EEG.data matrix in same
-        % time, so it goes through each channel sperately...
+        % Running medfilt on all channels at once will generate a vector;
+        % Therefore, run it per channel
         for i = 1 : size(EEG.data, 1)
             EEG.data(i, :) = medfilt1(EEG.data(i, :));
         end
@@ -345,10 +337,51 @@ for s_file = 1 : num_files
     
     
     
-    % ---------------------------------------------------------------------
-    if rereference == 1
+    %% 6. Artefactual spike rejection
+    %  ==============================
     
-        [EEG, lst_changes{end+1,1}] = pop_reref( EEG, []);
+    if interpolnoisychans == 1
+        
+        [EEG, lst_changes{end+1,1}] = pop_interp(EEG, ...
+            [string(interpolatedChan)], 'spherical');
+        
+        [EEG, lst_changes{end+1,1}] = eeg_checkset( EEG );
+        
+    end
+    
+%     eegplot( EEG.data(1,:), 'srate', EEG.srate, 'title', 'Scroll channel activities -- eegplot()', ...
+%         'limits', [EEG.xmin EEG.xmax]*1000);
+    
+    
+    
+    %% 7. Re-referencing of channel data
+    %  =================================
+    
+    if rereference == 1
+        
+        % Get channels that have been labeled for exclusion
+        chan_excl = find(strcmp({EEG.chanlocs.description}, 'To_exlude'));
+    
+        [EEG, lst_changes{end+1,1}] = pop_reref( EEG, [], ...
+            'exclude', chan_excl);
+        
+        [EEG, lst_changes{end+1,1}] = eeg_checkset( EEG );
+        
+    end
+    
+    
+    
+    %% 8. Independent Component Analysis
+    %  =================================
+    
+    if performica == 1
+    
+        [EEG, lst_changes{end+1,1}] = pop_runica(EEG, ...
+            'icatype', 'runica', ...
+            'extended', 1, ...
+            'interrupt', 'off', ...
+            'chanind', {'EEG'});
+        % This uses the 'EEG' tag as input from EEG.chanlocs.type
         
         [EEG, lst_changes{end+1,1}] = eeg_checkset( EEG );
         
@@ -368,7 +401,7 @@ for s_file = 1 : num_files
     
     % Define last step
     allSteps = [extractsws, rejectchans, filter, medianfilter, ...
-        interpolnoisychans, rereference, runica, epoching, separategroups];
+        interpolnoisychans, rereference, performica, epoching, separategroups];
     
     stepsPerformed = find(allSteps == 1);
     lastStep = stepsPerformed(end);

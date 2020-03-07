@@ -42,8 +42,8 @@ end
 % We define structure of sleep scoring file and then import values
 
 % |===USER INPUT===|
-dataTypeScore       = '%f %f'; % Type of data content of file
-column_of_interest  = 1; % Which column contains the scoring values
+dataTypeScore       = '%f %f';  % Type of data content of file
+column_of_interest  = 1;        % Which column contains the scoring values
 str_delimiter       = ' ';
 % |=END USER INPUT=|
 

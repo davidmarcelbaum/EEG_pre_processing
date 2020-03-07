@@ -7,10 +7,12 @@ for i = 1 : numel(chans2Rej)
 end
 
 
+idx_chan2reject = sort(idx_chan2reject);
+
 
 % Backup time series of channels that will be rejected
-EEG.RejectedData    = EEG.data(idx_chan2reject, :);
-EEG.RejectedChans   = {EEG.chanlocs(idx_chan2reject).labels};
+EEG.rejectedData    = EEG.data(idx_chan2reject, :);
+EEG.rejectedChans   = {EEG.chanlocs(idx_chan2reject).labels};
 
 
 
@@ -19,4 +21,5 @@ EEG.RejectedChans   = {EEG.chanlocs(idx_chan2reject).labels};
 % |This will also remove out of bounds events    |
 % |and also adapted EEG.chanlocs to kept channels|
 % +----------------------------------------------+
-[EEG, lst_changes{end+1,1}] = pop_select( EEG, 'nochannel', idx_chan2reject);
+[EEG, lst_changes{end+1,1}] = ...
+    pop_select( EEG, 'nochannel', idx_chan2reject);

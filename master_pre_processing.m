@@ -10,9 +10,12 @@
 % 9.	Rej noisy periods
 % 10.	ICA excluding chans of zeros (step 6)
 % 11.	Component rej
-% 12.	Epoch into trials
-% 13.	Rej epochs of noise and of artefactual components (ICA weights)
-% 14.	Separate trigger groups into distinct datasets
+% 12.   Interpolate channels of zeros (from step 7) with artefact-cleaned
+%       channels
+% 13.	Epoch into trials
+% 14.	Rej epochs of noise and of artefactual components (ICA weights)
+% 15.	Separate trigger groups into distinct datasets
+% 16.   Downsample to 100Hz
 
 % This script can handle .mff, .set and [.............] datasets
 
@@ -28,7 +31,7 @@
 %
 %   |=END USER INPUT=|
 
-pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori_SAMPLE/';
+pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori';
 % String of file path to the mother stem folder containing the datasets
 
 dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
@@ -73,7 +76,7 @@ filter              = 1;    % Filtfilt processing. Parameters set when
                             % when function called in script
 medianfilter        = 1;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
-interpolnoisychans  = 0;    % Interpolation of noisy channels based on
+noisychans2zeros    = 0;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
 rereference         = 0;    % Re-reference channels to choosen reference.
                             % Reference is choosen when function is called
@@ -179,7 +182,11 @@ clearvars rej rej_dot rej_doubledot rej_nonformat STUDY PLUGINLIST ...
 % Create file structures for saving the datasets after processing
 
 % All data outputs will be saved in this folder
-savePath = strcat(pathData, filesep, 'preProcessing');
+if contains(pathData, 'preProcessing')
+    savePath = pathData;
+else contains(pathData, 'preProcessing')
+    savePath = strcat(pathData, filesep, 'preProcessing');
+end
 
 if ~exist(savePath, 'dir')
     
@@ -238,6 +245,67 @@ for s_file = 1 : num_files
         str_savefile    = extractBefore(ls_files(s_file).name, dataType);
                             % The str_savefile will be adapted according to
                             % the last step performed later.
+    end
+    
+    
+    % ---------------------------------------------------------------------
+    % Here, an appendix will be added to the name of the dataset according
+    % to the last step performed
+    
+    % Define last step
+    allSteps = [extractsws, rejectchans, filter, medianfilter, ...
+        noisychans2zeros, rereference, performica, epoching, separategroups];
+    
+    stepsPerformed = find(allSteps == 1);
+    lastStep = stepsPerformed(end);
+    
+    switch lastStep
+        
+        case 1 % Extract SWS
+            
+            str_savefile = strcat(str_savefile, '_SWS.set');
+            
+        case 2 % Reject channels
+            
+            str_savefile = strcat(str_savefile, '_ChanReject.set');
+            
+        case 3 % Filter
+            
+            str_savefile = strcat(str_savefile, '_Filt.set');
+            
+        case 4 % Median Filter for spike rejection
+            
+            str_savefile = strcat(str_savefile, '_MedianFilt.set');
+            
+        case 5 % Noisy channels to be set to zeros
+            
+            str_savefile = strcat(str_savefile, '_ChanInterpol.set');
+            
+        case 6 % Re-reference channel data
+            
+            str_savefile = strcat(str_savefile, '_Re-reference.set');
+            
+        case 7 % ICA running
+            
+            str_savefile = strcat(str_savefile, '_ICAweights.set');
+            
+        case 8 % Epoching of datasets based on events
+            
+            str_savefile = strcat(str_savefile, '_Epoched.set');
+            
+        case 9 % Separation of event types
+            
+            % Here, the script from Andrea applies
+            
+    end
+    
+    
+    % ---------------------------------------------------------------------
+    % Break out of loop if the subject dataset has already been processed
+    
+    if exist(strcat(savePath, filesep, str_savefile), 'file')
+        fprintf('<!> File skipped because already exists\n')
+        continue
     end
     % End of subject definition
     % =========================
@@ -306,6 +374,32 @@ for s_file = 1 : num_files
     %  ============
     
     if filter == 1
+% THE ERROR HERE SEEMS TO HAVE BEEN CAUSED BY CHANNEL VREF OF ZEROS!   
+%         try % This here should not be done twice, but it does not always
+%             % seem to work the first time. NEEDS CHECKING AND CORRECTION
+%             [EEG, lst_changes{end+1}] = pop_eegfiltnew( EEG, ...
+%                 'locutoff', filt_highpass, 'hicutoff', filt_lowpass, ...
+%                 'filtorder', 33000);
+%             % Filtorder = filter length - 1; filter length: how many
+%             % weighted data points X compose filtered data Y
+%             
+%         catch ME
+%             
+%             if strcmp(ME.message, ...
+%                     'Attempt to grow array along ambiguous dimension.')
+%                 
+%                 fprintf('HELLO THERE!!!!!!!')
+%                 wait(1)
+%                 
+%                 [EEG, lst_changes{end+1}] = pop_eegfiltnew( EEG, ...
+%                     'locutoff', filt_highpass, 'hicutoff', filt_lowpass, ...
+%                     'filtorder', 33000);
+%                 % Filtorder = filter length - 1; filter length: how many
+%                 % weighted data points X compose filtered data Y
+%                 % Try again, it works the second time...
+%                 
+%             end
+%         end
         
         [EEG, lst_changes{end+1}] = pop_eegfiltnew( EEG, ...
             'locutoff', filt_highpass, 'hicutoff', filt_lowpass, ...
@@ -340,7 +434,7 @@ for s_file = 1 : num_files
     %% 6. Artefactual spike rejection
     %  ==============================
     
-    if interpolnoisychans == 1
+    if noisychans2zeros == 1
         
         [EEG, lst_changes{end+1,1}] = pop_interp(EEG, ...
             [string(interpolatedChan)], 'spherical');
@@ -395,60 +489,13 @@ for s_file = 1 : num_files
     % Add the history of all called functions to EEG structure
     EEG.lst_changes = lst_changes;
     
-    % ---------------------------------------------------------------------
-    % Here, an appendix will be added to the name of the dataset according
-    % to the last step performed
-    
-    % Define last step
-    allSteps = [extractsws, rejectchans, filter, medianfilter, ...
-        interpolnoisychans, rereference, performica, epoching, separategroups];
-    
-    stepsPerformed = find(allSteps == 1);
-    lastStep = stepsPerformed(end);
-    
-    switch lastStep
-        
-        case 1 % Extract SWS
-            
-            str_savefile = strcat(str_savefile, '_SWS.set');
-            
-        case 2 % Reject channels
-            
-            str_savefile = strcat(str_savefile, '_ChanReject.set');
-            
-        case 3 % Filter
-            
-            str_savefile = strcat(str_savefile, '_Filt.set');
-            
-        case 4 % Median Filter for spike rejection
-            
-            str_savefile = strcat(str_savefile, '_MedianFilt.set');
-            
-        case 5 % Interpolate noisy channels
-            
-            str_savefile = strcat(str_savefile, '_ChanInterpol.set');
-            
-        case 6 % Re-reference channel data
-            
-            str_savefile = strcat(str_savefile, '_Re-reference.set');
-            
-        case 7 % ICA running
-            
-            str_savefile = strcat(str_savefile, '_ICAweights.set');
-            
-        case 8 % Epoching of datasets based on events
-            
-            str_savefile = strcat(str_savefile, '_Epoched.set');
-            
-        case 9 % Separation of event types
-            
-            % Here, the script from Andrea applies
-            
-    end
-    
     
     EEG = pop_saveset( EEG, 'filename', str_savefile, ...
         'filepath', savePath);
+    
+    
+    % Clean worksapce from main structure
+    clear EEG
     
    
     

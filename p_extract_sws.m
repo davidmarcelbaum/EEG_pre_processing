@@ -1,20 +1,53 @@
-%% Some pre-defined variables
-%  ==========================
+% |===USER INPUT===|
+pathSleepScore      = '/home/sleep/Documents/DAVID/Datasets/Hypnograms/';
+% String of file path to the mother stem folder containing the files of
+% sleep scoring of the subjects. LEAVE EMPTY ("''") IF DOES NOT APPLY
+
+chunk_scoring       = 30; % scalar (s)
+% What was the scoring interval (in seconds)
+
+sleepStages         = [2, 3, 4]; % [scalars]
+% Define the sleep stages of interest to use if scleep scoring files will
+% be sideloaded
+
+EEG.sleepscorelabels = { ...
+    'Awake', 0;     ...
+    'REM', 5;       ...
+    'NREM1', 1;     ...
+    'NREM2', 2;     ...
+    'NREM3', 3;     ...
+    'NREM4', 4;     ...
+    'MT', 8         };
+% |=END USER INPUT=|
+
 
 % -------------------------------------------------------------------------
 % This will be used to establish the time points to extract from EEG.data
 pnts_scoring            = chunk_scoring * EEG.srate;
 
-EEG.sleepscorelabels    = { 'Awake', 0;     ...
-                            'REM', 5;       ...
-                            'NREM1', 1;     ...
-                            'NREM2', 2;     ...
-                            'NREM3', 3;     ...
-                            'NREM4', 4;     ...
-                            'MT', 8         };
+
+% -------------------------------------------------------------------------
+% Here we set up the list of sleep scoring files that will be processed in
+% the script
+
+ls_score        = dir(pathSleepScore);
+
+% "dir" is also listing the command to browse current folder (".") and step
+% out of folder (".."), so we reject these here
+rej_dot         = find(strcmp({ls_score.name}, '.'));
+rej_doubledot   = find(strcmp({ls_score.name}, '..'));
+rej             = [rej_dot rej_doubledot];
+
+ls_score(rej)   = [];
+
+
+% Avoid potential errors
+if strcmp(pathSleepScore(end), filesep)
+    pathSleepScore(end) = [];
+end
                   
 
-                        
+
 %% 2. Extract SWS (2, 3 and 4)
 %  ===========================
 % -------------------------------------------------------------------------

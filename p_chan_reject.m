@@ -1,10 +1,19 @@
 % |===USER INPUT===|
+chan_Mastoids       = {'E57', 'E100'};
+chan_EOG            = {'E8', 'E14', 'E21', 'E25', 'E126', 'E127'};
+chan_EMG            = {'E43', 'E120'};
+chan_VREF           = {'E129'};
+chan_Face           = {'E49', 'E48', 'E17', 'E128', 'E32', 'E1', ...
+                        'E125', 'E119', 'E113'};
+% Cell arrays of strings that specifies the channels to reject from
+% datasets.
+
 destructive_mode    = 1;    % [0, 1] for false and true
-% Choose here whether to reject channels in
-% destructive mode (complete rejection from
-% dataset) or reversible rejection (only
-% labeling channels as to be ignored in
-% pre-processing steps such as ICA).
+                            % Choose here whether to reject channels in
+                            % destructive mode (complete rejection from
+                            % dataset) or reversible rejection (only
+                            % labeling channels as to be ignored in
+                            % pre-processing steps such as ICA).
 % |=END USER INPUT=|
 
 

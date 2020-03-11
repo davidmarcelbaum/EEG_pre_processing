@@ -31,35 +31,11 @@
 %
 %   |=END USER INPUT=|
 
-pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori';
+pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori/preProcessing/MedianFiltered/';
 % String of file path to the mother stem folder containing the datasets
 
-dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
+dataType            = '.set'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
-
-pathSleepScore      = '/home/sleep/Documents/DAVID/Datasets/Hypnograms/';
-% String of file path to the mother stem folder containing the files of
-% sleep scoring of the subjects. LEAVE EMPTY ("''") IF DOES NOT APPLY
-
-chunk_scoring       = 30; % scalar (s)
-% What was the scoring interval (in seconds)
-
-sleepStages         = [2, 3, 4]; % [scalars]
-% Define the sleep stages of interest to use if scleep scoring files will
-% be sideloaded
-
-chan_Mastoids       = {'E57', 'E100'};
-chan_EOG            = {'E8', 'E14', 'E21', 'E25', 'E126', 'E127'};
-chan_EMG            = {'E43', 'E120'};
-chan_VREF           = {'E129'};
-chan_Face           = {'E49', 'E48', 'E17', 'E128', 'E32', 'E1', ...
-                        'E125', 'E119', 'E113'};
-% Cell arrays of strings that specifies the channels to reject from
-% datasets.
-
-filt_highpass       = 0.1;
-filt_lowpass        = 45;
-% Frequencies to use as boundaries for filtering
 
 % Choose what steps will be performed
 % MANUAL STEPS OCCUR AFTER:
@@ -69,16 +45,16 @@ filt_lowpass        = 45;
 % - epoching        :   Trial-based component rejection
 % AND SHOULD THEREFORE BE THE LAST 1 SET INSIDE RUN
 
-% import data is done in any case
-extractsws          = 1;    % Extract SWS periods of datasets
-rejectchans         = 1;    % Reject non-wanted channels
-filter              = 1;    % Filtfilt processing. Parameters set when
+% Define all steps to be performed: 0 for false and 1 for true
+extractsws          = 0;    % Extract SWS periods of datasets
+rejectchans         = 0;    % Reject non-wanted channels
+filter              = 0;    % Filtfilt processing. Parameters set when
                             % when function called in script
-medianfilter        = 1;    % Median filtering of noise artefacts of 
+medianfilter        = 0;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
-noisychans2zeros    = 0;    % Interpolation of noisy channels based on
+noisychans2zeros    = 1;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
-rereference         = 0;    % Re-reference channels to choosen reference.
+rereference         = 1;    % Re-reference channels to choosen reference.
                             % Reference is choosen when function is called
                             % in script
 performica          = 0;    % Run ICA on datasets. This step takes a while
@@ -120,21 +96,6 @@ num_files       = size(ls_files, 1);
 
 
 % -------------------------------------------------------------------------
-% Here we set up the list of sleep scoring files that will be processed in
-% the script
-
-ls_score        = dir(pathSleepScore);
-
-% "dir" is also listing the command to browse current folder (".") and step
-% out of folder (".."), so we reject these here
-rej_dot         = find(strcmp({ls_score.name}, '.'));
-rej_doubledot   = find(strcmp({ls_score.name}, '..'));
-rej             = [rej_dot rej_doubledot];
-
-ls_score(rej)   = [];
-
-
-% -------------------------------------------------------------------------
 % Here, we locate EEGLAB toolbox since the path might differ between
 % systems. This will then add the functions the script needs to MATLAB path
 
@@ -170,31 +131,78 @@ if strcmp(pathData(end), filesep)
     pathData(end)       = [];
 end
 
-if strcmp(pathSleepScore(end), filesep)
-    pathSleepScore(end) = [];
-end
 
 clearvars rej rej_dot rej_doubledot rej_nonformat STUDY PLUGINLIST ...
     CURRENTSTUDY CURRENTSET ALLEEG ALLCOM eeglabUpdater LASTCOM globalvars
 
 
 % -------------------------------------------------------------------------
-% Create file structures for saving the datasets after processing
+% Create folder structures for saving the datasets after processing
 
-% All data outputs will be saved in this folder
 if contains(pathData, 'preProcessing')
-    savePath = pathData;
-else contains(pathData, 'preProcessing')
+    savePath = erase(pathData, extractAfter(pathData, 'preProcessing'));
+else
     savePath = strcat(pathData, filesep, 'preProcessing');
 end
 
-if ~exist(savePath, 'dir')
+
+% Adapt savePath to last step: This will allow to collect databases easier 
+% just by running "dir" on pathData.
+
+allSteps = [extractsws, rejectchans, filter, medianfilter, ...
+    noisychans2zeros, rereference, performica, epoching, separategroups];
+
+stepsPerformed = find(allSteps == 1);
+lastStep = stepsPerformed(end);
+
+switch lastStep
     
-    mkdir(savePath);
+    case 1 % Extract SWS
+        
+        savePath = strcat(savePath, filesep, 'extrSWS');
+        
+    case 2 % Reject channels
+        
+        savePath = strcat(savePath, filesep, 'DataChans');
+        
+    case 3 % Filter
+        
+        savePath = strcat(savePath, filesep, 'Filtered');
+        
+    case 4 % Median Filter for spike rejection
+        
+        savePath = strcat(savePath, filesep, 'MedianFiltered');
+        
+    case 5 % Noisy channels to be set to zeros
+        
+        savePath = strcat(savePath, filesep, 'ChanInterpol');
+        
+    case 6 % Re-reference channel data
+        
+        savePath = strcat(savePath, filesep, 'offlineRef');
+        
+    case 7 % ICA running
+        
+        savePath = strcat(savePath, filesep, 'ICAweights');
+        
+    case 8 % Epoching of datasets based on events
+        
+        savePath = strcat(savePath, filesep, 'Epoched');
+        
+    case 9 % Separation of event types
+        
+        % Here, the script from Andrea applies
         
 end
 
 
+if ~exist(savePath, 'dir')
+    
+    mkdir(savePath);
+    
+end
+
+    
 % -------------------------------------------------------------------------
 % This is useful in order to store the history of EEGLAB functions called
 % called duringfile processing
@@ -206,15 +214,15 @@ lst_changes         = {};
 
 
 
-%% The core of the script. Every script seems rough on the outside, but has
-%  a soft core, so treat it nicely.
-%  ========================================================================
+%% The core of the script
+%  ======================
+% Every script seems rough on the outside, but has a soft core, so treat it nicely.
 
 for s_file = 1 : num_files
     
     
-    fprintf('\n<!> Running %s ...\n\n', ls_files(s_file).name) % Report stage
-    
+    fprintf('\n<!> Running %s (%d/%d)...\n', ...
+        ls_files(s_file).name, s_file, num_files) % Report stage
     
     
     %% 0. Define subject
@@ -248,16 +256,13 @@ for s_file = 1 : num_files
     end
     
     
+    
     % ---------------------------------------------------------------------
-    % Here, an appendix will be added to the name of the dataset according
-    % to the last step performed
+    % Add an appendix to the data base that defines the state of 
+    % pre-processing when saved
     
-    % Define last step
-    allSteps = [extractsws, rejectchans, filter, medianfilter, ...
-        noisychans2zeros, rereference, performica, epoching, separategroups];
+    str_subject_short = str_savefile;
     
-    stepsPerformed = find(allSteps == 1);
-    lastStep = stepsPerformed(end);
     
     switch lastStep
         
@@ -298,13 +303,13 @@ for s_file = 1 : num_files
             % Here, the script from Andrea applies
             
     end
-    
+       
     
     % ---------------------------------------------------------------------
     % Break out of loop if the subject dataset has already been processed
     
     if exist(strcat(savePath, filesep, str_savefile), 'file')
-        fprintf('<!> File skipped because already exists\n')
+        fprintf('... skipped because already exists\n\n')
         continue
     end
     % End of subject definition
@@ -347,9 +352,8 @@ for s_file = 1 : num_files
     % =============
     
     
-    
-    %% 2. Extract Slow Wave Sleep
-    %  ==========================
+    %% 2. Perform pre-processing steps
+    %  ===============================
     
     if extractsws == 1
         
@@ -358,10 +362,6 @@ for s_file = 1 : num_files
     end
     
     
-    
-    %% 3. Reject non-wanted channels
-    %  =============================
-    
     if rejectchans == 1
         
         run p_chan_reject.m
@@ -369,122 +369,46 @@ for s_file = 1 : num_files
     end
     
     
-    
-    %% 4. Filtering
-    %  ============
-    
     if filter == 1
-% THE ERROR HERE SEEMS TO HAVE BEEN CAUSED BY CHANNEL VREF OF ZEROS!   
-%         try % This here should not be done twice, but it does not always
-%             % seem to work the first time. NEEDS CHECKING AND CORRECTION
-%             [EEG, lst_changes{end+1}] = pop_eegfiltnew( EEG, ...
-%                 'locutoff', filt_highpass, 'hicutoff', filt_lowpass, ...
-%                 'filtorder', 33000);
-%             % Filtorder = filter length - 1; filter length: how many
-%             % weighted data points X compose filtered data Y
-%             
-%         catch ME
-%             
-%             if strcmp(ME.message, ...
-%                     'Attempt to grow array along ambiguous dimension.')
-%                 
-%                 fprintf('HELLO THERE!!!!!!!')
-%                 wait(1)
-%                 
-%                 [EEG, lst_changes{end+1}] = pop_eegfiltnew( EEG, ...
-%                     'locutoff', filt_highpass, 'hicutoff', filt_lowpass, ...
-%                     'filtorder', 33000);
-%                 % Filtorder = filter length - 1; filter length: how many
-%                 % weighted data points X compose filtered data Y
-%                 % Try again, it works the second time...
-%                 
-%             end
-%         end
         
-        [EEG, lst_changes{end+1}] = pop_eegfiltnew( EEG, ...
-            'locutoff', filt_highpass, 'hicutoff', filt_lowpass, ...
-            'filtorder', 33000);
-        % Filtorder = filter length - 1; filter length: how many
-        % weighted data points X compose filtered data Y
-
-        % Check data integrity
-        [EEG, lst_changes{end+1,1}] = eeg_checkset( EEG );
+        run p_filter.m
         
     end
     
-    
-    
-    %% 5. Artefactual spike rejection
-    %  ==============================
     
     if medianfilter == 1
         
-        % Running medfilt on all channels at once will generate a vector;
-        % Therefore, run it per channel
-        for i = 1 : size(EEG.data, 1)
-            EEG.data(i, :) = medfilt1(EEG.data(i, :));
-        end
-        
-        lst_changes{end+1,1} = 'medfilt1(EEG.data(by_channel, :)';
+        run p_medfilt.m
         
     end
     
-    
-    
-    %% 6. Artefactual spike rejection
-    %  ==============================
     
     if noisychans2zeros == 1
         
-        [EEG, lst_changes{end+1,1}] = pop_interp(EEG, ...
-            [string(interpolatedChan)], 'spherical');
-        
-        [EEG, lst_changes{end+1,1}] = eeg_checkset( EEG );
+        run pset_zerochans.m        
         
     end
     
-%     eegplot( EEG.data(1,:), 'srate', EEG.srate, 'title', 'Scroll channel activities -- eegplot()', ...
-%         'limits', [EEG.xmin EEG.xmax]*1000);
-    
-    
-    
-    %% 7. Re-referencing of channel data
-    %  =================================
     
     if rereference == 1
         
-        % Get channels that have been labeled for exclusion
-        chan_excl = find(strcmp({EEG.chanlocs.description}, 'To_exlude'));
-    
-        [EEG, lst_changes{end+1,1}] = pop_reref( EEG, [], ...
-            'exclude', chan_excl);
-        
-        [EEG, lst_changes{end+1,1}] = eeg_checkset( EEG );
+        run p_offlinereference
         
     end
     
-    
-    
-    %% 8. Independent Component Analysis
-    %  =================================
     
     if performica == 1
-    
-        [EEG, lst_changes{end+1,1}] = pop_runica(EEG, ...
-            'icatype', 'runica', ...
-            'extended', 1, ...
-            'interrupt', 'off', ...
-            'chanind', {'EEG'});
-        % This uses the 'EEG' tag as input from EEG.chanlocs.type
         
-        [EEG, lst_changes{end+1,1}] = eeg_checkset( EEG );
+        run p_ica.m
         
     end
+    % End of pre-processing
+    % =====================
     
     
     
-    %% Save dataset
-    %  ============
+    %% 3. Save dataset
+    %  ===============
     
     % Add the history of all called functions to EEG structure
     EEG.lst_changes = lst_changes;
@@ -494,7 +418,8 @@ for s_file = 1 : num_files
         'filepath', savePath);
     
     
-    % Clean worksapce from main structure
+    % Optional, but this way, we make sure data does not get mixed between 
+    % subjects.
     clear EEG
     
    

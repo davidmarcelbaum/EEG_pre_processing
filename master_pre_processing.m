@@ -21,6 +21,29 @@
 
 
 
+%% Terms and conditions
+%  ====================
+
+% Avilable under the terms of the Berkeley Software Distribution licence:
+% Copyright (c) 2020, Laboratory for Brain-Machine Interfaces and
+% Neuromodulation, Pontificia Universidad Católica de Chile,
+% hereafter referred to as the "Organization".
+% All rights reserved.
+% 
+% Redistribution and use in source and binary forms are permitted
+% provided that the above copyright notice and this paragraph are
+% duplicated in all such forms and that any documentation,
+% advertising materials, and other materials related to such
+% distribution and use acknowledge that the software was developed
+% by the Organization. The name of the
+% Organization may not be used to endorse or promote products derived
+% from this software without specific prior written permission.
+% THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR
+% IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+% WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
 %% Important user-defined variables
 %  ================================
 
@@ -31,7 +54,11 @@
 %
 %   |=END USER INPUT=|
 
-pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori/preProcessing/MedianFiltered/';
+% set(0, 'defaultFigureRenderer', 'painters')
+% set(0, 'defaultFigureRenderer', 'zbuffer')
+% One of both appearently can accelerate eegplot function 
+
+pathData            = '/home/sleep/Desktop/DAVID/Datasets/Ori/preProcessing/NoisyChans';
 % String of file path to the mother stem folder containing the datasets
 
 dataType            = '.set'; % {'.cdt', '.set', '.mff'}
@@ -52,12 +79,14 @@ filter              = 0;    % Filtfilt processing. Parameters set when
                             % when function called in script
 medianfilter        = 0;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
-noisychans2zeros    = 1;    % Interpolation of noisy channels based on
+noisychans2zeros    = 0;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
-rereference         = 1;    % Re-reference channels to choosen reference.
+noisyperiodreject   = 1;    % Rejection of noisy channels based on manually
+                            % generated table with noisy period info
+performica          = 0;    % Run ICA on datasets. This step takes a while
+rereference         = 0;    % Re-reference channels to choosen reference.
                             % Reference is choosen when function is called
                             % in script
-performica          = 0;    % Run ICA on datasets. This step takes a while
 epoching            = 0;    % Slice datasets according to trigger edges.
                             % Parameters set when function is called in
                             % script
@@ -93,6 +122,16 @@ rej_nonformat   = find(~contains({ls_files.name}, dataType));
 ls_files(rej_nonformat) = [];
 
 num_files       = size(ls_files, 1);
+
+
+% -------------------------------------------------------------------------
+% Stop right here when no files have been found
+
+if isempty(ls_files) || num_files == 0
+    
+    error('No datasets to process. Verify variables "pathData" and "dataType".')
+
+end
 
 
 % -------------------------------------------------------------------------
@@ -150,7 +189,8 @@ end
 % just by running "dir" on pathData.
 
 allSteps = [extractsws, rejectchans, filter, medianfilter, ...
-    noisychans2zeros, rereference, performica, epoching, separategroups];
+    noisychans2zeros, noisyperiodreject, performica, rereference, ...
+    epoching, separategroups];
 
 stepsPerformed = find(allSteps == 1);
 lastStep = stepsPerformed(end);
@@ -175,21 +215,25 @@ switch lastStep
         
     case 5 % Noisy channels to be set to zeros
         
-        savePath = strcat(savePath, filesep, 'ChanInterpol');
+        savePath = strcat(savePath, filesep, 'NoisyChans');
         
-    case 6 % Re-reference channel data
+    case 6 % Reject noisy periods
         
-        savePath = strcat(savePath, filesep, 'offlineRef');
+        savePath = strcat(savePath, filesep, 'NoisyPeriods');
         
     case 7 % ICA running
         
         savePath = strcat(savePath, filesep, 'ICAweights');
         
-    case 8 % Epoching of datasets based on events
+    case 8 % Re-reference channel data
+        
+        savePath = strcat(savePath, filesep, 'offlineRef');
+        
+    case 9 % Epoching of datasets based on events
         
         savePath = strcat(savePath, filesep, 'Epoched');
         
-    case 9 % Separation of event types
+    case 10 % Separation of event types
         
         % Here, the script from Andrea applies
         
@@ -201,14 +245,6 @@ if ~exist(savePath, 'dir')
     mkdir(savePath);
     
 end
-
-    
-% -------------------------------------------------------------------------
-% This is useful in order to store the history of EEGLAB functions called
-% called duringfile processing
-
-lst_changes         = {};
-
 % End of user land setup
 % ======================
 
@@ -256,6 +292,12 @@ for s_file = 1 : num_files
     end
     
     
+    % ---------------------------------------------------------------------
+    % This is useful in order to store the history of EEGLAB functions 
+    % called during file processing
+
+    lst_changes         = {};
+   
     
     % ---------------------------------------------------------------------
     % Add an appendix to the data base that defines the state of 
@@ -284,7 +326,7 @@ for s_file = 1 : num_files
             
         case 5 % Noisy channels to be set to zeros
             
-            str_savefile = strcat(str_savefile, '_ChanInterpol.set');
+            str_savefile = strcat(str_savefile, '_NoisyChans.set');
             
         case 6 % Re-reference channel data
             
@@ -385,14 +427,14 @@ for s_file = 1 : num_files
     
     if noisychans2zeros == 1
         
-        run pset_zerochans.m        
+        run p_set_zerochans.m        
         
     end
     
     
-    if rereference == 1
+    if noisyperiodreject == 1
         
-        run p_offlinereference
+        run p_noise_periods.m
         
     end
     
@@ -400,6 +442,13 @@ for s_file = 1 : num_files
     if performica == 1
         
         run p_ica.m
+        
+    end
+    
+    
+    if rereference == 1
+        
+        run p_offlinereference
         
     end
     % End of pre-processing
@@ -411,10 +460,18 @@ for s_file = 1 : num_files
     %  ===============
     
     % Add the history of all called functions to EEG structure
-    EEG.lst_changes = lst_changes;
+    if ~isfield(EEG, 'lst_changes')    
+        EEG.lst_changes = lst_changes;
+    else
+        EEG.lst_changes(...
+            numel(EEG.lst_changes) + 1 : ...
+            numel(EEG.lst_changes) + numel(lst_changes)) = ...
+            lst_changes;
+    end
     
     
-    EEG = pop_saveset( EEG, 'filename', str_savefile, ...
+    [EEG, lst_changes{end+1,1}] = pop_saveset( EEG, ...
+        'filename', str_savefile, ...
         'filepath', savePath);
     
     

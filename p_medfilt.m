@@ -1,5 +1,5 @@
 % |===USER INPUT===|
-lst_changes{end+1,1} = 'medfilt1(EEG.data(by_channel, :)';
+lst_changes{end+1,1} = 'EEG = medfilt1(EEG.data(by_channel, :)';
 % |=END USER INPUT=|
 
 

@@ -7,7 +7,9 @@
 
 % |===USER INPUT===|
 noiseChanFile   = '/home/sleep/Documents/DAVID/Datasets/Ori/preProcessing/channel_rejection_info.mat';
-def_variable    = 'channel_rejection';  % Name of variable that holds the cell
+def_variable    = 'channel_rejection';  % Name of variable that holds the 
+                                        % cell of subject-wise information
+                                        % of noisy channels
 % |=END USER INPUT=|
 
 

@@ -58,7 +58,7 @@
 % set(0, 'defaultFigureRenderer', 'zbuffer')
 % One of both appearently can accelerate eegplot function 
 
-pathData            = '/home/sleep/Desktop/DAVID/Datasets/Ori/preProcessing/NoisyChans';
+pathData            = '/home/sleep/Desktop/DAVID/Datasets/Ori/preProcessing/NoisyPeriods';
 % String of file path to the mother stem folder containing the datasets
 
 dataType            = '.set'; % {'.cdt', '.set', '.mff'}
@@ -81,9 +81,9 @@ medianfilter        = 0;    % Median filtering of noise artefacts of
                             % low-frequency occurence
 noisychans2zeros    = 0;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
-noisyperiodreject   = 1;    % Rejection of noisy channels based on manually
+noisyperiodreject   = 0;    % Rejection of noisy channels based on manually
                             % generated table with noisy period info
-performica          = 0;    % Run ICA on datasets. This step takes a while
+performica          = 1;    % Run ICA on datasets. This step takes a while
 rereference         = 0;    % Re-reference channels to choosen reference.
                             % Reference is choosen when function is called
                             % in script
@@ -328,21 +328,24 @@ for s_file = 1 : num_files
             
             str_savefile = strcat(str_savefile, '_NoisyChans.set');
             
-        case 6 % Re-reference channel data
+        case 6 % Reject noisy periods
             
-            str_savefile = strcat(str_savefile, '_Re-reference.set');
+            str_savefile = strcat(str_savefile, '_NoisyPeriods.set');
             
         case 7 % ICA running
             
             str_savefile = strcat(str_savefile, '_ICAweights.set');
             
-        case 8 % Epoching of datasets based on events
+        case 8 % Re-reference channel data
             
-            str_savefile = strcat(str_savefile, '_Epoched.set');
+            str_savefile = strcat(str_savefile, '_offlineRef.set');
             
-        case 9 % Separation of event types
+        case 9 % Epoching of datasets based on events
             
             % Here, the script from Andrea applies
+            
+        case 10 % Separation of event types
+           
             
     end
        

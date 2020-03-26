@@ -43,14 +43,14 @@ for Filenum = 1:numel(FilesList)
         
         % Separar por DIN1 y DIN2
         
-        All_DIN1 = find(strcmp({ALLEEG(1).event.code},'DIN1'));
+        All_DIN1 = find(strcmp({EEG.event.code},'DIN1'));
         
-        All_DIN2 = find(strcmp({ALLEEG(1).event.code},'DIN2'));
+        All_DIN2 = find(strcmp({EEG.event.code},'DIN2'));
         
         
         % Separar por pares e impares
         
-        get_cidx= {ALLEEG(1).event.mffkey_cidx};
+        get_cidx= {EEG.event.mffkey_cidx};
         
         Placebo_Epochs = find(mod(str2double(get_cidx),2)==0);
         Odor_Epochs = find(mod(str2double(get_cidx),2)~= 0);

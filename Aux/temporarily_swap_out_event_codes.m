@@ -36,22 +36,22 @@ EEG2 = EEG;
 EEG2.data = eeg_getdatact(EEG, 'component', [1:size(EEG.icaweights,1)]);
 
 % pop_eegbrowser is faster, but EEGBrowser updates first window to fit last one!
-% pop_eegbrowser(EEG, 0);
-% set(gcf, 'units', 'normalized', 'outerposition', [0 0 0.5 1]);
+pop_eegbrowser(EEG, 0);
+set(gcf, 'units', 'normalized', 'outerposition', [0 0 0.5 1]);
 % pop_eegbrowser(EEG2, 0);
 % set(gcf, 'units', 'normalized', 'outerposition', [0.5 0 0.5 1]);
 
 
-eegplot(EEG.data, 'srate', EEG.srate, 'winlength', 3, ...
-    'events', EEG.event, 'dispchans', 20, 'color', 'off');
-get(gcf, 'children')
-set(gcf, 'units', 'normalized', 'outerposition', [0 0 0.5 1]);
-eegplot(EEG2.data, 'children', 1, 'srate', EEG2.srate, 'winlength', 3, ...
+% eegplot(EEG.data, 'srate', EEG.srate, 'winlength', 3, ...
+%     'events', EEG.event, 'dispchans', 20, 'color', 'off');
+% set(gcf, 'units', 'normalized', 'outerposition', [0 0 0.5 1]);
+eegplot(EEG2.data, 'srate', EEG2.srate, 'winlength', 3, ...
     'events', EEG2.event, 'dispchans', 20, 'color', 'off');
 set(gcf, 'units', 'normalized', 'outerposition', [0.5 0 0.5 1]);
 
 
-
+EEG.setname = EEG.datfile;
+EEG.setname = strrep(EEG.setname, '.fdt', '.set');
 eeglab redraw % Necessary for showing dataset in EEGLAB window
 
 

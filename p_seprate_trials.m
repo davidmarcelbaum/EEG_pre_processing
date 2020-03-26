@@ -1,58 +1,92 @@
-%% Set up userland
-eeglab;
-EEG = pop_loadset;
-lst_changes = {};
-
 %% Variables for handling output
-savePath= cd;
-str_savefile = 'heythere.set';
-str_savefile2 = 'heyagain.set';
+% IMPORTANT:
+% recordings --> trigger1 on, trigger1 off, trigger2 on, trigger2 off, ...     
+set_sequence    = 'switchedON_switchedOFF'; 
+% {'switchedON_switchedOFF', 'switchedOFF_switchedON'}
+% "on_off" = [ongoing stimulation type 1, post-stimulation type 1] and
+% "off_on" = [pre-stimulation type 1, ongoing stimulation type 1], where
+% "pre-stimulation type 1" is actually post-stimulation type 2!
+% On and Off therefore refers to the current state of the stimulation
+% ("switched on" or "switched off").
 
-%% Slicing dataset into epochs (all)
+%% Set up userland
+lst_changes     = {};
+eeglab;
+EEG             = pop_loadset;
+
+savePath        = strcat(EEG.filepath, 'SepTriggers', filesep);
+
 [EEG, lst_changes{end+1,1}] = pop_epoch( EEG, ...
     { }, ...
-    [-15  15], ...
+    [-15 15], ...
     'newname', 'temp_set', ...
     'epochinfo', 'yes');
-EEG2 = EEG;
 
 %% Get trigger on and off states
-All_DIN1 = find(strcmp({EEG.event.code},'DIN1'));
-All_DIN2 = find(strcmp({EEG.event.code},'DIN2'));
+idx_switched_ON     = find(strcmp({EEG.event.code},'DIN1'));
+idx_switched_OFF    = find(strcmp({EEG.event.code},'DIN2'));
 
 get_cidx= {EEG.event.mffkey_cidx};
 
 %% Which of the triggers are Placebo and which are Odor
-% Based on odds vs even @Jens' mail
-Placebo_Epochs = find(mod(str2double(get_cidx),2)==0);
-Odor_Epochs = find(mod(str2double(get_cidx),2)~= 0);
+% Based on odds vs even @Jens' mail, INDEPENDANTLY OF ON OR OFF
+trigger_sham        = find(mod(str2double(get_cidx),2)==0);
+trigger_cue         = find(mod(str2double(get_cidx),2)~= 0);
 
 %% Get trigger time stamps
-% IMPORTANT:
-% TriggerOn means that trials are [15s pre-Trigger, 15s ongoing Trigger]
-% TriggerOff means that trials are [15s ongoing Trigger, 15s post-Trigger]
-% The trigger events here are "switching ON the trigger" and "switching OFF
-% the trigger" for TriggerOn and TiggerOff, respectively.
+if strcmp(set_sequence, 'switchedON_switchedOFF')
+    
+    idx_mid_trial_sham  = intersect(idx_switched_OFF,trigger_sham);
+    idx_mid_trial_cue   = intersect(idx_switched_OFF,trigger_cue);
+    
+elseif strcmp(set_sequence, 'switchedOFF_switchedON')
+    
+    idx_mid_trial_sham  = intersect(idx_switched_ON,trigger_sham);
+    idx_mid_trial_cue   = intersect(idx_switched_ON,trigger_cue);
+    
+else
+    
+    error('Error in "set_sequence" declaration')
 
-[PlaceboOn] = intersect(All_DIN1,Placebo_Epochs);
-[PlaceboOff] = intersect(All_DIN2,Placebo_Epochs);
+end
+    
+    
+%% Isolating trial of interest into separate structures
+EEG_sham    = EEG;
+EEG_cue     = EEG;
 
-[OdorOn] = intersect(All_DIN1,Odor_Epochs);
-[OdorOff] = intersect(All_DIN2,Odor_Epochs);
+[EEG_sham, lst_changes_sham]    = ...
+    pop_select( EEG_sham, 'trial', idx_mid_trial_sham );
+[EEG_cue, lst_changes_cue]     = ...
+    pop_select( EEG_cue, 'trial', idx_mid_trial_cue );
 
-%% Reject everything that is NOT related to Placebo
-[EEG, lst_changes{end+1,1}] = pop_select( EEG, 'trial', PlaceboOn );
+if ~isfield(EEG, 'lst_changes')
+    EEG.lst_changes = lst_changes;
+else
+    EEG.lst_changes(...
+        numel(EEG.lst_changes) + 1 : ...
+        numel(EEG.lst_changes) + numel(lst_changes)) = ...
+        lst_changes;
+end
 
+EEG_sham.lst_changes            = EEG.lst_changes;
+EEG_sham.lst_changes{end+1,1}   = {lst_changes_sham};
+EEG_cue.lst_changes             = EEG.lst_changes;
+EEG_cue.lst_changes{end+1,1}    = {lst_changes_cue};
+
+%% Saving here
+str_savefile_sham  = strcat(extractBefore(EEG.filename, '.set'), ...
+    '_Sham_', set_sequence, '.set');
+str_savefile_cue  = strcat(extractBefore(EEG.filename, '.set'), ...
+    '_Cue_', set_sequence, '.set');
+
+EEG = EEG_sham;
 [EEG, lst_changes{end+1,1}] = pop_saveset( EEG, ...
-    'filename', str_savefile, ...
+    'filename', str_savefile_sham, ...
+    'filepath', savePath);
+
+EEG = EEG_cue;
+[EEG, lst_changes{end+1,1}] = pop_saveset( EEG, ...
+    'filename', str_savefile_cue, ...
     'filepath', savePath); % strings to be defined
 
-% ------
-EEG = EEG2;
-
-%% Reject everything that is NOT related to Odor
-[EEG, lst_changes{end+1,1}] = pop_select( EEG, 'trial', OdorOn );
-
-[EEG, lst_changes{end+1,1}] = pop_saveset( EEG, ...
-    'filename', str_savefile2, ...
-    'filepath', savePath); % strings to be defined

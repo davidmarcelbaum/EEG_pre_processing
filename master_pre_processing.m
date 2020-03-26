@@ -58,10 +58,10 @@
 % set(0, 'defaultFigureRenderer', 'zbuffer')
 % One of both appearently can accelerate eegplot function 
 
-pathData            = '/home/sleep/Desktop/DAVID/Datasets/Ori/preProcessing/NoisyPeriods';
+pathData            = '/home/sleep/Desktop/DAVID/Datasets/Ori';
 % String of file path to the mother stem folder containing the datasets
 
-dataType            = '.set'; % {'.cdt', '.set', '.mff'}
+dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
 % Choose what steps will be performed
@@ -73,17 +73,17 @@ dataType            = '.set'; % {'.cdt', '.set', '.mff'}
 % AND SHOULD THEREFORE BE THE LAST 1 SET INSIDE RUN
 
 % Define all steps to be performed: 0 for false and 1 for true
-extractsws          = 0;    % Extract SWS periods of datasets
-rejectchans         = 0;    % Reject non-wanted channels
-filter              = 0;    % Filtfilt processing. Parameters set when
+extractsws          = 1;    % Extract SWS periods of datasets
+rejectchans         = 1;    % Reject non-wanted channels
+filter              = 1;    % Filtfilt processing. Parameters set when
                             % when function called in script
-medianfilter        = 0;    % Median filtering of noise artefacts of 
+medianfilter        = 1;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
 noisychans2zeros    = 0;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
 noisyperiodreject   = 0;    % Rejection of noisy channels based on manually
                             % generated table with noisy period info
-performica          = 1;    % Run ICA on datasets. This step takes a while
+performica          = 0;    % Run ICA on datasets. This step takes a while
 rereference         = 0;    % Re-reference channels to choosen reference.
                             % Reference is choosen when function is called
                             % in script
@@ -227,7 +227,7 @@ switch lastStep
         
     case 8 % Re-reference channel data
         
-        savePath = strcat(savePath, filesep, 'offlineRef');
+        savePath = strcat(savePath, filesep, 'ReRef');
         
     case 9 % Epoching of datasets based on events
         
@@ -235,7 +235,7 @@ switch lastStep
         
     case 10 % Separation of event types
         
-        % Here, the script from Andrea applies
+        savePath = strcat(savePath, filesep, 'SepTriggers');
         
 end
 
@@ -342,7 +342,8 @@ for s_file = 1 : num_files
             
         case 9 % Epoching of datasets based on events
             
-            % Here, the script from Andrea applies
+            str_savefile1 = strcat(str_savefile, '_Cue.set');
+            str_savefile2 = strcat(str_savefile, '_Sham.set');
             
         case 10 % Separation of event types
            

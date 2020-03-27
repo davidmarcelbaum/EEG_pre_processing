@@ -35,16 +35,13 @@ end
 % latencies of the EEG structure and then substract 1 time point from the
 % end edge of periods to be rejected.
 
-v_periods = v_periods .* EEG.srate;
-
-v_periods(:, 2) = v_periods(:, 2);
+v_periods           = v_periods .* EEG.srate;
 
 if strcmp(noisePeriods.(def_variable){subj_row,3}, 'end')
    
     v_periods(end, 2) = EEG.times(end);
     
 end
-
 
 [EEG, lst_changes{end+1,1}] = eeg_eegrej( EEG, v_periods);
 % This should adapt the values of the latencies to the new EEG.times

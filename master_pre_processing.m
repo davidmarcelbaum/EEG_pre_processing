@@ -58,10 +58,10 @@
 % set(0, 'defaultFigureRenderer', 'zbuffer')
 % One of both appearently can accelerate eegplot function 
 
-pathData            = '/home/sleep/Desktop/DAVID/Datasets/Ori';
+pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori/preProcessing/ICAweights/';
 % String of file path to the mother stem folder containing the datasets
 
-dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
+dataType            = '.set'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
 % Choose what steps will be performed
@@ -73,15 +73,15 @@ dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
 % AND SHOULD THEREFORE BE THE LAST 1 SET INSIDE RUN
 
 % Define all steps to be performed: 0 for false and 1 for true
-extractsws          = 1;    % Extract SWS periods of datasets
-rejectchans         = 1;    % Reject non-wanted channels
+extractsws          = 0;    % Extract SWS periods of datasets
 filter              = 1;    % Filtfilt processing. Parameters set when
                             % when function called in script
 medianfilter        = 1;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
+rejectchans         = 0;    % Reject non-wanted channels
 noisychans2zeros    = 0;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
-noisyperiodreject   = 0;    % Rejection of noisy channels based on manually
+noisyperiodreject   = 1;    % Rejection of noisy channels based on manually
                             % generated table with noisy period info
 performica          = 0;    % Run ICA on datasets. This step takes a while
 rereference         = 0;    % Re-reference channels to choosen reference.
@@ -188,7 +188,7 @@ end
 % Adapt savePath to last step: This will allow to collect databases easier 
 % just by running "dir" on pathData.
 
-allSteps = [extractsws, rejectchans, filter, medianfilter, ...
+allSteps = [extractsws, filter, medianfilter, rejectchans, ...
     noisychans2zeros, noisyperiodreject, performica, rereference, ...
     epoching, separategroups];
 
@@ -201,15 +201,15 @@ switch lastStep
         
         savePath = strcat(savePath, filesep, 'extrSWS');
         
-    case 2 % Reject channels
+    case 4 % Reject channels
         
         savePath = strcat(savePath, filesep, 'DataChans');
         
-    case 3 % Filter
+    case 2 % Filter
         
         savePath = strcat(savePath, filesep, 'Filtered');
         
-    case 4 % Median Filter for spike rejection
+    case 3 % Median Filter for spike rejection
         
         savePath = strcat(savePath, filesep, 'MedianFiltered');
         
@@ -312,15 +312,15 @@ for s_file = 1 : num_files
             
             str_savefile = strcat(str_savefile, '_SWS.set');
             
-        case 2 % Reject channels
+        case 4 % Reject channels
             
             str_savefile = strcat(str_savefile, '_ChanReject.set');
             
-        case 3 % Filter
+        case 2 % Filter
             
             str_savefile = strcat(str_savefile, '_Filt.set');
             
-        case 4 % Median Filter for spike rejection
+        case 3 % Median Filter for spike rejection
             
             str_savefile = strcat(str_savefile, '_MedianFilt.set');
             
@@ -408,13 +408,6 @@ for s_file = 1 : num_files
     end
     
     
-    if rejectchans == 1
-        
-        run p_chan_reject.m
-                
-    end
-    
-    
     if filter == 1
         
         run p_filter.m
@@ -426,6 +419,12 @@ for s_file = 1 : num_files
         
         run p_medfilt.m
         
+    end
+    
+    if rejectchans == 1
+        
+        run p_chan_reject.m
+                
     end
     
     

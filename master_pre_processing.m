@@ -18,6 +18,8 @@
 % 16.   Downsample to 100Hz
 
 % This script can handle .mff, .set and [.............] datasets
+% Order of pre-processing steps is to be changed in "2. Perform
+% pre-processing steps" and does not require any further changes.
 
 
 
@@ -58,10 +60,10 @@
 % set(0, 'defaultFigureRenderer', 'zbuffer')
 % One of both appearently can accelerate eegplot function 
 
-pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori/preProcessing/ICAweights/';
+pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori';
 % String of file path to the mother stem folder containing the datasets
 
-dataType            = '.set'; % {'.cdt', '.set', '.mff'}
+dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
 % Choose what steps will be performed
@@ -73,13 +75,13 @@ dataType            = '.set'; % {'.cdt', '.set', '.mff'}
 % AND SHOULD THEREFORE BE THE LAST 1 SET INSIDE RUN
 
 % Define all steps to be performed: 0 for false and 1 for true
-extractsws          = 0;    % Extract SWS periods of datasets
+extractsws          = 1;    % Extract SWS periods of datasets
+rejectchans         = 1;    % Reject non-wanted channels
 filter              = 1;    % Filtfilt processing. Parameters set when
                             % when function called in script
 medianfilter        = 1;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
-rejectchans         = 0;    % Reject non-wanted channels
-noisychans2zeros    = 0;    % Interpolation of noisy channels based on
+noisychans2zeros    = 1;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
 noisyperiodreject   = 1;    % Rejection of noisy channels based on manually
                             % generated table with noisy period info
@@ -92,6 +94,18 @@ epoching            = 0;    % Slice datasets according to trigger edges.
                             % script
 separategroups      = 0;    % Separate trial series into groups. Parameters
                             % set when function is called in script.
+                            
+lastStep            = 'Reject channels';
+                            % Define last step to be done in this run
+                            % {...
+                            %   'Extract SWS', ...
+                            %   'Reject channels', ...
+                            %   'Filter', ...
+                            %   'Median filter for spike rejection', ...
+                            %   'Set noisy channels to zeros', ...
+                            %   'Reject noisy periods', ...
+                            %   'Run ICA', ...
+                            %   'Re-reference' }
                             
 
 %                         +-------------------+
@@ -185,57 +199,28 @@ else
 end
 
 
-% Adapt savePath to last step: This will allow to collect databases easier 
+% Adapt savePath to last step and add appendix to dataset name
+% accordingly: This will allow to collect databases easier
 % just by running "dir" on pathData.
-
-allSteps = [extractsws, filter, medianfilter, rejectchans, ...
-    noisychans2zeros, noisyperiodreject, performica, rereference, ...
-    epoching, separategroups];
-
-stepsPerformed = find(allSteps == 1);
-lastStep = stepsPerformed(end);
 
 switch lastStep
     
-    case 1 % Extract SWS
-        
+    case 'Extract SWS'
         savePath = strcat(savePath, filesep, 'extrSWS');
-        
-    case 4 % Reject channels
-        
+    case 'Reject channels'
         savePath = strcat(savePath, filesep, 'DataChans');
-        
-    case 2 % Filter
-        
+    case 'Filter'
         savePath = strcat(savePath, filesep, 'Filtered');
-        
-    case 3 % Median Filter for spike rejection
-        
+    case 'Median filter for spike rejection'
         savePath = strcat(savePath, filesep, 'MedianFiltered');
-        
-    case 5 % Noisy channels to be set to zeros
-        
+    case 'Set noisy channels to zeros'
         savePath = strcat(savePath, filesep, 'NoisyChans');
-        
-    case 6 % Reject noisy periods
-        
+    case 'Reject noisy periods'
         savePath = strcat(savePath, filesep, 'NoisyPeriods');
-        
-    case 7 % ICA running
-        
+    case 'Run ICA'
         savePath = strcat(savePath, filesep, 'ICAweights');
-        
-    case 8 % Re-reference channel data
-        
+    case 'Re-reference'
         savePath = strcat(savePath, filesep, 'ReRef');
-        
-    case 9 % Epoching of datasets based on events
-        
-        savePath = strcat(savePath, filesep, 'Epoched');
-        
-    case 10 % Separation of event types
-        
-        savePath = strcat(savePath, filesep, 'SepTriggers');
         
 end
 
@@ -245,6 +230,7 @@ if ~exist(savePath, 'dir')
     mkdir(savePath);
     
 end
+
 % End of user land setup
 % ======================
 
@@ -291,64 +277,40 @@ for s_file = 1 : num_files
                             % the last step performed later.
     end
     
+    str_base = str_savefile;
+    
+    
+    % Appendix to dataset name accordingly to last step performed:
+    % This will allow to collect databases easier just by running "dir" 
+    % on pathData.
+    
+    switch lastStep
+        
+        case 'Extract SWS'
+            str_savefile = strcat(str_savefile, '_SWS.set');
+        case 'Reject channels'
+            str_savefile = strcat(str_savefile, '_ChanReject.set');
+        case 'Filter'
+            str_savefile = strcat(str_savefile, '_Filt.set');
+        case 'Median filter for spike rejection'
+            str_savefile = strcat(str_savefile, '_MedianFilt.set');
+        case 'Set noisy channels to zeros'
+            str_savefile = strcat(str_savefile, '_NoisyChans.set');
+        case 'Reject noisy periods'
+            str_savefile = strcat(str_savefile, '_NoisyPeriods.set');
+        case 'Run ICA'
+            str_savefile = strcat(str_savefile, '_ICAweights.set');
+        case 'Re-reference'
+            str_savefile = strcat(str_savefile, '_ReRef.set');
+            
+    end
+    
     
     % ---------------------------------------------------------------------
     % This is useful in order to store the history of EEGLAB functions 
     % called during file processing
 
     lst_changes         = {};
-   
-    
-    % ---------------------------------------------------------------------
-    % Add an appendix to the data base that defines the state of 
-    % pre-processing when saved
-    
-    str_subject_short = str_savefile;
-    
-    
-    switch lastStep
-        
-        case 1 % Extract SWS
-            
-            str_savefile = strcat(str_savefile, '_SWS.set');
-            
-        case 4 % Reject channels
-            
-            str_savefile = strcat(str_savefile, '_ChanReject.set');
-            
-        case 2 % Filter
-            
-            str_savefile = strcat(str_savefile, '_Filt.set');
-            
-        case 3 % Median Filter for spike rejection
-            
-            str_savefile = strcat(str_savefile, '_MedianFilt.set');
-            
-        case 5 % Noisy channels to be set to zeros
-            
-            str_savefile = strcat(str_savefile, '_NoisyChans.set');
-            
-        case 6 % Reject noisy periods
-            
-            str_savefile = strcat(str_savefile, '_NoisyPeriods.set');
-            
-        case 7 % ICA running
-            
-            str_savefile = strcat(str_savefile, '_ICAweights.set');
-            
-        case 8 % Re-reference channel data
-            
-            str_savefile = strcat(str_savefile, '_offlineRef.set');
-            
-        case 9 % Epoching of datasets based on events
-            
-            str_savefile1 = strcat(str_savefile, '_Cue.set');
-            str_savefile2 = strcat(str_savefile, '_Sham.set');
-            
-        case 10 % Separation of event types
-           
-            
-    end
        
     
     % ---------------------------------------------------------------------
@@ -401,9 +363,14 @@ for s_file = 1 : num_files
     %% 2. Perform pre-processing steps
     %  ===============================
     
+    % THESE STEPS CAN BE CHANGED IN ORDER WITHOUT ANY FURTHER CHANGES
+    % NEEDED IN THE SCRIPT
+    
     if extractsws == 1
         
         run p_extract_sws.m
+        
+        thisStep = 'Extract SWS';
        
     end
     
@@ -412,6 +379,8 @@ for s_file = 1 : num_files
         
         run p_filter.m
         
+        thisStep = 'Filter';
+        
     end
     
     
@@ -419,18 +388,16 @@ for s_file = 1 : num_files
         
         run p_medfilt.m
         
-    end
-    
-    if rejectchans == 1
+        thisStep = 'Median filter for spike rejection';
         
-        run p_chan_reject.m
-                
     end
     
     
     if noisychans2zeros == 1
         
-        run p_set_zerochans.m        
+        run p_set_zerochans.m
+        
+        thisStep = 'Set noisy channels to zeros';
         
     end
     
@@ -439,12 +406,24 @@ for s_file = 1 : num_files
         
         run p_noise_periods.m
         
+        thisStep = 'Reject noisy periods';
+        
+    end
+    
+    if rejectchans == 1
+        
+        run p_chan_reject.m
+        
+        thisStep = 'Reject channels';
+                
     end
     
     
     if performica == 1
         
         run p_ica.m
+        
+        thisStep = 'Run ICA';
         
     end
     
@@ -453,7 +432,18 @@ for s_file = 1 : num_files
         
         run p_offlinereference
         
+        thisStep = 'Re-reference';
+        
     end
+    
+    
+    if ~strcmp(lastStep, thisStep)
+        
+        warning('Filename and filepath to save in are not corresponding to defined last step!')
+        wait(3)
+        
+    end
+    
     % End of pre-processing
     % =====================
     

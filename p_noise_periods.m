@@ -19,7 +19,7 @@ def_variable    = 'period_rejection';  % Name of variable that holds the
 noisePeriods = load(noiseChanFile);
 
 subj_row = find(strcmp(noisePeriods.(def_variable)(:,1), ...
-    str_subject_short));
+    str_base));
 
 
 v_periods = noisePeriods.(def_variable){subj_row,2};

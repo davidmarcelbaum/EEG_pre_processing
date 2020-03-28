@@ -20,7 +20,7 @@ def_variable    = 'channel_rejection';  % Name of variable that holds the
 noiseChans = load(noiseChanFile);
 
 subj_row = find(strcmp(noiseChans.(def_variable)(:,1), ...
-    str_subject_short));
+    str_base));
 
 label_chans = noiseChans.(def_variable){subj_row,2};
 

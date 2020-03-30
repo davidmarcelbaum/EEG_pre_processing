@@ -76,14 +76,14 @@ dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
 
 % Define all steps to be performed: 0 for false and 1 for true
 extractsws          = 1;    % Extract SWS periods of datasets
-rejectchans         = 1;    % Reject non-wanted channels
-filter              = 1;    % Filtfilt processing. Parameters set when
+rejectchans         = 0;    % Reject non-wanted channels
+filter              = 0;    % Filtfilt processing. Parameters set when
                             % when function called in script
-medianfilter        = 1;    % Median filtering of noise artefacts of 
+medianfilter        = 0;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
-noisychans2zeros    = 1;    % Interpolation of noisy channels based on
+noisychans2zeros    = 0;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
-noisyperiodreject   = 1;    % Rejection of noisy channels based on manually
+noisyperiodreject   = 0;    % Rejection of noisy channels based on manually
                             % generated table with noisy period info
 performica          = 0;    % Run ICA on datasets. This step takes a while
 rereference         = 0;    % Re-reference channels to choosen reference.
@@ -95,7 +95,7 @@ epoching            = 0;    % Slice datasets according to trigger edges.
 separategroups      = 0;    % Separate trial series into groups. Parameters
                             % set when function is called in script.
                             
-lastStep            = 'Reject channels';
+lastStep            = 'Extract SWS';
                             % Define last step to be done in this run
                             % {...
                             %   'Extract SWS', ...
@@ -463,9 +463,9 @@ for s_file = 1 : num_files
     end
     
     
-    [EEG, lst_changes{end+1,1}] = pop_saveset( EEG, ...
-        'filename', str_savefile, ...
-        'filepath', savePath);
+%     [EEG, lst_changes{end+1,1}] = pop_saveset( EEG, ...
+%         'filename', str_savefile, ...
+%         'filepath', savePath);
     
     
     % Optional, but this way, we make sure data does not get mixed between 

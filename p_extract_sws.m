@@ -116,7 +116,7 @@ if use_eegrej == 1
         
         % Start and stop latency of time blocks to be retained
         time_borders(1,pos_sws)   = startpos_sws(pos_sws) * pnts_scoring - ...
-            pnts_scoring;
+            pnts_scoring + 1;
         time_borders(2,pos_sws)   = time_borders(1,pos_sws) + ....
             pnts_scoring - 1;
         
@@ -126,12 +126,13 @@ if use_eegrej == 1
     for v_rej = 1 : size(time_borders, 2)
         
         % Build a matrix with limits of data blocks to reject
-        if v_rej == 1
+        if v_rej == 1 && time_borders(1,1) > 1
+            % If first period of SWS is different from first scoring period
             
             i = i + 1;
             
             out_of_bound(i,1) = 1;
-            out_of_bound(i,2) = time_borders(1,1);
+            out_of_bound(i,2) = time_borders(1,1) - 1;
             
         elseif time_borders(1, v_rej) - time_borders(2, v_rej-1) > 1
             
@@ -140,7 +141,7 @@ if use_eegrej == 1
             out_of_bound(i,1) = time_borders(2, v_rej-1) + 1;
             out_of_bound(i,2) = time_borders(1, v_rej) - 1;
             
-        elseif time_borders(1, v_rej) - time_borders(2, v_rej-1) < 1
+        elseif time_borders(1, v_rej) - time_borders(2, v_rej-1) < 0
             % Jut to be sure there is no error in the time_borders array
             
             error('An error occurred in the generation of the sleep period boundaries')
@@ -150,15 +151,22 @@ if use_eegrej == 1
         
         if v_rej == size(time_borders, 2)
             
-            i = i + 1;
-            
-            if time_borders(2, v_rej) <= EEG.times(end)
+            if time_borders(2, v_rej) > EEG.times(end) + 1
                 % It is possible that the last scoring period, which is 
                 % created in a fixed way, exceeds the time limit of actual 
-                % recording
+                % recording. In that case, correct the last stop point
             
+                out_of_bound(i,2) = EEG.times(end) + 1;
+            
+            elseif time_borders(2, v_rej) < EEG.times(end) + 1
+                % In tihs case, an additional boundary needs to be added
+                % between last SWS period and end of recording.
+                
+                i = i + 1;
+                
                 out_of_bound(i,1) = time_borders(2, v_rej) + 1;
                 out_of_bound(i,2) = EEG.times(end) + 1;
+                                    % +1 because begins with 0
             
             end
             
@@ -166,8 +174,27 @@ if use_eegrej == 1
         
     end
     
+    out_of_bound % Visualize
+    
+    ori_pnts = EEG.times(end) + 1;
+    
     [EEG, lst_changes{end+1,1}] = eeg_eegrej( EEG, out_of_bound);
     % This should adapt the values of the latencies to the new EEG.times
+    
+    
+    % Last check for data integrity and correct SWS period extraction.
+    % This check obviously does not apply to datasets in which last SWS
+    % period was exceeding oiginal length of recording
+    if time_borders(2, end) < ori_pnts && ...
+            EEG.pnts ~= pnts_scoring * numel(startpos_sws)
+        
+        error('Mismatch between final dataset time points and number of SWS periods')
+        
+    elseif time_borders(2, end) > ori_pnts
+        
+        warning('SWS periods did not allow for end extracton data verification. You can ignore this.')
+        
+    end
     
     % ---------------------------------------------------------------------
     % Cleanup in order to avoid errors in current subject in remaining 

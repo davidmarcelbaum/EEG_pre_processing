@@ -60,10 +60,10 @@
 % set(0, 'defaultFigureRenderer', 'zbuffer')
 % One of both appearently can accelerate eegplot function 
 
-pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori';
+pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori/preProcessing/DataChans/';
 % String of file path to the mother stem folder containing the datasets
 
-dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
+dataType            = '.set'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
 % Choose what steps will be performed
@@ -75,7 +75,7 @@ dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
 % AND SHOULD THEREFORE BE THE LAST 1 SET INSIDE RUN
 
 % Define all steps to be performed: 0 for false and 1 for true
-extractsws          = 1;    % Extract SWS periods of datasets
+extractsws          = 0;    % Extract SWS periods of datasets
 rejectchans         = 0;    % Reject non-wanted channels
 filter              = 0;    % Filtfilt processing. Parameters set when
                             % when function called in script
@@ -85,7 +85,7 @@ noisychans2zeros    = 0;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
 noisyperiodreject   = 0;    % Rejection of noisy channels based on manually
                             % generated table with noisy period info
-performica          = 0;    % Run ICA on datasets. This step takes a while
+performica          = 1;    % Run ICA on datasets. This step takes a while
 rereference         = 0;    % Re-reference channels to choosen reference.
                             % Reference is choosen when function is called
                             % in script
@@ -95,7 +95,7 @@ epoching            = 0;    % Slice datasets according to trigger edges.
 separategroups      = 0;    % Separate trial series into groups. Parameters
                             % set when function is called in script.
                             
-lastStep            = 'Extract SWS';
+lastStep            = 'Run ICA';
                             % Define last step to be done in this run
                             % {...
                             %   'Extract SWS', ...
@@ -218,7 +218,7 @@ switch lastStep
     case 'Reject noisy periods'
         savePath = strcat(savePath, filesep, 'NoisyPeriods');
     case 'Run ICA'
-        savePath = strcat(savePath, filesep, 'ICAweights');
+        savePath = strcat(savePath, filesep, 'ICAweights20200330');
     case 'Re-reference'
         savePath = strcat(savePath, filesep, 'ReRef');
         
@@ -328,34 +328,9 @@ for s_file = 1 : num_files
     %% 1. Import datasets into EEGLAB-like structures
     %  ==============================================
     
-    if strcmp(dataType,'.set')
-        
-        
-        [EEG, lst_changes{end+1,1}] = ...
-            pop_loadset('filename', ls_files(s_file).name, ...
-            'filepath', pathData);
-        
-        
-    elseif strcmp(dataType,'.mff')
-        
-        
-        % mff folders contain various files
-        [EEG, lst_changes{end+1,1}] = ...
-            pop_mffimport([pathData, filesep, ls_files(s_file).name], ...
-            {'classid' 'code' 'description' 'label' 'mffkey_cidx' ...
-            'mffkey_gidx' 'mffkeys' 'mffkeysbackup' 'relativebegintime' ...
-            'sourcedevice'});
-        
-        
-    elseif strcmp(dataType,'.cdt')
-        
-        
-        [EEG, lst_changes{end+1,1}] = ...
-            loadcurry([pathData, filesep, ls_files(s_file).name], ...
-            'CurryLocations', 'False');
-        
-        
-    end
+    [EEG, lst_changes{end+1,1}] = f_load_data(...
+        ls_files(s_file).name, pathData, dataType);
+    
     % End of import
     % =============
     
@@ -366,82 +341,65 @@ for s_file = 1 : num_files
     % THESE STEPS CAN BE CHANGED IN ORDER WITHOUT ANY FURTHER CHANGES
     % NEEDED IN THE SCRIPT
     
+    allSteps = {};
+    
     if extractsws == 1
-        
-        run p_extract_sws.m
-        
+        run p_extract_sws.m        
         thisStep = 'Extract SWS';
-       
+        allSteps(end+1) = {thisStep};
     end
     
     
-    if filter == 1
-        
-        run p_filter.m
-        
-        thisStep = 'Filter';
-        
+    if filter == 1        
+        run p_filter.m        
+        thisStep = 'Filter';  
+        allSteps(end+1) = {thisStep};
     end
     
     
-    if medianfilter == 1
-        
-        run p_medfilt.m
-        
+    if medianfilter == 1        
+        run p_medfilt.m        
         thisStep = 'Median filter for spike rejection';
-        
+        allSteps(end+1) = {thisStep};
     end
     
     
-    if noisychans2zeros == 1
-        
-        run p_set_zerochans.m
-        
+    if noisychans2zeros == 1        
+        run p_set_zerochans.m        
         thisStep = 'Set noisy channels to zeros';
-        
+        allSteps(end+1) = {thisStep};
     end
     
     
     if noisyperiodreject == 1
-        
         run p_noise_periods.m
-        
         thisStep = 'Reject noisy periods';
-        
+        allSteps(end+1) = {thisStep};
     end
     
     if rejectchans == 1
-        
         run p_chan_reject.m
-        
         thisStep = 'Reject channels';
-                
+        allSteps(end+1) = {thisStep};
     end
     
     
     if performica == 1
-        
-        run p_ica.m
-        
+        [EEG, lst_changes{end+1,1}] = f_ica(EEG);
         thisStep = 'Run ICA';
-        
+        allSteps(end+1) = {thisStep};
     end
     
     
     if rereference == 1
-        
         run p_offlinereference
-        
         thisStep = 'Re-reference';
-        
+        allSteps(end+1) = {thisStep};
     end
     
     
     if ~strcmp(lastStep, thisStep)
-        
         warning('Filename and filepath to save in are not corresponding to defined last step!')
-        wait(3)
-        
     end
     
     % End of pre-processing
@@ -463,9 +421,9 @@ for s_file = 1 : num_files
     end
     
     
-%     [EEG, lst_changes{end+1,1}] = pop_saveset( EEG, ...
-%         'filename', str_savefile, ...
-%         'filepath', savePath);
+    [EEG, lst_changes{end+1,1}] = pop_saveset( EEG, ...
+        'filename', str_savefile, ...
+        'filepath', savePath);
     
     
     % Optional, but this way, we make sure data does not get mixed between 
@@ -475,3 +433,6 @@ for s_file = 1 : num_files
    
     
 end
+
+allSteps % all performed steps
+

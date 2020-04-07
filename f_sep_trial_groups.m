@@ -1,5 +1,7 @@
-%% Variables for handling output
-% IMPORTANT:
+function [EEG_Cue, EEG_Sham, set_sequence] = ...
+    f_sep_trial_groups(EEG, savePath)
+
+% |===USER INPUT===|
 % recordings --> trigger1 on, trigger1 off, trigger2 on, trigger2 off, ...     
 set_sequence    = 'switchedON_switchedOFF'; 
 % {'switchedON_switchedOFF', 'switchedOFF_switchedON'}
@@ -8,19 +10,27 @@ set_sequence    = 'switchedON_switchedOFF';
 % "pre-stimulation type 1" is actually post-stimulation type 2!
 % On and Off therefore refers to the current state of the stimulation
 % ("switched on" or "switched off").
+% |=END USER INPUT=|
 
-%% Set up userland
-lst_changes     = {};
-eeglab;
-EEG             = pop_loadset;
 
-savePath        = strcat(EEG.filepath, 'SepTriggers', filesep);
-
-[EEG, lst_changes{end+1,1}] = pop_epoch( EEG, ...
+[EEG] = pop_epoch( EEG, ...
     { }, ...
     [-15 15], ...
     'newname', 'temp_set', ...
     'epochinfo', 'yes');
+
+%% Reject epochs with overlapping trials
+rej_epochs      =[];
+
+for i = 1:size(EEG.epoch,2)
+    if size(EEG.epoch(i).eventduration,2) ~=1
+        rej_epochs = [rej_epochs i];
+    end
+    
+end
+    
+EEG = pop_rejepoch( EEG, rej_epochs ,0);
+
 
 %% Get trigger on and off states
 idx_switched_ON     = find(strcmp({EEG.event.code},'DIN1'));
@@ -32,6 +42,7 @@ get_cidx= {EEG.event.mffkey_cidx};
 % Based on odds vs even @Jens' mail, INDEPENDANTLY OF ON OR OFF
 trigger_sham        = find(mod(str2double(get_cidx),2)==0);
 trigger_cue         = find(mod(str2double(get_cidx),2)~= 0);
+
 
 %% Get trigger time stamps
 if strcmp(set_sequence, 'switchedON_switchedOFF')
@@ -52,41 +63,17 @@ end
     
     
 %% Isolating trial of interest into separate structures
-EEG_sham    = EEG;
-EEG_cue     = EEG;
+EEG_Sham    = EEG;
+EEG_Cue     = EEG;
 
-[EEG_sham, lst_changes_sham]    = ...
-    pop_select( EEG_sham, 'trial', idx_mid_trial_sham );
-[EEG_cue, lst_changes_cue]     = ...
-    pop_select( EEG_cue, 'trial', idx_mid_trial_cue );
+[EEG_Sham, lst_changes_sham]    = ...
+    pop_select( EEG_Sham, 'trial', idx_mid_trial_sham );
+[EEG_Cue, lst_changes_cue]     = ...
+    pop_select( EEG_Cue, 'trial', idx_mid_trial_cue );
 
-if ~isfield(EEG, 'lst_changes')
-    EEG.lst_changes = lst_changes;
-else
-    EEG.lst_changes(...
-        numel(EEG.lst_changes) + 1 : ...
-        numel(EEG.lst_changes) + numel(lst_changes)) = ...
-        lst_changes;
+
+EEG_Sham.lst_changes{end+1,1}   = lst_changes_sham;
+EEG_Cue.lst_changes{end+1,1}    = lst_changes_cue;
+
 end
-
-EEG_sham.lst_changes            = EEG.lst_changes;
-EEG_sham.lst_changes{end+1,1}   = {lst_changes_sham};
-EEG_cue.lst_changes             = EEG.lst_changes;
-EEG_cue.lst_changes{end+1,1}    = {lst_changes_cue};
-
-%% Saving here
-str_savefile_sham  = strcat(extractBefore(EEG.filename, '.set'), ...
-    '_Sham_', set_sequence, '.set');
-str_savefile_cue  = strcat(extractBefore(EEG.filename, '.set'), ...
-    '_Cue_', set_sequence, '.set');
-
-EEG = EEG_sham;
-[EEG, lst_changes{end+1,1}] = pop_saveset( EEG, ...
-    'filename', str_savefile_sham, ...
-    'filepath', savePath);
-
-EEG = EEG_cue;
-[EEG, lst_changes{end+1,1}] = pop_saveset( EEG, ...
-    'filename', str_savefile_cue, ...
-    'filepath', savePath); % strings to be defined
 

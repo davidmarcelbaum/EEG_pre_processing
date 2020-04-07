@@ -1,24 +1,8 @@
-% This script performs the following steps on EEG datasets:
-% 1.	Import datasets into EEGLAB
-% 2.	Extract SWS (2, 3 and 4)
-% 3.	Reject non-wanted channels (such as M1, M2, HEOG, VEOG, Triggers, Ref)
-% 5.	Filtfilt 0.1 45
-% 6.	Reduce spike bursts noise by additional filtering
-% 7.	Automatic and eye-based rejection of noisy channels
-%       a.	Set these to zeros(channel, columns) and interpolate them
-% 8.	Re-ref mean of all excluding 0 channels
-% 9.	Rej noisy periods
-% 10.	ICA excluding chans of zeros (step 6)
-% 11.	Component rej
-% 12.   Interpolate channels of zeros (from step 7) with artefact-cleaned
-%       channels
-% 13.	Epoch into trials
-% 14.	Rej epochs of noise and of artefactual components (ICA weights)
-% 15.	Separate trigger groups into distinct datasets
-% 16.   Downsample to 100Hz
-
+% This script performs several pre_processing steps on EEG recordings. The
+% code makes heavy use of EEGLAB 2019.1 and all credits go to the
+% developpers of the EEGLAB toolbox.
 % This script can handle .mff, .set and [.............] datasets
-% Order of pre-processing steps is to be changed in "2. Perform
+% Order of pre-processing steps is to be changed in section 2 "Perform
 % pre-processing steps" and does not require any further changes.
 
 
@@ -26,7 +10,7 @@
 %% Terms and conditions
 %  ====================
 
-% Avilable under the terms of the Berkeley Software Distribution licence:
+% Available under the terms of the Berkeley Software Distribution licence:
 % Copyright (c) 2020, Laboratory for Brain-Machine Interfaces and
 % Neuromodulation, Pontificia Universidad Católica de Chile,
 % hereafter referred to as the "Organization".
@@ -49,31 +33,6 @@
 %% Important user-defined variables
 %  ================================
 
-% Modifiable declarations inside several files are also possible and tagged
-%   |===USER INPUT===|
-%
-%   ...
-%
-%   |=END USER INPUT=|
-
-% set(0, 'defaultFigureRenderer', 'painters')
-% set(0, 'defaultFigureRenderer', 'zbuffer')
-% One of both appearently can accelerate eegplot function 
-
-pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori/preProcessing/DataChans/';
-% String of file path to the mother stem folder containing the datasets
-
-dataType            = '.set'; % {'.cdt', '.set', '.mff'}
-% String of file extension of data to process
-
-% Choose what steps will be performed
-% MANUAL STEPS OCCUR AFTER:
-% - medianfilter    :   Automatic and eye-based rejection of noisy channels
-% - rereference     :   Rej noisy periods
-% - runica          :   Component rej
-% - epoching        :   Trial-based component rejection
-% AND SHOULD THEREFORE BE THE LAST 1 SET INSIDE RUN
-
 % Define all steps to be performed: 0 for false and 1 for true
 extractsws          = 0;    % Extract SWS periods of datasets
 rejectchans         = 0;    % Reject non-wanted channels
@@ -85,17 +44,18 @@ noisychans2zeros    = 0;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
 noisyperiodreject   = 0;    % Rejection of noisy channels based on manually
                             % generated table with noisy period info
-performica          = 1;    % Run ICA on datasets. This step takes a while
+performica          = 0;    % Run ICA on datasets. This step takes a while
 rereference         = 0;    % Re-reference channels to choosen reference.
                             % Reference is choosen when function is called
                             % in script
-epoching            = 0;    % Slice datasets according to trigger edges.
-                            % Parameters set when function is called in
-                            % script
-separategroups      = 0;    % Separate trial series into groups. Parameters
+reject_IC           = 0;    % Extract information about artifact components
+                            % and reject these
+chan_interpol       = 1;    % Interpolate rejected channels (all 0)
+downsample          = 1;    % Downsample datsets to user-defined sample fr
+separate_trial_grps = 1;    % Separate trial series into groups. Parameters
                             % set when function is called in script.
                             
-lastStep            = 'Run ICA';
+lastStep            = 'Separate trials';
                             % Define last step to be done in this run
                             % {...
                             %   'Extract SWS', ...
@@ -105,7 +65,25 @@ lastStep            = 'Run ICA';
                             %   'Set noisy channels to zeros', ...
                             %   'Reject noisy periods', ...
                             %   'Run ICA', ...
-                            %   'Re-reference' }
+                            %   'Reject ICs', ...
+                            %   'Epoch', ...
+                            %   'Separate trials', ...
+                            %   'Re-reference', ...
+                            %   'Interpolate chans', ...
+                            %   'Downsample'}
+
+% Modifiable declarations inside several files are also possible and tagged
+%   |===USER INPUT===|
+%
+%   ...
+%
+%   |=END USER INPUT=|
+
+pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori/preProcessing/ICAweights_SAMPLE/';
+% String of file path to the mother stem folder containing the datasets
+
+dataType            = '.set'; % {'.cdt', '.set', '.mff'}
+% String of file extension of data to process
                             
 
 %                         +-------------------+
@@ -158,23 +136,48 @@ if ~isempty(locateEeglab)
     
     [folderEEGLAB, ~, ~] = fileparts(locateEeglab);
     
-    strcat(folderEEGLAB, filesep, 'functions', filesep, 'adminfunc');
-    strcat(folderEEGLAB, filesep, 'functions', filesep, 'popfunc');
+    folders2add = dir(folderEEGLAB);
+    
+    % This section is overly complicated and could be substituted by
+    % running 'EEGLAB;', but allows running this code without loading the
+    % Java environment ('matlab -nodisplay -nojvm') which gives a great 
+    % speed boost of the code 
+    for s_fold = 1:size(folders2add, 1)
+        
+        if folders2add(s_fold).isdir == 1
+            
+            if strcmp(folders2add(s_fold).name, '.') || ...
+                    strcmp(folders2add(s_fold).name, '..')
+                continue
+            else
+               subfolders2add = dir(strcat(...
+                   folderEEGLAB, filesep, folders2add(s_fold).name)); 
+            end
+            
+            for s_subfold = 1:size(subfolders2add, 1)
+                
+                if subfolders2add(s_subfold).isdir == 1
+                    
+                    if strcmp(subfolders2add(s_fold).name, '.') || ...
+                            strcmp(subfolders2add(s_fold).name, '..')
+                        continue
+                    else
+                        
+                        addpath(strcat(...
+                            folderEEGLAB, filesep, ...
+                            folders2add(s_fold).name, filesep, ...
+                            subfolders2add(s_subfold).name))
+                    end
+                end
+            end
+        end
+    end
     
 else
     
     error('EEGLAB not found')
     
 end
-
-
-% -------------------------------------------------------------------------
-% It is probably good to initialize EEGLAB variables once and also allows
-% to reinitialize the EEG structure which holds heavy variables and is
-% likely to make MATLAB throw out of memory errors.
-
-eeglab;
-close all;
 
 
 % -------------------------------------------------------------------------
@@ -218,10 +221,17 @@ switch lastStep
     case 'Reject noisy periods'
         savePath = strcat(savePath, filesep, 'NoisyPeriods');
     case 'Run ICA'
-        savePath = strcat(savePath, filesep, 'ICAweights20200330');
+        savePath = strcat(savePath, filesep, 'ICAweights');
     case 'Re-reference'
         savePath = strcat(savePath, filesep, 'ReRef');
-        
+    case 'Reject ICs'
+        savePath = strcat(savePath, filesep, 'ICAclean');
+    case 'Epoch'
+        savePath = strcat(savePath, filesep, 'Epoched');
+    case 'Separate trials'
+        savePath = strcat(savePath, filesep, 'TrialGroups');
+    case 'Interpolate chans'
+        savePath = strcat(savePath, filesep, 'ChanInterpol');
 end
 
 
@@ -240,6 +250,7 @@ end
 %  ======================
 % Every script seems rough on the outside, but has a soft core, so treat it nicely.
 
+tic;
 for s_file = 1 : num_files
     
     
@@ -302,6 +313,12 @@ for s_file = 1 : num_files
             str_savefile = strcat(str_savefile, '_ICAweights.set');
         case 'Re-reference'
             str_savefile = strcat(str_savefile, '_ReRef.set');
+        case 'Reject ICs'
+            savePath = strcat(savePath, filesep, '_ICAclean');
+        case 'Epoch'
+            savePath = strcat(savePath, filesep, '_Epoched');
+        case 'Separate trials'
+            % Will be adapted by function;
             
     end
     
@@ -391,6 +408,20 @@ for s_file = 1 : num_files
     end
     
     
+    if reject_IC == 1
+        run p_comp_reject
+        thisStep = 'Reject ICs';
+        allSteps(end+1) = {thisStep};
+    end
+    
+    
+    if chan_interpol == 1
+        run p_interpolate
+        thisStep = 'Interpolate chans';
+        allSteps(end+1) = {thisStep};
+    end
+    
+    
     if rereference == 1
         run p_offlinereference
         thisStep = 'Re-reference';
@@ -398,10 +429,28 @@ for s_file = 1 : num_files
     end
     
     
-    if ~strcmp(lastStep, thisStep)
-        warning('Filename and filepath to save in are not corresponding to defined last step!')
+    if separate_trial_grps == 1
+        
+        % Add the history of all called functions to EEG structure
+        if ~isfield(EEG, 'lst_changes')
+            EEG.lst_changes = lst_changes;
+        else
+            EEG.lst_changes(...
+                numel(EEG.lst_changes) + 1 : ...
+                numel(EEG.lst_changes) + numel(lst_changes)) = ...
+                lst_changes;
+        end
+        
+        [EEG_Cue, EEG_Sham, set_sequence] = ...
+            f_sep_trial_groups(EEG, savePath);
+        thisStep = 'Separate trials';
+        allSteps(end+1) = {thisStep};
     end
     
+    
+    if ~strcmp(lastStep, thisStep)
+        warning('Filename and filepath to save in are not corresponding to defined last step!')
+    end    
     % End of pre-processing
     % =====================
     
@@ -410,21 +459,39 @@ for s_file = 1 : num_files
     %% 3. Save dataset
     %  ===============
     
-    % Add the history of all called functions to EEG structure
-    if ~isfield(EEG, 'lst_changes')    
-        EEG.lst_changes = lst_changes;
+    if strcmp(thisStep, 'Separate trials')
+        
+        str_savefile_sham  = strcat(str_savefile, ...
+            '_Sham_', set_sequence, '.set');
+
+        str_savefile_cue  = strcat(str_savefile, ...
+            '_Cue_', set_sequence, '.set');
+     
+        [EEG, lst_changes{end+1,1}] = pop_saveset( EEG_Cue, ...
+            'filename', str_savefile_cue, ...
+            'filepath', savePath);
+        
+        [EEG, lst_changes{end+1,1}] = pop_saveset( EEG_Sham, ...
+            'filename', str_savefile_sham, ...
+            'filepath', savePath);
+        
     else
-        EEG.lst_changes(...
-            numel(EEG.lst_changes) + 1 : ...
-            numel(EEG.lst_changes) + numel(lst_changes)) = ...
-            lst_changes;
+        
+        % Add the history of all called functions to EEG structure
+        if ~isfield(EEG, 'lst_changes')
+            EEG.lst_changes = lst_changes;
+        else
+            EEG.lst_changes(...
+                numel(EEG.lst_changes) + 1 : ...
+                numel(EEG.lst_changes) + numel(lst_changes)) = ...
+                lst_changes;
+        end
+        
+        [EEG, lst_changes{end+1,1}] = pop_saveset( EEG, ...
+            'filename', str_savefile, ...
+            'filepath', savePath);
+        
     end
-    
-    
-    [EEG, lst_changes{end+1,1}] = pop_saveset( EEG, ...
-        'filename', str_savefile, ...
-        'filepath', savePath);
-    
     
     % Optional, but this way, we make sure data does not get mixed between 
     % subjects.
@@ -435,4 +502,4 @@ for s_file = 1 : num_files
 end
 
 allSteps % all performed steps
-
+toc

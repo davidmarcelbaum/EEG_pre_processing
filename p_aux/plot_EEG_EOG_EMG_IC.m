@@ -1,5 +1,5 @@
-dataFile = 'RC_201_sleep_ICAweights.set';
-dataPath = '/home/sleep/Documents/DAVID/Datasets/Ori/preProcessing/ICAweights20200330';
+dataFile = 'RC_091_sleep_ICAweights.set';
+dataPath = '/home/sleep/Desktop/preProcessing/ICAweights';
 
 % Prompt for loading
 eeglab

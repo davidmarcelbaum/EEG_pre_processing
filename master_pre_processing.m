@@ -12,8 +12,8 @@
 
 % Available under the terms of the Berkeley Software Distribution licence:
 % Copyright (c) 2020, Laboratory for Brain-Machine Interfaces and
-% Neuromodulation, Pontificia Universidad Católica de Chile,
-% hereafter referred to as the "Organization".
+% Neuromodulation, Pontificia Universidad Católica de Chile, hereafter 
+% referred to as the "Organization".
 % All rights reserved.
 % 
 % Redistribution and use in source and binary forms are permitted
@@ -34,33 +34,36 @@
 %  ================================
 
 % Define all steps to be performed: 0 for false and 1 for true
-extractsws          = 0;    % Extract SWS periods of datasets
-rejectchans         = 0;    % Reject non-wanted channels
+extractsws          = 1;    % Extract SWS periods of datasets
+rejectchans         = 1;    % Reject non-wanted channels
 filter              = 0;    % Filtfilt processing. Parameters set when
                             % when function called in script
+buildfiltfilt       = 1;    % Build and apply a custom zero-phase Fir 
+                            % FiltFilt bandpass filter
 medianfilter        = 0;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
-noisychans2zeros    = 0;    % Interpolation of noisy channels based on
+noisychans2zeros    = 1;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
-noisyperiodreject   = 0;    % Rejection of noisy channels based on manually
+noisyperiodreject   = 1;    % Rejection of noisy channels based on manually
                             % generated table with noisy period info
-performica          = 0;    % Run ICA on datasets. This step takes a while
-rereference         = 0;    % Re-reference channels to choosen reference.
+rereference         = 1;    % Re-reference channels to choosen reference.
                             % Reference is choosen when function is called
                             % in script
+performica          = 1;    % Run ICA on datasets. This step takes a while
 reject_IC           = 0;    % Extract information about artifact components
                             % and reject these
-chan_interpol       = 1;    % Interpolate rejected channels (all 0)
-downsample          = 1;    % Downsample datsets to user-defined sample fr
-separate_trial_grps = 1;    % Separate trial series into groups. Parameters
+chan_interpol       = 0;    % Interpolate rejected channels (all 0)
+downsample          = 0;    % Downsample datsets to user-defined sample fr
+separate_trial_grps = 0;    % Separate trial series into groups. Parameters
                             % set when function is called in script.
                             
-lastStep            = 'Separate trials';
+lastStep            = 'Run ICA';
                             % Define last step to be done in this run
                             % {...
                             %   'Extract SWS', ...
                             %   'Reject channels', ...
                             %   'Filter', ...
+                            %   'CustomFilter', ...
                             %   'Median filter for spike rejection', ...
                             %   'Set noisy channels to zeros', ...
                             %   'Reject noisy periods', ...
@@ -79,10 +82,10 @@ lastStep            = 'Separate trials';
 %
 %   |=END USER INPUT=|
 
-pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori/preProcessing/ICAweights_SAMPLE/';
+pathData            = '/home/sleep/Desktop';
 % String of file path to the mother stem folder containing the datasets
 
-dataType            = '.set'; % {'.cdt', '.set', '.mff'}
+dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
                             
 
@@ -141,7 +144,8 @@ if ~isempty(locateEeglab)
     % This section is overly complicated and could be substituted by
     % running 'EEGLAB;', but allows running this code without loading the
     % Java environment ('matlab -nodisplay -nojvm') which gives a great 
-    % speed boost of the code 
+    % speed boost of the code
+    % SEEMS TO BE ABLE TO BE REPLACED BY 'addpath(genpath(folderEEGLAB));'
     for s_fold = 1:size(folders2add, 1)
         
         if folders2add(s_fold).isdir == 1
@@ -188,8 +192,7 @@ if strcmp(pathData(end), filesep)
 end
 
 
-clearvars rej rej_dot rej_doubledot rej_nonformat STUDY PLUGINLIST ...
-    CURRENTSTUDY CURRENTSET ALLEEG ALLCOM eeglabUpdater LASTCOM globalvars
+clearvars rej rej_dot rej_doubledot rej_nonformat globalvars
 
 
 % -------------------------------------------------------------------------
@@ -214,6 +217,8 @@ switch lastStep
         savePath = strcat(savePath, filesep, 'DataChans');
     case 'Filter'
         savePath = strcat(savePath, filesep, 'Filtered');
+    case 'CustomFilter'
+        savePath = strcat(savePath, filesep, 'CustomFiltered');
     case 'Median filter for spike rejection'
         savePath = strcat(savePath, filesep, 'MedianFiltered');
     case 'Set noisy channels to zeros'
@@ -303,6 +308,8 @@ for s_file = 1 : num_files
             str_savefile = strcat(str_savefile, '_ChanReject.set');
         case 'Filter'
             str_savefile = strcat(str_savefile, '_Filt.set');
+        case 'CustomFilter'
+            str_savefile = strcat(str_savefile, '_CustomFilt.set');
         case 'Median filter for spike rejection'
             str_savefile = strcat(str_savefile, '_MedianFilt.set');
         case 'Set noisy channels to zeros'
@@ -369,15 +376,23 @@ for s_file = 1 : num_files
     
     if filter == 1        
         run p_filter.m        
-        thisStep = 'Filter';  
+        thisStep = 'Filter';
+        allSteps(end+1) = {thisStep};
+    end
+    
+    
+    if buildfiltfilt == 1
+        run p_aux/p_design_filter.m
+        thisStep = 'CustomFilter';
         allSteps(end+1) = {thisStep};
     end
     
     
     if medianfilter == 1        
-        run p_medfilt.m        
-        thisStep = 'Median filter for spike rejection';
-        allSteps(end+1) = {thisStep};
+%         run p_medfilt.m
+%         thisStep = 'Median filter for spike rejection';
+%         allSteps(end+1) = {thisStep};
+        warning('MedFilt was set to be run but was skipped because is commented!')
     end
     
     
@@ -394,9 +409,17 @@ for s_file = 1 : num_files
         allSteps(end+1) = {thisStep};
     end
     
+    
     if rejectchans == 1
         run p_chan_reject.m
         thisStep = 'Reject channels';
+        allSteps(end+1) = {thisStep};
+    end
+    
+    
+    if rereference == 1
+        run p_offlinereference
+        thisStep = 'Re-reference';
         allSteps(end+1) = {thisStep};
     end
     
@@ -422,13 +445,6 @@ for s_file = 1 : num_files
     end
     
     
-    if rereference == 1
-        run p_offlinereference
-        thisStep = 'Re-reference';
-        allSteps(end+1) = {thisStep};
-    end
-    
-    
     if separate_trial_grps == 1
         
         % Add the history of all called functions to EEG structure
@@ -445,6 +461,7 @@ for s_file = 1 : num_files
             f_sep_trial_groups(EEG, savePath);
         thisStep = 'Separate trials';
         allSteps(end+1) = {thisStep};
+        
     end
     
     
@@ -492,14 +509,9 @@ for s_file = 1 : num_files
             'filepath', savePath);
         
     end
-    
-    % Optional, but this way, we make sure data does not get mixed between 
-    % subjects.
-    clear EEG
-    
    
     
 end
 
-allSteps % all performed steps
+allSteps % all performed steps for end script verification
 toc

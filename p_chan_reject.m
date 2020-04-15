@@ -92,7 +92,6 @@ end
 % The 'nochannel' option will adapt EEG.chanlocs and EEG.nbchan
 
 
-
 if destructive_mode == 1
     
     % ---------------------------------------------------------------------

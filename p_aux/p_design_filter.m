@@ -3,45 +3,46 @@
 
 % |===USER INPUT===|
 pm.response             = 'bandpassfir';% Type of filter to apply {'string'}
-% pm.filtOrder            = 33;           % scalar
-pm.SampleRate           = EEG.srate;    % Acquisition rate of data
-pm.StopbandFrequency1   = 0.5;          % Below this frequency, signal is 
+pm.filtOrder            = 100;          % scalar
+pm.SampleRate           = 1000;         % Acquisition rate of data
+pm.PassbandFrequency1   = 0.5;         % Output of frequencies inside 
+                                        % passband will be 100%
+pm.StopbandFrequency1   = 0.45;          % Below this frequency, signal is 
                                         % attenuated by set attenuation
+pm.PassbandFrequency2   = 45;
 pm.StopbandFrequency2   = 50;           % Above this frequency, signal is 
                                         % attenuated by setattenuation
-pm.StopbandAttenuation1 = 100;          % Attenuation of signal amplitude 
+pm.StopbandAttenuation1 = 90;           % Attenuation of signal amplitude 
                                         % (- Value in dB)
-pm.StopbandAttenuation2 = 70;
+pm.StopbandAttenuation2 = 20;
 
 pm.PassbandRipple       = 1;            % Not sure, what this is, but seems
                                         % to be allowed dB variations in 
                                         % passband frequencies
-pm.PassbandFrequency1   = 0.75;
-pm.PassbandFrequency2   = 45;           % Output of frequencies inside 
-                                        % passband will be 100%
 pm.DesignMethod         = 'kaiserwin';  % Step-wise reduction in signal 
                                         % amplitude
+                                        % Windowed such as kaiserwin allows
+                                        % for high roll-off in transition
+                                        % fr band while maintaining
+                                        % relatively low but significant 
+                                        % ripples in both passband and
+                                        % stopband.
+                                        % Butter IIR design allows for
+                                        % minimal Ripples but does not
+                                        % allow for high roll-off and
+                                        % produces overshoot into Passband!
 % |=END USER INPUT=|
 
 
 %% Extract current recording in for non-destructive computing
-dataIn                      = EEG.data;
+dataIn = EEG.data;
 if isa(dataIn, 'single')
     dataIn = double(dataIn);
 end
 
 
 %% Build the filter
-
-% designedFilt = designfilt('highpassfir', ...
-%     'StopbandFrequency',      pm.StopbandFrequency,           ...
-%     'PassbandFrequency',      pm.PassbandFrequency,           ...
-%     'StopbandAttenuation',    pm.StopbandAttenuation,         ...
-%     'PassbandRipple',         pm.PassbandRipple,              ...
-%     'SampleRate',             pm.SampleRate,                  ...
-%     'DesignMethod',           pm.DesignMethod);
-
-designedFilt = designfilt('bandpassfir', ...
+designedFilt = designfilt(pm.response, ...
     'SampleRate',           pm.SampleRate,              ...
     'StopbandAttenuation1', pm.StopbandAttenuation1,    ...
     'StopbandAttenuation2', pm.StopbandAttenuation2,    ...
@@ -54,8 +55,8 @@ designedFilt = designfilt('bandpassfir', ...
 
 % The length of the input X must be more than three times the filter order,
 % defined as max(length(B)-1,length(A)-1)
-fvtool(designedFilt) % plot the frequency response
-fvtool(designedFilt, 'MagnitudeDisplay', 'Zero-phase')
+% fvtool(designedFilt) % plot the frequency response
+% fvtool(designedFilt, 'MagnitudeDisplay', 'Zero-phase')
 
 % ERROR SAMPLE NUMBER: 76938 / 3 = 25645 = filtOrder
 % There is an error when parsing the data matrix as number of channels x
@@ -68,24 +69,12 @@ fprintf('\n<!> Applying filtilt. Make some coffee, this will take a while...')
 dataOut = filtfilt(designedFilt, dataIn);
 
 
-%% For verification, get power spectrum (in dB)
-
-% params.fpass    = [0 45];
-% params.Fs       = pm.SampleRate;
-% params.tapers   = [0 100];
-% params.trialave = 0;
-% params.err      = 0;
-% [v_peaks,v_freqs]    = mtspectrumc(dataOut(2,:), params); 
-% plot(v_freqs,v_peaks, 'LineWidth', 0.5, 'Color', 'b')
-
-
-
 %% Parsing back the data matrix to EEG structure and saving the step
 EEG.data = dataOut';
 
 clear dataIn dataOut
 
-lst_changes{end+1,1} = strcat('customfilt(', 'bandpassfir', ...
+lst_changes{end+1,1} = strcat('customfilt(', 'bandpass', ...
     '_SampleRate',           num2str(pm.SampleRate),              ...
     '_StopbandAttenuation1', num2str(pm.StopbandAttenuation1),    ...
     '_StopbandAttenuation2', num2str(pm.StopbandAttenuation2),    ...

@@ -1,6 +1,6 @@
 % |===USER INPUT===|
 filt_highpass       = 0.1;
-filt_lowpass        = 45;
+filt_lowpass        = 4;
 filter_length       = 33000; % 66000 seems better, try to further increase
 % Frequencies to use as boundaries for filtering and filter "steeepness".
 % The lower the filt order, the higher the filter length and the steeper

@@ -82,7 +82,7 @@ lastStep            = 'Run ICA';
 %
 %   |=END USER INPUT=|
 
-pathData            = '/home/sleep/Desktop/DavidExploringFilterDesigns/';
+pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori';
 % String of file path to the mother stem folder containing the datasets
 
 dataType            = '.mff'; % {'.cdt', '.set', '.mff'}

@@ -1,5 +1,5 @@
 % |===USER INPUT===|
-noiseICFile   = '/home/sleep/Documents/DAVID/Datasets/Ori/preProcessing/IC_rejection_info.mat';
+noiseICFile   = '/home/sleep/Desktop/DavidExploringFilterDesigns/preProcessing/ICAweightsCustomKaiserwinFilter/IC_rejection_info_CustomFilt.mat';
 def_variable    = 'comps2reject';
 % Name of variable that holds the cell of subject-wise information of noisy
 % periods
@@ -23,6 +23,7 @@ if isempty(v_ICs)
     return
 end
 
+fprintf('\n<!> Eliminating %d component(s)\n', numel(v_ICs))
 
 % Order: EEG, components, plotag, keepcomp
 EEG = pop_subcomp( EEG, v_ICs, 0, 0);

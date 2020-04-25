@@ -34,46 +34,45 @@
 %  ================================
 
 % Define all steps to be performed: 0 for false and 1 for true
-extractsws          = 1;    % Extract SWS periods of datasets
-rejectchans         = 1;    % Reject non-wanted channels
+extractsws          = 0;    % Extract SWS periods of datasets
+rejectchans         = 0;    % Reject non-wanted channels
 filter              = 0;    % Filtfilt processing. Parameters set when
                             % when function called in script
-buildfiltfilt       = 1;    % Build and apply a custom zero-phase Fir 
+buildfiltfilt       = 0;    % Build and apply a custom zero-phase Fir 
                             % FiltFilt bandpass filter
 medianfilter        = 0;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
-noisychans2zeros    = 1;    % Interpolation of noisy channels based on
+noisychans2zeros    = 0;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
-noisyperiodreject   = 1;    % Rejection of noisy channels based on manually
+noisyperiodreject   = 0;    % Rejection of noisy channels based on manually
                             % generated table with noisy period info
-rereference         = 1;    % Re-reference channels to choosen reference.
+rereference         = 0;    % Re-reference channels to choosen reference.
                             % Reference is choosen when function is called
                             % in script
-performica          = 1;    % Run ICA on datasets. This step takes a while
-reject_IC           = 0;    % Extract information about artifact components
+performica          = 0;    % Run ICA on datasets. This step takes a while
+reject_IC           = 1;    % Extract information about artifact components
                             % and reject these
-chan_interpol       = 0;    % Interpolate rejected channels (all 0)
+chan_interpol       = 1;    % Interpolate rejected channels (all 0)
 downsample          = 0;    % Downsample datsets to user-defined sample fr
-separate_trial_grps = 0;    % Separate trial series into groups. Parameters
+separate_trial_grps = 1;    % Separate trial series into groups. Parameters
                             % set when function is called in script.
                             
-lastStep            = 'Run ICA';
+lastStep            = 'separate_trial_grps';
                             % Define last step to be done in this run
                             % {...
-                            %   'Extract SWS', ...
-                            %   'Reject channels', ...
-                            %   'Filter', ...
-                            %   'CustomFilter', ...
-                            %   'Median filter for spike rejection', ...
-                            %   'Set noisy channels to zeros', ...
-                            %   'Reject noisy periods', ...
-                            %   'Run ICA', ...
-                            %   'Reject ICs', ...
-                            %   'Epoch', ...
-                            %   'Separate trials', ...
-                            %   'Re-reference', ...
-                            %   'Interpolate chans', ...
-                            %   'Downsample'}
+                            %   'extractsws', ...
+                            %   'rejectchans', ...
+                            %   'filter', ...
+                            %   'buildfiltfilt', ...
+                            %   'medianfilter', ...
+                            %   'noisychans2zeros', ...
+                            %   'noisyperiodreject', ...
+                            %   'performica', ...
+                            %   'reject_IC', ...
+                            %   'separate_trial_grps', ...
+                            %   'rereference', ...
+                            %   'chan_interpol', ...
+                            %   'downsample'}
 
 % Modifiable declarations inside several files are also possible and tagged
 %   |===USER INPUT===|
@@ -82,11 +81,27 @@ lastStep            = 'Run ICA';
 %
 %   |=END USER INPUT=|
 
-pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori';
+pathData            = '/home/sleep/Desktop/DavidExploringFilterDesigns/preProcessing/ICAweightsCustomKaiserwinFilter';
 % String of file path to the mother stem folder containing the datasets
 
-dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
+dataType            = '.set'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
+
+stimulation_seq     = 'switchedON_switchedOFF';
+% {'switchedON_switchedOFF', 'switchedOFF_switchedON'}
+% recordings --> trigger1 on, trigger1 off, trigger2 on, trigger2 off, ...     
+% "on_off" = [ongoing stimulation type 1, post-stimulation type 1] and
+% "off_on" = [pre-stimulation type 1, ongoing stimulation type 1], where
+% "pre-stimulation type 1" is actually post-stimulation type 2!
+% On and Off therefore refers to the current state of the stimulation
+% ("switched on" or "switched off").
+
+trials2rejPath   = '/home/sleep/Desktop/DavidExploringFilterDesigns/preProcessing/ICAweightsCustomKaiserwinFilter/IC_rejection_info_CustomFilt.mat';
+% Path to .mat file that contains information about trials to reject
+% (explanations about organization of the file in f_sep_trial_groups
+trials2rejVar    = 'comps2reject';
+% Name of variable that holds the information about the trials to reject
+% inside the .mat file
                             
 
 %                         +-------------------+
@@ -97,6 +112,11 @@ dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
 
 %% Setting up user land
 %  ====================
+% -------------------------------------------------------------------------
+% Define variables to be shared across workspaces
+global str_base
+
+
 % -------------------------------------------------------------------------
 % Here we set up the list of recording files that will be processed in the 
 % script
@@ -211,31 +231,29 @@ end
 
 switch lastStep
     
-    case 'Extract SWS'
+    case 'extractsws'
         savePath = strcat(savePath, filesep, 'extrSWS');
-    case 'Reject channels'
+    case 'rejectchans'
         savePath = strcat(savePath, filesep, 'DataChans');
-    case 'Filter'
+    case 'filter'
         savePath = strcat(savePath, filesep, 'Filtered');
-    case 'CustomFilter'
+    case 'buildfiltfilt'
         savePath = strcat(savePath, filesep, 'CustomFiltered');
-    case 'Median filter for spike rejection'
+    case 'medianfilter'
         savePath = strcat(savePath, filesep, 'MedianFiltered');
-    case 'Set noisy channels to zeros'
+    case 'noisychans2zeros'
         savePath = strcat(savePath, filesep, 'NoisyChans');
-    case 'Reject noisy periods'
+    case 'noisyperiodreject'
         savePath = strcat(savePath, filesep, 'NoisyPeriods');
-    case 'Run ICA'
+    case 'performica'
         savePath = strcat(savePath, filesep, 'ICAweights');
-    case 'Re-reference'
+    case 'rereference'
         savePath = strcat(savePath, filesep, 'ReRef');
-    case 'Reject ICs'
+    case 'reject_IC'
         savePath = strcat(savePath, filesep, 'ICAclean');
-    case 'Epoch'
-        savePath = strcat(savePath, filesep, 'Epoched');
-    case 'Separate trials'
+    case 'separate_trial_grps'
         savePath = strcat(savePath, filesep, 'TrialGroups');
-    case 'Interpolate chans'
+    case 'chan_interpol'
         savePath = strcat(savePath, filesep, 'ChanInterpol');
 end
 
@@ -302,30 +320,30 @@ for s_file = 1 : num_files
     
     switch lastStep
         
-        case 'Extract SWS'
+        case 'extractsws'
             str_savefile = strcat(str_savefile, '_SWS.set');
-        case 'Reject channels'
+        case 'rejectchans'
             str_savefile = strcat(str_savefile, '_ChanReject.set');
-        case 'Filter'
+        case 'filter'
             str_savefile = strcat(str_savefile, '_Filt.set');
-        case 'CustomFilter'
+        case 'buildfiltfilt'
             str_savefile = strcat(str_savefile, '_CustomFilt.set');
-        case 'Median filter for spike rejection'
+        case 'medianfilter'
             str_savefile = strcat(str_savefile, '_MedianFilt.set');
-        case 'Set noisy channels to zeros'
+        case 'noisychans2zeros'
             str_savefile = strcat(str_savefile, '_NoisyChans.set');
-        case 'Reject noisy periods'
+        case 'noisyperiodreject'
             str_savefile = strcat(str_savefile, '_NoisyPeriods.set');
-        case 'Run ICA'
+        case 'performica'
             str_savefile = strcat(str_savefile, '_ICAweights.set');
-        case 'Re-reference'
+        case 'rereference'
             str_savefile = strcat(str_savefile, '_ReRef.set');
-        case 'Reject ICs'
-            savePath = strcat(savePath, filesep, '_ICAclean');
-        case 'Epoch'
-            savePath = strcat(savePath, filesep, '_Epoched');
-        case 'Separate trials'
+        case 'reject_IC'
+            str_savefile = strcat(str_savefile, '_ICAclean');
+        case 'separate_trial_grps'
             % Will be adapted by function;
+        case 'chan_interpol'
+            str_savefile = strcat(str_savefile, '_ChanInterp');
             
     end
     
@@ -369,28 +387,28 @@ for s_file = 1 : num_files
     
     if extractsws == 1
         run p_extract_sws.m        
-        thisStep = 'Extract SWS';
+        thisStep = 'extractsws';
         allSteps(end+1) = {thisStep};
     end
     
     
     if filter == 1        
         run p_filter.m        
-        thisStep = 'Filter';
+        thisStep = 'filter';
         allSteps(end+1) = {thisStep};
     end
     
     
     if buildfiltfilt == 1
         run p_aux/p_design_filter.m
-        thisStep = 'CustomFilter';
+        thisStep = 'buildfiltfilt';
         allSteps(end+1) = {thisStep};
     end
     
     
     if medianfilter == 1        
 %         run p_medfilt.m
-%         thisStep = 'Median filter for spike rejection';
+%         thisStep = 'medianfilter';
 %         allSteps(end+1) = {thisStep};
         warning('MedFilt was set to be run but was skipped because is commented!')
     end
@@ -398,49 +416,49 @@ for s_file = 1 : num_files
     
     if noisychans2zeros == 1        
         run p_set_zerochans.m        
-        thisStep = 'Set noisy channels to zeros';
+        thisStep = 'noisyperiodreject';
         allSteps(end+1) = {thisStep};
     end
     
     
     if noisyperiodreject == 1
         run p_noise_periods.m
-        thisStep = 'Reject noisy periods';
+        thisStep = 'noisyperiodreject';
         allSteps(end+1) = {thisStep};
     end
     
     
     if rejectchans == 1
         run p_chan_reject.m
-        thisStep = 'Reject channels';
+        thisStep = 'rejectchans';
         allSteps(end+1) = {thisStep};
     end
     
     
     if rereference == 1
         run p_offlinereference
-        thisStep = 'Re-reference';
+        thisStep = 'rereference';
         allSteps(end+1) = {thisStep};
     end
     
     
     if performica == 1
         [EEG, lst_changes{end+1,1}] = f_ica(EEG);
-        thisStep = 'Run ICA';
+        thisStep = 'performica';
         allSteps(end+1) = {thisStep};
     end
     
     
     if reject_IC == 1
         run p_comp_reject
-        thisStep = 'Reject ICs';
+        thisStep = 'reject_IC';
         allSteps(end+1) = {thisStep};
     end
     
     
     if chan_interpol == 1
         run p_interpolate
-        thisStep = 'Interpolate chans';
+        thisStep = 'chan_interpol';
         allSteps(end+1) = {thisStep};
     end
     
@@ -458,8 +476,10 @@ for s_file = 1 : num_files
         end
         
         [EEG_Cue, EEG_Sham, set_sequence] = ...
-            f_sep_trial_groups(EEG, savePath);
-        thisStep = 'Separate trials';
+            f_sep_trial_groups(EEG, stimulation_seq, ...
+            trials2rejPath, trials2rejVar);
+        
+        thisStep = 'separate_trial_grps';
         allSteps(end+1) = {thisStep};
         
     end
@@ -476,7 +496,7 @@ for s_file = 1 : num_files
     %% 3. Save dataset
     %  ===============
     
-    if strcmp(thisStep, 'Separate trials')
+    if strcmp(thisStep, 'separate_trial_grps')
         
         str_savefile_sham  = strcat(str_savefile, ...
             '_Sham_', set_sequence, '.set');
@@ -484,11 +504,11 @@ for s_file = 1 : num_files
         str_savefile_cue  = strcat(str_savefile, ...
             '_Cue_', set_sequence, '.set');
      
-        [EEG, lst_changes{end+1,1}] = pop_saveset( EEG_Cue, ...
+        [EEG_Cue] = pop_saveset( EEG_Cue, ...
             'filename', str_savefile_cue, ...
             'filepath', savePath);
         
-        [EEG, lst_changes{end+1,1}] = pop_saveset( EEG_Sham, ...
+        [EEG_Sham] = pop_saveset( EEG_Sham, ...
             'filename', str_savefile_sham, ...
             'filepath', savePath);
         
@@ -504,7 +524,7 @@ for s_file = 1 : num_files
                 lst_changes;
         end
         
-        [EEG, lst_changes{end+1,1}] = pop_saveset( EEG, ...
+        [EEG] = pop_saveset( EEG, ...
             'filename', str_savefile, ...
             'filepath', savePath);
         

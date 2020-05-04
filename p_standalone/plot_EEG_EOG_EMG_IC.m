@@ -1,7 +1,7 @@
 close all
 
-dataFile = 'RC_091_sleep_ICAweights.set';
-dataPath = '/home/sleep/Desktop/DavidExploringFilterDesigns/preProcessing/ICAweightsCustomKaiserwinFilter';
+dataFile = 'RC_131_sleep_ICAweights.set';
+dataPath = '/home/sleep/Desktop/DavidExploringFilterDesigns/preProcessing/ICAweightsEEGLABFiltered';
 midtrialTrigger = 'DIN2';
 
 % Prompt for loading

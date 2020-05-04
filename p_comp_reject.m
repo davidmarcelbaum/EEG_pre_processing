@@ -1,5 +1,5 @@
 % |===USER INPUT===|
-noiseICFile   = '/home/sleep/Desktop/DavidExploringFilterDesigns/preProcessing/ICAweightsCustomKaiserwinFilter/IC_rejection_info_CustomFilt.mat';
+noiseICFile   = '/home/sleep/Desktop/DavidExploringFilterDesigns/preProcessing/IC_rejection_info_EEGLABFilt_20200428.mat';
 def_variable    = 'comps2reject';
 % Name of variable that holds the cell of subject-wise information of noisy
 % periods

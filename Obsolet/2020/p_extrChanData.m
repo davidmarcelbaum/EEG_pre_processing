@@ -1,18 +1,18 @@
 %% Prerequisities
 if contains(computer,'PCWIN') == 1
-    slashSys = '\';
+    filesep = '\';
 else
-    slashSys = '/';
+    filesep = '/';
 end
 
 % Build save path for result saving at end
-if ~exist(strcat(cd, slashSys, 'DataChan'),'dir')
-    mkdir(strcat(cd, slashSys, 'DataChan'))
+if ~exist(strcat(cd, filesep, 'DataChan'),'dir')
+    mkdir(strcat(cd, filesep, 'DataChan'))
 end
-savePath = strcat(cd, slashSys, 'DataChan', slashSys);
+savePath = strcat(cd, filesep, 'DataChan', filesep);
 
 %% Set up user land
-pathName = strcat(uigetdir(cd,'Choose the folder that contains the datasets'),slashSys);
+pathName = strcat(uigetdir(cd,'Choose the folder that contains the datasets'),filesep);
 
 FilesList = dir([pathName,'*.set']);
 

@@ -81,7 +81,7 @@ lastStep            = 'separate_trial_grps';
 %
 %   |=END USER INPUT=|
 
-pathData            = '/home/sleep/Desktop/DavidExploringFilterDesigns/preProcessing/ICAweightsCustomKaiserwinFilter';
+pathData            = '/home/sleep/Desktop/DavidExploringFilterDesigns/preProcessing/ICAweightsEEGLABFiltered';
 % String of file path to the mother stem folder containing the datasets
 
 dataType            = '.set'; % {'.cdt', '.set', '.mff'}
@@ -96,7 +96,7 @@ stimulation_seq     = 'switchedON_switchedOFF';
 % On and Off therefore refers to the current state of the stimulation
 % ("switched on" or "switched off").
 
-trials2rejPath   = '/home/sleep/Desktop/DavidExploringFilterDesigns/preProcessing/ICAweightsCustomKaiserwinFilter/IC_rejection_info_CustomFilt.mat';
+trials2rejPath   = '/home/sleep/Desktop/DavidExploringFilterDesigns/preProcessing/IC_rejection_info_EEGLABFilt_20200428.mat';
 % Path to .mat file that contains information about trials to reject
 % (explanations about organization of the file in f_sep_trial_groups
 trials2rejVar    = 'comps2reject';
@@ -154,54 +154,56 @@ end
 % systems. This will then add the functions the script needs to MATLAB path
 
 locateEeglab = which('eeglab.m');
+[folderEEGLAB, ~, ~] = fileparts(locateEeglab);
+addpath(genpath(folderEEGLAB))
 
-if ~isempty(locateEeglab)
-    
-    [folderEEGLAB, ~, ~] = fileparts(locateEeglab);
-    
-    folders2add = dir(folderEEGLAB);
-    
-    % This section is overly complicated and could be substituted by
-    % running 'EEGLAB;', but allows running this code without loading the
-    % Java environment ('matlab -nodisplay -nojvm') which gives a great 
-    % speed boost of the code
-    % SEEMS TO BE ABLE TO BE REPLACED BY 'addpath(genpath(folderEEGLAB));'
-    for s_fold = 1:size(folders2add, 1)
-        
-        if folders2add(s_fold).isdir == 1
-            
-            if strcmp(folders2add(s_fold).name, '.') || ...
-                    strcmp(folders2add(s_fold).name, '..')
-                continue
-            else
-               subfolders2add = dir(strcat(...
-                   folderEEGLAB, filesep, folders2add(s_fold).name)); 
-            end
-            
-            for s_subfold = 1:size(subfolders2add, 1)
-                
-                if subfolders2add(s_subfold).isdir == 1
-                    
-                    if strcmp(subfolders2add(s_fold).name, '.') || ...
-                            strcmp(subfolders2add(s_fold).name, '..')
-                        continue
-                    else
-                        
-                        addpath(strcat(...
-                            folderEEGLAB, filesep, ...
-                            folders2add(s_fold).name, filesep, ...
-                            subfolders2add(s_subfold).name))
-                    end
-                end
-            end
-        end
-    end
-    
-else
-    
-    error('EEGLAB not found')
-    
-end
+% if ~isempty(locateEeglab)
+%     
+%     [folderEEGLAB, ~, ~] = fileparts(locateEeglab);
+%     
+%     folders2add = dir(folderEEGLAB);
+%     
+%     % This section is overly complicated and could be substituted by
+%     % running 'EEGLAB;', but allows running this code without loading the
+%     % Java environment ('matlab -nodisplay -nojvm') which gives a great 
+%     % speed boost of the code
+%     % SEEMS TO BE ABLE TO BE REPLACED BY 'addpath(genpath(folderEEGLAB));'
+%     for s_fold = 1:size(folders2add, 1)
+%         
+%         if folders2add(s_fold).isdir == 1
+%             
+%             if strcmp(folders2add(s_fold).name, '.') || ...
+%                     strcmp(folders2add(s_fold).name, '..')
+%                 continue
+%             else
+%                subfolders2add = dir(strcat(...
+%                    folderEEGLAB, filesep, folders2add(s_fold).name)); 
+%             end
+%             
+%             for s_subfold = 1:size(subfolders2add, 1)
+%                 
+%                 if subfolders2add(s_subfold).isdir == 1
+%                     
+%                     if strcmp(subfolders2add(s_fold).name, '.') || ...
+%                             strcmp(subfolders2add(s_fold).name, '..')
+%                         continue
+%                     else
+%                         
+%                         addpath(strcat(...
+%                             folderEEGLAB, filesep, ...
+%                             folders2add(s_fold).name, filesep, ...
+%                             subfolders2add(s_subfold).name))
+%                     end
+%                 end
+%             end
+%         end
+%     end
+%     
+% else
+%     
+%     error('EEGLAB not found')
+%     
+% end
 
 
 % -------------------------------------------------------------------------

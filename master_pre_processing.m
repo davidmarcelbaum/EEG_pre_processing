@@ -34,30 +34,30 @@
 %  ================================
 
 % Define all steps to be performed: 0 for false and 1 for true
-extractsws          = 0;    % Extract SWS periods of datasets
-rejectchans         = 0;    % Reject non-wanted channels
+extractsws          = 1;    % Extract SWS periods of datasets
+rejectchans         = 1;    % Reject non-wanted channels
 filter              = 0;    % Filtfilt processing. Parameters set when
                             % when function called in script
-buildfiltfilt       = 0;    % Build and apply a custom zero-phase Fir 
+buildfiltfilt       = 1;    % Build and apply a custom zero-phase Fir 
                             % FiltFilt bandpass filter
 medianfilter        = 0;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
-noisychans2zeros    = 0;    % Interpolation of noisy channels based on
+noisychans2zeros    = 1;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
-noisyperiodreject   = 0;    % Rejection of noisy channels based on manually
+noisyperiodreject   = 1;    % Rejection of noisy channels based on manually
                             % generated table with noisy period info
-rereference         = 0;    % Re-reference channels to choosen reference.
+rereference         = 1;    % Re-reference channels to choosen reference.
                             % Reference is choosen when function is called
                             % in script
-performica          = 0;    % Run ICA on datasets. This step takes a while
-reject_IC           = 1;    % Extract information about artifact components
+performica          = 1;    % Run ICA on datasets. This step takes a while
+reject_IC           = 0;    % Extract information about artifact components
                             % and reject these
-chan_interpol       = 1;    % Interpolate rejected channels (all 0)
+chan_interpol       = 0;    % Interpolate rejected channels (all 0)
 downsample          = 0;    % Downsample datsets to user-defined sample fr
-separate_trial_grps = 1;    % Separate trial series into groups. Parameters
+separate_trial_grps = 0;    % Separate trial series into groups. Parameters
                             % set when function is called in script.
                             
-lastStep            = 'separate_trial_grps';
+lastStep            = 'performica';
                             % Define last step to be done in this run
                             % {...
                             %   'extractsws', ...
@@ -81,10 +81,10 @@ lastStep            = 'separate_trial_grps';
 %
 %   |=END USER INPUT=|
 
-pathData            = '/home/sleep/Desktop/DavidExploringFilterDesigns/preProcessing/ICAweightsEEGLABFiltered';
+pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori';
 % String of file path to the mother stem folder containing the datasets
 
-dataType            = '.set'; % {'.cdt', '.set', '.mff'}
+dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
 stimulation_seq     = 'switchedON_switchedOFF';
@@ -96,7 +96,7 @@ stimulation_seq     = 'switchedON_switchedOFF';
 % On and Off therefore refers to the current state of the stimulation
 % ("switched on" or "switched off").
 
-trials2rejPath   = '/home/sleep/Desktop/DavidExploringFilterDesigns/preProcessing/IC_rejection_info_EEGLABFilt_20200428.mat';
+trials2rejPath   = '/home/sleep/Documents/DAVID/Datasets/Ori/preProcessing/IC_rejection_info_EEGLABFilt_20200428.mat';
 % Path to .mat file that contains information about trials to reject
 % (explanations about organization of the file in f_sep_trial_groups
 trials2rejVar    = 'comps2reject';
@@ -156,54 +156,6 @@ end
 locateEeglab = which('eeglab.m');
 [folderEEGLAB, ~, ~] = fileparts(locateEeglab);
 addpath(genpath(folderEEGLAB))
-
-% if ~isempty(locateEeglab)
-%     
-%     [folderEEGLAB, ~, ~] = fileparts(locateEeglab);
-%     
-%     folders2add = dir(folderEEGLAB);
-%     
-%     % This section is overly complicated and could be substituted by
-%     % running 'EEGLAB;', but allows running this code without loading the
-%     % Java environment ('matlab -nodisplay -nojvm') which gives a great 
-%     % speed boost of the code
-%     % SEEMS TO BE ABLE TO BE REPLACED BY 'addpath(genpath(folderEEGLAB));'
-%     for s_fold = 1:size(folders2add, 1)
-%         
-%         if folders2add(s_fold).isdir == 1
-%             
-%             if strcmp(folders2add(s_fold).name, '.') || ...
-%                     strcmp(folders2add(s_fold).name, '..')
-%                 continue
-%             else
-%                subfolders2add = dir(strcat(...
-%                    folderEEGLAB, filesep, folders2add(s_fold).name)); 
-%             end
-%             
-%             for s_subfold = 1:size(subfolders2add, 1)
-%                 
-%                 if subfolders2add(s_subfold).isdir == 1
-%                     
-%                     if strcmp(subfolders2add(s_fold).name, '.') || ...
-%                             strcmp(subfolders2add(s_fold).name, '..')
-%                         continue
-%                     else
-%                         
-%                         addpath(strcat(...
-%                             folderEEGLAB, filesep, ...
-%                             folders2add(s_fold).name, filesep, ...
-%                             subfolders2add(s_subfold).name))
-%                     end
-%                 end
-%             end
-%         end
-%     end
-%     
-% else
-%     
-%     error('EEGLAB not found')
-%     
-% end
 
 
 % -------------------------------------------------------------------------
@@ -277,8 +229,7 @@ end
 
 tic;
 for s_file = 1 : num_files
-    
-    
+        
     fprintf('\n<!> Running %s (%d/%d)...\n', ...
         ls_files(s_file).name, s_file, num_files) % Report stage
     
@@ -319,7 +270,6 @@ for s_file = 1 : num_files
     % Appendix to dataset name accordingly to last step performed:
     % This will allow to collect databases easier just by running "dir" 
     % on pathData.
-    
     switch lastStep
         
         case 'extractsws'
@@ -353,13 +303,11 @@ for s_file = 1 : num_files
     % ---------------------------------------------------------------------
     % This is useful in order to store the history of EEGLAB functions 
     % called during file processing
-
     lst_changes         = {};
        
     
     % ---------------------------------------------------------------------
     % Break out of loop if the subject dataset has already been processed
-    
     if exist(strcat(savePath, filesep, str_savefile), 'file')
         fprintf('... skipped because already exists\n\n')
         continue
@@ -402,7 +350,7 @@ for s_file = 1 : num_files
     
     
     if buildfiltfilt == 1
-        run p_aux/p_design_filter.m
+        run p_standalone/p_design_filter.m
         thisStep = 'buildfiltfilt';
         allSteps(end+1) = {thisStep};
     end

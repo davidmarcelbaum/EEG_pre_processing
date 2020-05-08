@@ -44,6 +44,7 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
     Channel.Filename = FilesList(Filenum).name; % file name
     Channel.Origin = strcat(EEG.filepath, FilesList(Filenum).name); % where...
     % do the channels have been extracted from
+    Channel.lst_changes = EEG.lst_changes;
     
     % Build name of file to save
     saveName = insertAfter(FilesList(Filenum).name,'sleep_','ChanDat_');

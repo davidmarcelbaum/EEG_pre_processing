@@ -1,8 +1,11 @@
-close all
-
-dataFile = 'RC_131_sleep_ICAweights.set';
-dataPath = '/home/sleep/Desktop/DavidExploringFilterDesigns/preProcessing/ICAweightsEEGLABFiltered';
+%% Userland setup
+dataFile = 'RC_201_sleep_ICAweights.set';
+dataPath = '/home/sleep/Documents/DAVID/Datasets/Ori/preProcessing/ICAweightsCustomKaiserwin';
 midtrialTrigger = 'DIN2';
+
+
+%% Automatic part
+close all
 
 % Prompt for loading
 eeglab
@@ -28,15 +31,17 @@ for i_trans = 1 : numel(EEG.epoch)
 end
 
 
-idx_triggerOI           = find(strcmp({EEG.epoch.eventlabel}, 'DIN2'));
+idx_triggerOI           = find(strcmp({EEG.epoch.eventlabel}, ...
+    midtrialTrigger));
 
 
-idx_unique_triggers     = [];
+idx_unique_triggers     = zeros(1,size(EEG.epoch,2));
 for i = 1:size(EEG.epoch,2)
     if numel(EEG.epoch(i).event) == 1
-        idx_unique_triggers = [idx_unique_triggers i];
+        idx_unique_triggers(i) = 1;
     end
 end
+idx_unique_triggers = find(idx_unique_triggers == 1);
 
 idx_trialsOI = intersect(idx_triggerOI, idx_unique_triggers);
 
@@ -82,10 +87,10 @@ EEG_ica = EEG;
 EEG_ica.data = eeg_getdatact(EEG_ica, 'component', [1:size(EEG.icaweights,1)]);
 
 % For faster plotting
-EEG     = pop_resample(EEG, 50);
+% EEG    = pop_resample(EEG, 50);
 % EEG_rej = pop_resample(EEG_rej, 50);
-EEG_ica.nbchan = size(EEG_ica.data,1);
-EEG_ica = pop_resample(EEG_ica, 50);
+EEG_ica.nbchan  = size(EEG_ica.data,1);
+EEG_ica         = pop_resample(EEG_ica, 50);
 
 
 % pop_eegbrowser is faster, but EEGBrowser extracts data time serie for

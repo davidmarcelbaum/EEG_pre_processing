@@ -34,30 +34,30 @@
 %  ================================
 
 % Define all steps to be performed: 0 for false and 1 for true
-extractsws          = 1;    % Extract SWS periods of datasets
-rejectchans         = 1;    % Reject non-wanted channels
+extractsws          = 0;    % Extract SWS periods of datasets
+rejectchans         = 0;    % Reject non-wanted channels
 filter              = 0;    % Filtfilt processing. Parameters set when
                             % when function called in script
-buildfiltfilt       = 1;    % Build and apply a custom zero-phase Fir 
+buildfiltfilt       = 0;    % Build and apply a custom zero-phase Fir 
                             % FiltFilt bandpass filter
 medianfilter        = 0;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
-noisychans2zeros    = 1;    % Interpolation of noisy channels based on
+noisychans2zeros    = 0;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
-noisyperiodreject   = 1;    % Rejection of noisy channels based on manually
+noisyperiodreject   = 0;    % Rejection of noisy channels based on manually
                             % generated table with noisy period info
-rereference         = 1;    % Re-reference channels to choosen reference.
+rereference         = 0;    % Re-reference channels to choosen reference.
                             % Reference is choosen when function is called
                             % in script
-performica          = 1;    % Run ICA on datasets. This step takes a while
-reject_IC           = 0;    % Extract information about artifact components
+performica          = 0;    % Run ICA on datasets. This step takes a while
+reject_IC           = 1;    % Extract information about artifact components
                             % and reject these
-chan_interpol       = 0;    % Interpolate rejected channels (all 0)
-downsample          = 0;    % Downsample datsets to user-defined sample fr
-separate_trial_grps = 0;    % Separate trial series into groups. Parameters
+chan_interpol       = 1;    % Interpolate rejected channels (all 0)
+downsample          = 1;    % Downsample datsets to user-defined sample fr
+separate_trial_grps = 1;    % Separate trial series into groups. Parameters
                             % set when function is called in script.
                             
-lastStep            = 'performica';
+lastStep            = 'separate_trial_grps';
                             % Define last step to be done in this run
                             % {...
                             %   'extractsws', ...
@@ -81,10 +81,10 @@ lastStep            = 'performica';
 %
 %   |=END USER INPUT=|
 
-pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori';
+pathData            = '/home/sleep/Desktop/DAVID/Datasets/Ori/preProcessing/ICAweightsCustomKaiserwin';
 % String of file path to the mother stem folder containing the datasets
 
-dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
+dataType            = '.set'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
 stimulation_seq     = 'switchedON_switchedOFF';
@@ -96,7 +96,7 @@ stimulation_seq     = 'switchedON_switchedOFF';
 % On and Off therefore refers to the current state of the stimulation
 % ("switched on" or "switched off").
 
-trials2rejPath   = '/home/sleep/Documents/DAVID/Datasets/Ori/preProcessing/IC_rejection_info_EEGLABFilt_20200428.mat';
+trials2rejFile   = '/home/sleep/Desktop/DAVID/GitHub/EEG_pre_processing/data_specific/GermanData/IC_rejection_info_CustomKaiserFilt_20200428.mat';
 % Path to .mat file that contains information about trials to reject
 % (explanations about organization of the file in f_sep_trial_groups
 trials2rejVar    = 'comps2reject';
@@ -400,7 +400,8 @@ for s_file = 1 : num_files
     
     
     if reject_IC == 1
-        run p_comp_reject
+        [EEG, lst_changes{end+1,1}] = f_reject_ICs(...
+            EEG, trials2rejFile, trials2rejVar);
         thisStep = 'reject_IC';
         allSteps(end+1) = {thisStep};
     end
@@ -427,7 +428,7 @@ for s_file = 1 : num_files
         
         [EEG_Cue, EEG_Sham, set_sequence] = ...
             f_sep_trial_groups(EEG, stimulation_seq, ...
-            trials2rejPath, trials2rejVar);
+            trials2rejFile, trials2rejVar);
         
         thisStep = 'separate_trial_grps';
         allSteps(end+1) = {thisStep};

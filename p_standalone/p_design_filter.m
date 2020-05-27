@@ -5,9 +5,9 @@
 pm.response             = 'bandpassfir';% Type of filter to apply {'string'}
 pm.filtOrder            = 100;          % scalar
 pm.SampleRate           = 1000;         % Acquisition rate of data
-pm.PassbandFrequency1   = 0.5;         % Output of frequencies inside 
+pm.PassbandFrequency1   = 0.5;          % Output of frequencies inside 
                                         % passband will be 100%
-pm.StopbandFrequency1   = 0.45;          % Below this frequency, signal is 
+pm.StopbandFrequency1   = 0.45;         % Below this frequency, signal is 
                                         % attenuated by set attenuation
 pm.PassbandFrequency2   = 45;
 pm.StopbandFrequency2   = 50;           % Above this frequency, signal is 

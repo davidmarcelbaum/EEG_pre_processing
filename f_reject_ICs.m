@@ -1,10 +1,6 @@
-% |===USER INPUT===|
-noiseICFile   = '/home/sleep/Desktop/DavidExploringFilterDesigns/preProcessing/IC_rejection_info_EEGLABFilt_20200428.mat';
-def_variable    = 'comps2reject';
-% Name of variable that holds the cell of subject-wise information of noisy
-% periods
-% |=END USER INPUT=|
+function [EEG, lst_changes] = f_reject_ICs(EEG, noiseICFile, def_variable)
 
+global str_base
 
 % -------------------------------------------------------------------------
 % Extract the vectors of the noisy periods that are given by the
@@ -26,6 +22,6 @@ end
 fprintf('\n<!> Eliminating %d component(s)\n', numel(v_ICs))
 
 % Order: EEG, components, plotag, keepcomp
-EEG = pop_subcomp( EEG, v_ICs, 0, 0);
+[EEG, lst_changes] = pop_subcomp( EEG, v_ICs, 0, 0);
 % Careful, setting keepcomp to 1 will reject components NOT provided by
 % 'components'

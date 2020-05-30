@@ -34,17 +34,18 @@ for Filenum = 1:numel(FilesList) %Loop going from the 1st element in the folder,
         Channel.Labels{i,1} = EEG.chanlocs(i).labels;
     end
     
-    Channel.Data = EEG.data; % Contains data points
-    Channel.Trials = EEG.trials; % Number of trials
-    Channel.Srate = EEG.srate; % Sample rate
-    Channel.TrialStart = EEG.xmin; % seconds before trigger
-    Channel.TrialEnd = EEG.xmax; % seconds after trigger
-    Channel.Times = EEG.times; % time points of whole set
-    Channel.Pnts = EEG.pnts;
-    Channel.Filename = FilesList(Filenum).name; % file name
-    Channel.Origin = strcat(EEG.filepath, FilesList(Filenum).name); % where...
-    % do the channels have been extracted from
+    Channel.Data        = EEG.data; % Contains data points
+    Channel.Trials      = EEG.trials; % Number of trials
+    Channel.Srate       = EEG.srate; % Sample rate
+    Channel.TrialStart  = EEG.xmin; % seconds before trigger
+    Channel.TrialEnd    = EEG.xmax; % seconds after trigger
+    Channel.Times       = EEG.times; % time points of whole set
+    Channel.Pnts        = EEG.pnts;
+    Channel.Filename    = FilesList(Filenum).name; % file name
+    Channel.Origin      = strcat(EEG.filepath, FilesList(Filenum).name);
     Channel.lst_changes = EEG.lst_changes;
+    Channel.Chanlocs    = EEG.chanlocs; % Contains information about which
+                                        % channel has been interpolated etc
     
     % Build name of file to save
     saveName = insertAfter(FilesList(Filenum).name,'sleep_','ChanDat_');

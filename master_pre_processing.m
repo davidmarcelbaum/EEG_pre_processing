@@ -34,11 +34,11 @@
 %  ================================
 
 % Define all steps to be performed: 0 for false and 1 for true
-extractsws          = 0;    % Extract SWS periods of datasets
+extractsws          = 1;    % Extract SWS periods of datasets
 rejectchans         = 0;    % Reject non-wanted channels
-filter              = 0;    % Filtfilt processing. Parameters set when
+eeglabfilter        = 0;    % Filtfilt processing. Parameters set when
                             % when function called in script
-buildfiltfilt       = 0;    % Build and apply a custom zero-phase Fir 
+buildfiltfilt       = 1;    % Build and apply a custom zero-phase Fir 
                             % FiltFilt bandpass filter
 medianfilter        = 0;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
@@ -50,11 +50,11 @@ rereference         = 0;    % Re-reference channels to choosen reference.
                             % Reference is choosen when function is called
                             % in script
 performica          = 0;    % Run ICA on datasets. This step takes a while
-reject_IC           = 1;    % Extract information about artifact components
+reject_IC           = 0;    % Extract information about artifact components
                             % and reject these
-chan_interpol       = 1;    % Interpolate rejected channels (all 0)
-downsample          = 1;    % Downsample datsets to user-defined sample fr
-separate_trial_grps = 1;    % Separate trial series into groups. Parameters
+chan_interpol       = 0;    % Interpolate rejected channels (all 0)
+downsample          = 0;    % Downsample datsets to user-defined sample fr
+separate_trial_grps = 0;    % Separate trial series into groups. Parameters
                             % set when function is called in script.
                             
 lastStep            = 'separate_trial_grps';
@@ -342,8 +342,8 @@ for s_file = 1 : num_files
     end
     
     
-    if filter == 1        
-        run p_filter.m        
+    if eeglabfilter == 1        
+        run p_eeglabfilter.m        
         thisStep = 'filter';
         allSteps(end+1) = {thisStep};
     end

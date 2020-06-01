@@ -38,7 +38,7 @@ extractsws          = 1;    % Extract SWS periods of datasets
 rejectchans         = 0;    % Reject non-wanted channels
 eeglabfilter        = 0;    % Filtfilt processing. Parameters set when
                             % when function called in script
-buildfiltfilt       = 1;    % Build and apply a custom zero-phase Fir 
+customfilter        = 1;    % Build and apply a custom zero-phase Fir 
                             % FiltFilt bandpass filter
 medianfilter        = 0;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
@@ -57,13 +57,13 @@ downsample          = 0;    % Downsample datsets to user-defined sample fr
 separate_trial_grps = 0;    % Separate trial series into groups. Parameters
                             % set when function is called in script.
                             
-lastStep            = 'separate_trial_grps';
+lastStep            = 'customfilter';
                             % Define last step to be done in this run
                             % {...
                             %   'extractsws', ...
                             %   'rejectchans', ...
                             %   'filter', ...
-                            %   'buildfiltfilt', ...
+                            %   'customfilter', ...
                             %   'medianfilter', ...
                             %   'noisychans2zeros', ...
                             %   'noisyperiodreject', ...
@@ -81,10 +81,10 @@ lastStep            = 'separate_trial_grps';
 %
 %   |=END USER INPUT=|
 
-pathData            = '/home/sleep/Desktop/DAVID/Datasets/Ori/preProcessing/ICAweightsCustomKaiserwin';
+pathData            = 'D:\germanStudyData\datasetsSETS\Ori_TaskNONassoNight';
 % String of file path to the mother stem folder containing the datasets
 
-dataType            = '.set'; % {'.cdt', '.set', '.mff'}
+dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
 stimulation_seq     = 'switchedON_switchedOFF';
@@ -349,7 +349,7 @@ for s_file = 1 : num_files
     end
     
     
-    if buildfiltfilt == 1
+    if customfilter == 1
         run p_standalone/p_design_filter.m
         thisStep = 'buildfiltfilt';
         allSteps(end+1) = {thisStep};
@@ -360,7 +360,7 @@ for s_file = 1 : num_files
 %         run p_medfilt.m
 %         thisStep = 'medianfilter';
 %         allSteps(end+1) = {thisStep};
-        warning('MedFilt was set to be run but was skipped because is commented!')
+        warning('MedFilt was set to be run but was skipped since commented!')
     end
     
     

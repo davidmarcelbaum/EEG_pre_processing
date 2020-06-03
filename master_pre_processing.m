@@ -81,7 +81,7 @@ lastStep            = 'customfilter';
 %
 %   |=END USER INPUT=|
 
-pathData            = 'D:\germanStudyData\datasetsSETS\Ori_TaskNONassoNight';
+pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori_PlaceboNight';
 % String of file path to the mother stem folder containing the datasets
 
 dataType            = '.mff'; % {'.cdt', '.set', '.mff'}

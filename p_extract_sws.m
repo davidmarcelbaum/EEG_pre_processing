@@ -1,5 +1,5 @@
 % |===USER INPUT===|
-pathSleepScore      = 'D:\Gits\EEG_pre_processing\data_specific\GermanData\Hypnograms';
+pathSleepScore      = '/home/sleep/Documents/DAVID/GitHub/EEG_pre_processing/data_specific/GermanData/Hypnograms/';
 % String of file path to the mother stem folder containing the files of
 % sleep scoring of the subjects. LEAVE EMPTY ("''") IF DOES NOT APPLY
 

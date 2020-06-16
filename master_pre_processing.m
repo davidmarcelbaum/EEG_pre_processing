@@ -34,7 +34,7 @@
 %  ================================
 
 % Define all steps to be performed: 0 for false and 1 for true
-extractsws          = 1;    % Extract SWS periods of datasets
+extractsws          = 0;    % Extract SWS periods of datasets
 rejectchans         = 0;    % Reject non-wanted channels
 eeglabfilter        = 0;    % Filtfilt processing. Parameters set when
                             % when function called in script
@@ -81,10 +81,10 @@ lastStep            = 'customfilter';
 %
 %   |=END USER INPUT=|
 
-pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori_PlaceboNight';
+pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori_PlaceboNight/preProcessing/extrSWS/';
 % String of file path to the mother stem folder containing the datasets
 
-dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
+dataType            = '.set'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
 stimulation_seq     = 'switchedON_switchedOFF';
@@ -243,11 +243,10 @@ for s_file = 1 : num_files
     % |===USER INPUT===|
     str_subj            = extractAfter(ls_files(s_file).name, 'RC_');
     str_subj            = extractBefore(str_subj, '_');
-    % |=END USER INPUT=|
-    
     
     str_session         = str_subj(3); % Number of session
     str_subjnum     	= str_subj(1:2); % Number of subject
+    % |=END USER INPUT=|
     
     
     if strcmp(dataType, '.set')

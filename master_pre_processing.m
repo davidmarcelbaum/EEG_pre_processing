@@ -81,7 +81,7 @@ lastStep            = 'customfilter';
 %
 %   |=END USER INPUT=|
 
-pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori_PlaceboNight/preProcessing/extrSWS/';
+pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori/preProcessing/extrSWS/';
 % String of file path to the mother stem folder containing the datasets
 
 dataType            = '.set'; % {'.cdt', '.set', '.mff'}
@@ -191,7 +191,7 @@ switch lastStep
         savePath = strcat(savePath, filesep, 'DataChans');
     case 'filter'
         savePath = strcat(savePath, filesep, 'Filtered');
-    case 'buildfiltfilt'
+    case 'customfilter'
         savePath = strcat(savePath, filesep, 'CustomFiltered');
     case 'medianfilter'
         savePath = strcat(savePath, filesep, 'MedianFiltered');
@@ -277,7 +277,7 @@ for s_file = 1 : num_files
             str_savefile = strcat(str_savefile, '_ChanReject.set');
         case 'filter'
             str_savefile = strcat(str_savefile, '_Filt.set');
-        case 'buildfiltfilt'
+        case 'customfilter'
             str_savefile = strcat(str_savefile, '_CustomFilt.set');
         case 'medianfilter'
             str_savefile = strcat(str_savefile, '_MedianFilt.set');
@@ -350,7 +350,7 @@ for s_file = 1 : num_files
     
     if customfilter == 1
         run p_standalone/p_design_filter.m
-        thisStep = 'buildfiltfilt';
+        thisStep = 'customfilter';
         allSteps(end+1) = {thisStep};
     end
     

@@ -1,5 +1,5 @@
 function [structEEG, lst_changes] = f_load_data(...
-    fileName ,filePath, dataType)
+    fileName, filePath, dataType)
 
 if strcmp(dataType,'.set')
     

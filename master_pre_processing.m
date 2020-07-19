@@ -38,18 +38,18 @@ extractsws          = 0;    % Extract SWS periods of datasets
 rejectchans         = 0;    % Reject non-wanted channels
 eeglabfilter        = 0;    % Filtfilt processing. Parameters set when
                             % when function called in script
-customfilter        = 1;    % Build and apply a custom zero-phase Fir 
+customfilter        = 0;    % Build and apply a custom zero-phase Fir 
                             % FiltFilt bandpass filter
 medianfilter        = 0;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
-noisychans2zeros    = 0;    % Interpolation of noisy channels based on
+noisychans2zeros    = 1;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
-noisyperiodreject   = 0;    % Rejection of noisy channels based on manually
+noisyperiodreject   = 1;    % Rejection of noisy channels based on manually
                             % generated table with noisy period info
-rereference         = 0;    % Re-reference channels to choosen reference.
+rereference         = 1;    % Re-reference channels to choosen reference.
                             % Reference is choosen when function is called
                             % in script
-performica          = 0;    % Run ICA on datasets. This step takes a while
+performica          = 1;    % Run ICA on datasets. This step takes a while
 reject_IC           = 0;    % Extract information about artifact components
                             % and reject these
 chan_interpol       = 0;    % Interpolate rejected channels (all 0)
@@ -57,7 +57,7 @@ downsample          = 0;    % Downsample datsets to user-defined sample fr
 separate_trial_grps = 0;    % Separate trial series into groups. Parameters
                             % set when function is called in script.
                             
-lastStep            = 'customfilter';
+lastStep            = 'performica';
                             % Define last step to be done in this run
                             % {...
                             %   'extractsws', ...
@@ -81,7 +81,7 @@ lastStep            = 'customfilter';
 %
 %   |=END USER INPUT=|
 
-pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori_PlaceboNight/preProcessing/extrSWS/';
+pathData            = 'D:\germanStudyData\datasetsSETS\Ori_TaskNONassoNight\preProcessing\CustomFiltered\';
 % String of file path to the mother stem folder containing the datasets
 
 dataType            = '.set'; % {'.cdt', '.set', '.mff'}
@@ -252,9 +252,9 @@ for s_file = 1 : num_files
     if strcmp(dataType, '.set')
         % Extract the last step performed on the datset
         str_savefile    = extractBefore(ls_files(s_file).name, dataType);
-        str_parts       = strsplit(str_savefile, '_');
-        str_savefile    = extractBefore(str_savefile, ...
-            strcat('_', str_parts(end)));
+%         str_parts       = strsplit(str_savefile, '_');
+%         str_savefile    = extractBefore(str_savefile, ...
+%             strcat('_', str_parts(end)));
     else
         % Else, just get the file name without extension since no step
         % performed yet

@@ -85,6 +85,10 @@ idx_trialsOI = intersect(idx_triggerOI, idx_unique_triggers);
     'epochinfo', 'yes');
 
 
+%% Remove baseline
+% pop_rmbase()
+
+
 
 %% Reject trials that have been labeled for rejection in a separate file
 
@@ -105,10 +109,10 @@ if ~isempty(noiseTrialFile) && ~isempty(def_variable)
     % ---------------------------------------------------------------------
     % Simply reject the epochs
     
-    if ~isempty(rej_trials)
-        [EEG, EEG.lst_changes{end+1,1}] = ...
-            pop_rejepoch( EEG, rej_trials ,0);
-    end
+%     if ~isempty(rej_trials)
+%         [EEG, EEG.lst_changes{end+1,1}] = ...
+%             pop_rejepoch( EEG, rej_trials ,0);
+%     end
 
 end
 

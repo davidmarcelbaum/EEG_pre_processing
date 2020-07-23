@@ -35,17 +35,17 @@
 
 % Define all steps to be performed: 0 for false and 1 for true
 extractsws          = 0;    % Extract SWS periods of datasets
-rejectchans         = 0;    % Reject non-wanted channels
-eeglabfilter        = 0;    % Filtfilt processing. Parameters set when
+eeglabfilter        = 1;    % Filtfilt processing. Parameters set when
                             % when function called in script
 customfilter        = 0;    % Build and apply a custom zero-phase Fir 
                             % FiltFilt bandpass filter
 medianfilter        = 0;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
-noisychans2zeros    = 1;    % Interpolation of noisy channels based on
+noisychans2zeros    = 0;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
 noisyperiodreject   = 1;    % Rejection of noisy channels based on manually
                             % generated table with noisy period info
+rejectchans         = 1;    % Reject non-wanted channels
 rereference         = 1;    % Re-reference channels to choosen reference.
                             % Reference is choosen when function is called
                             % in script
@@ -81,7 +81,7 @@ lastStep            = 'performica';
 %
 %   |=END USER INPUT=|
 
-pathData            = 'D:\germanStudyData\datasetsSETS\Ori_TaskNONassoNight\preProcessing\CustomFiltered\';
+pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori_PlaceboNight/preProcessing/extrSWS/test/';
 % String of file path to the mother stem folder containing the datasets
 
 dataType            = '.set'; % {'.cdt', '.set', '.mff'}
@@ -102,7 +102,7 @@ trials2rejFile   = '/home/sleep/Desktop/DAVID/GitHub/EEG_pre_processing/data_spe
 trials2rejVar    = 'comps2reject';
 % Name of variable that holds the information about the trials to reject
 % inside the .mat file
-                            
+
 
 %                         +-------------------+
 % ------------------------| END OF USER INPUT |----------------------------
@@ -252,9 +252,9 @@ for s_file = 1 : num_files
     if strcmp(dataType, '.set')
         % Extract the last step performed on the datset
         str_savefile    = extractBefore(ls_files(s_file).name, dataType);
-%         str_parts       = strsplit(str_savefile, '_');
-%         str_savefile    = extractBefore(str_savefile, ...
-%             strcat('_', str_parts(end)));
+        str_parts       = strsplit(str_savefile, '_');
+        str_savefile    = extractBefore(str_savefile, ...
+            strcat('_', str_parts(end)));
     else
         % Else, just get the file name without extension since no step
         % performed yet

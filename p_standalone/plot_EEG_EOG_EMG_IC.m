@@ -1,6 +1,6 @@
 %% Userland setup
-dataFile = 'RC_201_sleep_ICAweights.set';
-dataPath = '/home/sleep/Documents/DAVID/Datasets/Ori/preProcessing/ICAweightsCustomKaiserwin';
+dataFile = 'RC_132_sleep_ICAweights.set';
+dataPath = '/home/sleep/Documents/DAVID/Datasets/Ori_PlaceboNight/preProcessing/ICAweights/';
 midtrialTrigger = 'DIN2';
 
 

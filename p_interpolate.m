@@ -10,6 +10,9 @@ end
 for s_chan = 1 : numel(v_noiseChans)
     if any(EEG.data(v_noiseChans(s_chan)) ~= 0)
         error('You were about to interpolate a non_empty channel')
+        % Noisy channels should be:
+        % 1. EEG.chanlocs.description = 'Noisy'
+        % 2. EEG.data = zeros
     end
 end
 

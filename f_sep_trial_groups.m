@@ -1,4 +1,4 @@
-function [EEG_Cue, EEG_Sham, set_sequence] = f_sep_trial_groups(...
+function [EEG_Odor, EEG_Sham, set_sequence] = f_sep_trial_groups(...
     EEG, set_sequence, noiseTrialFile, def_variable)
 
 % recordings --> trigger1 on, trigger1 off, trigger2 on, trigger2 off, ...     
@@ -120,19 +120,19 @@ get_cidx= {EEG.event.mffkey_cidx};
 
 % Based on odds vs even @Jens' mail, INDEPENDANTLY OF ON OR OFF
 idx_trigger_sham        = find( mod(str2double(get_cidx), 2) == 0);
-idx_trigger_cue         = find( mod(str2double(get_cidx), 2) ~= 0);
+idx_trigger_odor         = find( mod(str2double(get_cidx), 2) ~= 0);
     
     
 % -------------------------------------------------------------------------
 % Isolating trial of interest into separate structures
 
 EEG_Sham    = EEG;
-EEG_Cue     = EEG;
+EEG_Odor     = EEG;
 
 [EEG_Sham, EEG_Sham.lst_changes{end+1,1}]    = ...
     pop_select( EEG_Sham, 'trial', idx_trigger_sham );
-[EEG_Cue, EEG_Cue.lst_changes{end+1,1}]     = ...
-    pop_select( EEG_Cue, 'trial', idx_trigger_cue );
+[EEG_Odor, EEG_Odor.lst_changes{end+1,1}]     = ...
+    pop_select( EEG_Odor, 'trial', idx_trigger_odor );
 
 
 end

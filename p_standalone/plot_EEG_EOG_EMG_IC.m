@@ -1,6 +1,11 @@
 %% Userland setup
+<<<<<<< HEAD
 dataFile = 'RC_132_sleep_ICAweights.set';
 dataPath = '/home/sleep/Documents/DAVID/Datasets/Ori_PlaceboNight/preProcessing/ICAweights/';
+=======
+dataFile = 'RC_162_sleep_ICAweights.set';
+dataPath = 'D:\germanStudyData\datasetsSETS\Ori_TaskNONassoNight\preProcessing\ICAweights';
+>>>>>>> 7b2809a322e45c87675fd3fd8119184f120bf151
 midtrialTrigger = 'DIN2';
 
 
@@ -12,11 +17,11 @@ eeglab
 EEG = pop_loadset('filename', dataFile, 'filepath', dataPath);
 
 
-[EEG, EEG.lst_changes{end+1,1}] = pop_epoch( EEG, ...
-    { }, ...
-    [-15 15], ...
-    'newname', 'temp_set', ...
-    'epochinfo', 'yes');
+[EEG, EEG.lst_changes{end+1,1}] = pop_epoch( ...
+    EEG,            { }, ...
+    [-15 15],       ...
+    'newname',      'temp_set', ...
+    'epochinfo',    'yes');
 
 
 for i_trans = 1 : numel(EEG.epoch)

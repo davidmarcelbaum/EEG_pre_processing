@@ -80,7 +80,7 @@ pathData            = 'D:\germanStudyData\datasetsSETS\Ori_TaskassoNight\preProc
 dataType            = '.set'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
-stimulation_seq     = 'switchedOFF_switchedON';
+stimulation_seq     = 'switchedON_switchedOFF';
 % {'switchedON_switchedOFF', 'switchedOFF_switchedON'}
 % recordings --> trigger1 on, trigger1 off, trigger2 on, trigger2 off, ...     
 % "on_off" = [ongoing stimulation type 1, post-stimulation type 1] and
@@ -89,7 +89,7 @@ stimulation_seq     = 'switchedOFF_switchedON';
 % On and Off therefore refers to the current state of the stimulation
 % ("switched on" or "switched off").
 
-baselineCorr = [-7000 0]; % Array of min and max (ms) for baseline
+baselineCorr = []; % [-7000 0] Array of min and max (ms) for baseline
 % Baseline correction when epochs are extracted from dataset in
 % f_sep_trial_groups. Leave empty if no correction is desired.
 

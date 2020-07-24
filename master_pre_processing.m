@@ -89,6 +89,11 @@ stimulation_seq     = 'switchedOFF_switchedON';
 % On and Off therefore refers to the current state of the stimulation
 % ("switched on" or "switched off").
 
+baselineCorr = [-7000 0]; % Array of min and max (ms) for baseline
+% Baseline correction when epochs are extracted from dataset in
+% f_sep_trial_groups. Leave empty if no correction is desired.
+
+
 trials2rejFile   = 'D:\Gits\EEG_pre_processing\data_specific\GermanData\IC_rejection_info_CustomKaiserFilt_20200721.mat';
 % Path to .mat file that contains information about trials to reject
 % (explanations about organization of the file in f_sep_trial_groups
@@ -428,7 +433,7 @@ for s_file = 1 : num_files
         
         [EEG_Odor, EEG_Sham, set_sequence] = ...
             f_sep_trial_groups(EEG, stimulation_seq, ...
-            trials2rejFile, trials2rejVar);
+            trials2rejFile, trials2rejVar, baselineCorr);
         
         thisStep = 'separate_trial_grps';
         allSteps(end+1) = {thisStep};

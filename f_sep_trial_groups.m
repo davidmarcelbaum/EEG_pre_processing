@@ -1,5 +1,5 @@
 function [EEG_Odor, EEG_Sham, set_sequence] = f_sep_trial_groups(...
-    EEG, set_sequence, noiseTrialFile, def_variable)
+    EEG, set_sequence, noiseTrialFile, def_variable, v_baseline)
 
 % recordings --> trigger1 on, trigger1 off, trigger2 on, trigger2 off, ...     
 % set_sequence    = cell string of sequence of odor stimulation and
@@ -114,8 +114,10 @@ end
 
 
 %% Remove baseline
-[EEG, EEG.lst_changes{end+1,1}] = pop_rmbase(EEG, [-7000 0]);
 
+if ~isempty(v_baseline)
+    [EEG, EEG.lst_changes{end+1,1}] = pop_rmbase(EEG, v_baseline);
+end
 
 
 %% Determine groups of trials and separate them

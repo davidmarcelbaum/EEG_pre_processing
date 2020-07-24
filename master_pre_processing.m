@@ -74,14 +74,7 @@ lastStep            = 'separate_trial_grps';
                             %   'chan_interpol', ...
                             %   'downsample'}
 
-% Modifiable declarations inside several files are also possible and tagged
-%   |===USER INPUT===|
-%
-%   ...
-%
-%   |=END USER INPUT=|
-
-pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori/preProcessing/ICAweightsCustomKaiserwin/';
+pathData            = 'D:\germanStudyData\datasetsSETS\Ori_TaskassoNight\preProcessing\BackupServer20200505\ICAweightsCustomKaiserwin';
 % String of file path to the mother stem folder containing the datasets
 
 dataType            = '.set'; % {'.cdt', '.set', '.mff'}
@@ -96,13 +89,20 @@ stimulation_seq     = 'switchedOFF_switchedON';
 % On and Off therefore refers to the current state of the stimulation
 % ("switched on" or "switched off").
 
-trials2rejFile   = '/home/sleep/Documents/DAVID/GitHub/EEG_pre_processing/data_specific/GermanData/IC_rejection_info_CustomKaiserFilt_20200721.mat';
+trials2rejFile   = 'D:\Gits\EEG_pre_processing\data_specific\GermanData\IC_rejection_info_CustomKaiserFilt_20200721.mat';
 % Path to .mat file that contains information about trials to reject
 % (explanations about organization of the file in f_sep_trial_groups
 
 trials2rejVar    = 'comps2reject';
 % Name of variable that holds the information about the trials to reject
 % inside the .mat file
+
+% Modifiable declarations inside several files are also possible and tagged
+%   |===USER INPUT===|
+%
+%   ...
+%
+%   |=END USER INPUT=|
 
 
 %                         +-------------------+

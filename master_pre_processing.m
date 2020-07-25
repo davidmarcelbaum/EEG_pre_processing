@@ -34,23 +34,25 @@
 %  ================================
 
 % Define all steps to be performed: 0 for false and 1 for true
-extractsws          = 0;    % Extract SWS periods of datasets
+extractsws          = 1;    % Extract SWS periods of datasets
+defdetrend          = 1;    % Detrend the dataset (quadtratic, linear,
+                            % continuous, discontinuous)
 eeglabfilter        = 0;    % Filtfilt processing. Parameters set when
                             % when function called in script
 customfilter        = 0;    % Build and apply a custom zero-phase Fir 
                             % FiltFilt bandpass filter
 medianfilter        = 0;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
-noisychans2zeros    = 0;    % Interpolation of noisy channels based on
+noisychans2zeros    = 1;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
-noisyperiodreject   = 0;    % Rejection of noisy channels based on manually
+noisyperiodreject   = 1;    % Rejection of noisy channels based on manually
                             % generated table with noisy period info
-rejectchans         = 0;    % Reject non-wanted channels
-rereference         = 0;    % Re-reference channels to choosen reference.
+rejectchans         = 1;    % Reject non-wanted channels
+rereference         = 1;    % Re-reference channels to choosen reference.
                             % Reference is choosen when function is called
                             % in script
 performica          = 0;    % Run ICA on datasets. This step takes a while
-reject_IC           = 1;    % Extract information about artifact components
+reject_IC           = 0;    % Extract information about artifact components
                             % and reject these
 chan_interpol       = 1;    % Interpolate rejected channels (all 0)
 downsample          = 0;    % Downsample datsets to user-defined sample fr
@@ -61,6 +63,7 @@ lastStep            = 'separate_trial_grps';
                             % Define last step to be done in this run
                             % {...
                             %   'extractsws', ...
+                            %   'defdetrend', ...
                             %   'rejectchans', ...
                             %   'filter', ...
                             %   'customfilter', ...
@@ -74,10 +77,10 @@ lastStep            = 'separate_trial_grps';
                             %   'chan_interpol', ...
                             %   'downsample'}
 
-pathData            = 'D:\germanStudyData\datasetsSETS\Ori_TaskassoNight\preProcessing\BackupServer20200505\ICAweightsCustomKaiserwin';
+pathData            = 'D:\germanStudyData\datasetsSETS\Ori_TaskassoNight\';
 % String of file path to the mother stem folder containing the datasets
 
-dataType            = '.set'; % {'.cdt', '.set', '.mff'}
+dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
 stimulation_seq     = 'switchedON_switchedOFF';
@@ -195,6 +198,8 @@ switch lastStep
         savePath = strcat(savePath, filesep, 'extrSWS');
     case 'rejectchans'
         savePath = strcat(savePath, filesep, 'DataChans');
+    case 'defdetrend'
+        savePath = strcat(savePath, filesep, 'Detrend');
     case 'filter'
         savePath = strcat(savePath, filesep, 'Filtered');
     case 'customfilter'
@@ -281,6 +286,8 @@ for s_file = 1 : num_files
             str_savefile = strcat(str_savefile, '_SWS.set');
         case 'rejectchans'
             str_savefile = strcat(str_savefile, '_ChanReject.set');
+        case 'defdetrend'
+            str_savefile = strcat(str_savefile, '_Detrend.set');
         case 'filter'
             str_savefile = strcat(str_savefile, '_Filt.set');
         case 'customfilter'
@@ -341,85 +348,95 @@ for s_file = 1 : num_files
     allSteps = {};
     
     if extractsws == 1
+        thisStep = 'extractsws'
         run p_extract_sws.m        
-        thisStep = 'extractsws';
         allSteps(end+1) = {thisStep};
     end
     
     
-    if eeglabfilter == 1        
-        run p_eeglabfilter.m        
+    if defdetrend == 1
+        thisStep = 'defdetrend'
+        [EEG.data, lst_changes{end+1,1}] = f_detrend(EEG.data, ...
+            [], false, {});
+        allSteps(end+1) = {thisStep};
+    end
+    
+    
+    if eeglabfilter == 1
         thisStep = 'filter';
+        run p_eeglabfilter.m
         allSteps(end+1) = {thisStep};
     end
     
     
     if customfilter == 1
+        thisStep = 'customfilter'
         run p_standalone/p_design_filter.m
-        thisStep = 'customfilter';
         allSteps(end+1) = {thisStep};
     end
     
     
-    if medianfilter == 1        
+    if medianfilter == 1     
+%         thisStep = 'medianfilter'
 %         run p_medfilt.m
-%         thisStep = 'medianfilter';
 %         allSteps(end+1) = {thisStep};
         warning('MedFilt was set to be run but was skipped since commented!')
     end
     
     
-    if noisychans2zeros == 1        
+    if noisychans2zeros == 1
+        thisStep = 'noisychans2zeros'
         run p_set_zerochans.m        
-        thisStep = 'noisyperiodreject';
         allSteps(end+1) = {thisStep};
     end
     
     
     if noisyperiodreject == 1
+        thisStep = 'noisyperiodreject'
         run p_noise_periods.m
-        thisStep = 'noisyperiodreject';
         allSteps(end+1) = {thisStep};
     end
     
     
     if rejectchans == 1
-        run p_chan_reject.m
         thisStep = 'rejectchans';
+        run p_chan_reject.m
         allSteps(end+1) = {thisStep};
     end
     
     
     if rereference == 1
+        thisStep = 'rereference'
         run p_offlinereference
-        thisStep = 'rereference';
         allSteps(end+1) = {thisStep};
     end
     
     
     if performica == 1
+        thisStep = 'performica'
         [EEG, lst_changes{end+1,1}] = f_ica(EEG);
-        thisStep = 'performica';
         allSteps(end+1) = {thisStep};
     end
     
     
     if reject_IC == 1
+        thisStep = 'reject_IC'
         [EEG, lst_changes{end+1,1}] = f_reject_ICs(...
             EEG, trials2rejFile, trials2rejVar);
-        thisStep = 'reject_IC';
         allSteps(end+1) = {thisStep};
     end
     
     
     if chan_interpol == 1
+        thisStep = 'chan_interpol'
         run p_interpolate
-        thisStep = 'chan_interpol';
         allSteps(end+1) = {thisStep};
     end
     
     
     if separate_trial_grps == 1
+        
+        thisStep = 'separate_trial_grps'
         
         % Add the history of all called functions to EEG structure
         if ~isfield(EEG, 'lst_changes')
@@ -435,7 +452,6 @@ for s_file = 1 : num_files
             f_sep_trial_groups(EEG, stimulation_seq, ...
             trials2rejFile, trials2rejVar, baselineCorr);
         
-        thisStep = 'separate_trial_grps';
         allSteps(end+1) = {thisStep};
         
     end
@@ -457,11 +473,11 @@ for s_file = 1 : num_files
         str_savefile_sham  = strcat(str_savefile, ...
             '_Sham_', set_sequence, '.set');
 
-        str_savefile_cue  = strcat(str_savefile, ...
+        str_savefile_odor  = strcat(str_savefile, ...
             '_Odor_', set_sequence, '.set');
      
         [EEG_Odor] = pop_saveset( EEG_Odor, ...
-            'filename', str_savefile_cue, ...
+            'filename', str_savefile_odor, ...
             'filepath', savePath);
         
         [EEG_Sham] = pop_saveset( EEG_Sham, ...
@@ -485,6 +501,8 @@ for s_file = 1 : num_files
             'filepath', savePath);
         
     end
+    
+    clearvars EEG_Odor EEG_Sham
    
     
 end

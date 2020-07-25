@@ -16,8 +16,11 @@ for s_chan = 1 : numel(v_noiseChans)
     end
 end
 
-[EEG, EEG.lst_changes{end+1,1}] = ...
-    pop_interp(EEG, [v_noiseChans], 'spherical');
+[EEG] = pop_interp(EEG, [v_noiseChans], 'spherical');
+
+lst_changes{end+1,1} = strcat("pop_interp(EEG, [", ...
+    num2str(v_noiseChans), ...
+    "], 'spherical'");
 
 for s_chan = 1 : numel(v_noiseChans)
     EEG.chanlocs(v_noiseChans(s_chan)).description = 'Interpolated';

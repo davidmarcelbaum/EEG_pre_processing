@@ -34,32 +34,32 @@
 %  ================================
 
 % Define all steps to be performed: 0 for false and 1 for true
-extractsws          = 1;    % Extract SWS periods of datasets
-defdetrend          = 1;    % Detrend the dataset (quadtratic, linear,
+extractsws          = 0;    % Extract SWS periods of datasets
+defdetrend          = 0;    % Detrend the dataset (quadtratic, linear,
                             % continuous, discontinuous)
 eeglabfilter        = 0;    % Filtfilt processing. Parameters set when
                             % when function called in script
-customfilter        = 0;    % Build and apply a custom zero-phase Fir 
+customfilter        = 1;    % Build and apply a custom zero-phase Fir 
                             % FiltFilt bandpass filter
 medianfilter        = 0;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
-noisychans2zeros    = 1;    % Interpolation of noisy channels based on
+noisychans2zeros    = 0;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
-noisyperiodreject   = 1;    % Rejection of noisy channels based on manually
+noisyperiodreject   = 0;    % Rejection of noisy channels based on manually
                             % generated table with noisy period info
-rejectchans         = 1;    % Reject non-wanted channels
-rereference         = 1;    % Re-reference channels to choosen reference.
+rejectchans         = 0;    % Reject non-wanted channels
+rereference         = 0;    % Re-reference channels to choosen reference.
                             % Reference is choosen when function is called
                             % in script
 performica          = 0;    % Run ICA on datasets. This step takes a while
 reject_IC           = 0;    % Extract information about artifact components
                             % and reject these
-chan_interpol       = 1;    % Interpolate rejected channels (all 0)
+chan_interpol       = 0;    % Interpolate rejected channels (all 0)
 downsample          = 0;    % Downsample datsets to user-defined sample fr
-separate_trial_grps = 1;    % Separate trial series into groups. Parameters
+separate_trial_grps = 0;    % Separate trial series into groups. Parameters
                             % set when function is called in script.
                             
-lastStep            = 'separate_trial_grps';
+lastStep            = 'customfilter';
                             % Define last step to be done in this run
                             % {...
                             %   'extractsws', ...
@@ -77,10 +77,10 @@ lastStep            = 'separate_trial_grps';
                             %   'chan_interpol', ...
                             %   'downsample'}
 
-pathData            = 'D:\germanStudyData\datasetsSETS\Ori_TaskassoNight\';
+pathData            = 'D:\germanStudyData\datasetsSETS\Ori_TaskNONassoNight\preProcessing\extrSWS\';
 % String of file path to the mother stem folder containing the datasets
 
-dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
+dataType            = '.set'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
 stimulation_seq     = 'switchedON_switchedOFF';

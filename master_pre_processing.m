@@ -77,7 +77,7 @@ lastStep            = 'customfilter';
                             %   'chan_interpol', ...
                             %   'downsample'}
 
-pathData            = 'D:\germanStudyData\datasetsSETS\Ori_TaskNONassoNight\preProcessing\extrSWS\';
+pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori_PlaceboNight/preProcessing/extrSWS/';
 % String of file path to the mother stem folder containing the datasets
 
 dataType            = '.set'; % {'.cdt', '.set', '.mff'}

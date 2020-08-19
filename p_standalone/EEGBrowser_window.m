@@ -1,3 +1,11 @@
+currDir     = '/home/sleep/Documents/DAVID/Datasets/Ori_PlaceboNight/preProcessing/CustomFiltered/';
+currDataset = 'RC_511_sleep_CustomFilt.set';
+% eeglabDir   = extractBefore(which('eeglab.m'), strcat(filesep, 'eeglab.m'));
+% genpath(eeglabDir)
+eeglab
+EEG         = pop_loadset([currDir, currDataset]);
+EEG         = pop_resample(EEG, 50);
+
 h2 = EEGBrowser(EEG);
 
 set(gcf,'units','normalized','outerposition',[0 0 1 1])
@@ -21,3 +29,7 @@ h2.figureHandle.Children(15).Position = [0.1663 0.0981 0.0421 0.036];
 
 % By default, the window has a lot of empty space --> Take advantage
 h2.axesHandle.Position = [0.025,0.155,0.96,0.84];
+
+h2.figureHandle.CurrentAxes.FontSize  = 5.5;
+
+% Set time window to 30s manually

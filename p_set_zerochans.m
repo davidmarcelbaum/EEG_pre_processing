@@ -6,7 +6,7 @@
 % Column 2: Cell array of channel labels that are noisy
 
 % |===USER INPUT===|
-noiseChanFile   = 'D:\Gits\EEG_pre_processing\data_specific\GermanData\channel_rejection_info.mat';
+noiseChanFile   = '/home/sleep/Documents/DAVID/GitHub/EEG_pre_processing/data_specific/GermanData/channel_rejection_info.mat';
 def_variable    = 'channel_rejection';  % Name of variable that holds the 
                                         % cell of subject-wise information
                                         % of noisy channels

@@ -5,7 +5,7 @@
 % end of periods to reject, respectively)
 
 % |===USER INPUT===|
-noiseChanFile   = 'D:\Gits\EEG_pre_processing\data_specific\GermanData\period_rejection_info.mat';
+noiseChanFile   = '/home/sleep/Documents/DAVID/GitHub/EEG_pre_processing/data_specific/GermanData/period_rejection_info.mat';
 def_variable    = 'period_rejection';  % Name of variable that holds the 
                                         % cell of subject-wise information
                                         % of noisy periods

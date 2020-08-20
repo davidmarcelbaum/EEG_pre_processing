@@ -35,31 +35,31 @@
 
 % Define all steps to be performed: 0 for false and 1 for true
 extractsws          = 0;    % Extract SWS periods of datasets
-defdetrend          = 0;    % Detrend the dataset (quadtratic, linear,
+defdetrend          = 1;    % Detrend the dataset (quadtratic, linear,
                             % continuous, discontinuous)
 eeglabfilter        = 0;    % Filtfilt processing. Parameters set when
                             % when function called in script
-customfilter        = 1;    % Build and apply a custom zero-phase Fir 
+customfilter        = 0;    % Build and apply a custom zero-phase Fir 
                             % FiltFilt bandpass filter
 medianfilter        = 0;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
-noisychans2zeros    = 0;    % Interpolation of noisy channels based on
+noisychans2zeros    = 1;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
-noisyperiodreject   = 0;    % Rejection of noisy channels based on manually
+noisyperiodreject   = 1;    % Rejection of noisy channels based on manually
                             % generated table with noisy period info
-rejectchans         = 0;    % Reject non-wanted channels
-rereference         = 0;    % Re-reference channels to choosen reference.
+rejectchans         = 1;    % Reject non-wanted channels
+rereference         = 1;    % Re-reference channels to choosen reference.
                             % Reference is choosen when function is called
                             % in script
 performica          = 0;    % Run ICA on datasets. This step takes a while
 reject_IC           = 0;    % Extract information about artifact components
                             % and reject these
-chan_interpol       = 0;    % Interpolate rejected channels (all 0)
+chan_interpol       = 1;    % Interpolate rejected channels (all 0)
 downsample          = 0;    % Downsample datsets to user-defined sample fr
-separate_trial_grps = 0;    % Separate trial series into groups. Parameters
+separate_trial_grps = 1;    % Separate trial series into groups. Parameters
                             % set when function is called in script.
                             
-lastStep            = 'customfilter';
+lastStep            = 'separate_trial_grps';
                             % Define last step to be done in this run
                             % {...
                             %   'extractsws', ...
@@ -97,7 +97,7 @@ baselineCorr = []; % [-7000 0] Array of min and max (ms) for baseline
 % f_sep_trial_groups. Leave empty if no correction is desired.
 
 
-trials2rejFile   = 'D:\Gits\EEG_pre_processing\data_specific\GermanData\IC_rejection_info_CustomKaiserFilt_20200721.mat';
+trials2rejFile   = '';
 % Path to .mat file that contains information about trials to reject
 % (explanations about organization of the file in f_sep_trial_groups
 
@@ -363,7 +363,7 @@ for s_file = 1 : num_files
     
     
     if eeglabfilter == 1
-        thisStep = 'filter';
+        thisStep = 'filter'
         run p_eeglabfilter.m
         allSteps(end+1) = {thisStep};
     end
@@ -399,7 +399,7 @@ for s_file = 1 : num_files
     
     
     if rejectchans == 1
-        thisStep = 'rejectchans';
+        thisStep = 'rejectchans'
         run p_chan_reject.m
         allSteps(end+1) = {thisStep};
     end

@@ -34,7 +34,7 @@
 %  ================================
 
 % Define all steps to be performed: 0 for false and 1 for true
-extractsws          = 0;    % Extract SWS periods of datasets
+extractsws          = 1;    % Extract SWS periods of datasets
 defdetrend          = 1;    % Detrend the dataset (quadtratic, linear,
                             % continuous, discontinuous)
 eeglabfilter        = 0;    % Filtfilt processing. Parameters set when
@@ -43,6 +43,8 @@ customfilter        = 0;    % Build and apply a custom zero-phase Fir
                             % FiltFilt bandpass filter
 medianfilter        = 0;    % Median filtering of noise artefacts of 
                             % low-frequency occurence
+basecorrect         = 0;    % Baseline correction of signal according to
+                            % time vector given by 'baselineCorr'.
 noisychans2zeros    = 1;    % Interpolation of noisy channels based on
                             % manually generated table with noisy chan info
 noisyperiodreject   = 1;    % Rejection of noisy channels based on manually
@@ -68,6 +70,7 @@ lastStep            = 'separate_trial_grps';
                             %   'filter', ...
                             %   'customfilter', ...
                             %   'medianfilter', ...
+                            %   'basecorrect', ...
                             %   'noisychans2zeros', ...
                             %   'noisyperiodreject', ...
                             %   'performica', ...
@@ -77,13 +80,13 @@ lastStep            = 'separate_trial_grps';
                             %   'chan_interpol', ...
                             %   'downsample'}
 
-pathData            = '/home/sleep/Documents/DAVID/Datasets/Ori_PlaceboNight/preProcessing/extrSWS/';
+pathData            = 'D:\germanStudyData\datasetsSETS\Ori_CueNight';
 % String of file path to the mother stem folder containing the datasets
 
-dataType            = '.set'; % {'.cdt', '.set', '.mff'}
+dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
-stimulation_seq     = 'switchedON_switchedOFF';
+stimulation_seq     = 'switchedOFF_switchedON';
 % {'switchedON_switchedOFF', 'switchedOFF_switchedON'}
 % recordings --> trigger1 on, trigger1 off, trigger2 on, trigger2 off, ...     
 % "on_off" = [ongoing stimulation type 1, post-stimulation type 1] and
@@ -206,6 +209,8 @@ switch lastStep
         savePath = strcat(savePath, filesep, 'CustomFiltered');
     case 'medianfilter'
         savePath = strcat(savePath, filesep, 'MedianFiltered');
+    case 'basecorrect'
+        savePath = strcat(savePath, filesep, 'BaseCorr');
     case 'noisychans2zeros'
         savePath = strcat(savePath, filesep, 'NoisyChans');
     case 'noisyperiodreject'
@@ -294,6 +299,8 @@ for s_file = 1 : num_files
             str_savefile = strcat(str_savefile, '_CustomFilt.set');
         case 'medianfilter'
             str_savefile = strcat(str_savefile, '_MedianFilt.set');
+        case 'basecorrect'
+            str_savefile = strcat(str_savefile, '_BaseCorr.set');
         case 'noisychans2zeros'
             str_savefile = strcat(str_savefile, '_NoisyChans.set');
         case 'noisyperiodreject'
@@ -345,19 +352,37 @@ for s_file = 1 : num_files
     % THESE STEPS CAN BE CHANGED IN ORDER WITHOUT ANY FURTHER CHANGES
     % NEEDED IN THE SCRIPT
     
+    % FOR CLEANED DATA:
+    % extractSWS, eeglabfilter, customfilter, medianfilter,
+    % noisychans2zeros, noisyperiodreject, rejectchans, rereference,
+    % performica, reject_IC, chan_interpol, separate_trial_grps
+    
+    % FOR DETRENDED DATA:
+    % extractsws, noisychans2zeros, noisyperiodreject, chan_interpol,
+    % separate_trial_grps, defdetrend, rereference
+    
+    %     stepwise(...
+    %         'extractsws', extractsws, ...
+    %         'defdetrend', defdetrend, ...
+    %         'eeglabfilter', eeglabfilter, ...
+    %         'customfilter', customfilter, ...
+    %         'medianfilter', medianfilter, ...
+    %         'noisychans2zeros', noisychans2zeros, ...
+    %         'noisyperiodreject', noisyperiodreject, ...
+    %         'rejectchans', rejectchans, ...
+    %         'rereference', rereference, ...
+    %         'performica', performica, ...
+    %         'reject_IC', reject_IC, ...
+    %         'chan_interpol', chan_interpol, ...
+    %         'downsample', downsample, ...
+    %         'separate_trial_grps', separate_trial_grps);
+    
+
     allSteps = {};
     
     if extractsws == 1
         thisStep = 'extractsws'
         run p_extract_sws.m        
-        allSteps(end+1) = {thisStep};
-    end
-    
-    
-    if defdetrend == 1
-        thisStep = 'defdetrend'
-        [EEG.data, lst_changes{end+1,1}] = f_detrend(EEG.data, ...
-            [], false, {});
         allSteps(end+1) = {thisStep};
     end
     
@@ -405,13 +430,6 @@ for s_file = 1 : num_files
     end
     
     
-    if rereference == 1
-        thisStep = 'rereference'
-        run p_offlinereference
-        allSteps(end+1) = {thisStep};
-    end
-    
-    
     if performica == 1
         thisStep = 'performica'
         [EEG, lst_changes{end+1,1}] = f_ica(EEG);
@@ -434,6 +452,13 @@ for s_file = 1 : num_files
     end
     
     
+    if basecorrect == 1
+        thisStep = 'basecorrect'
+        [EEG, lst_changes{end+1,1}] = pop_rmbase(EEG, baselineCorr);
+        allSteps(end+1) = {thisStep};
+    end
+    
+    
     if separate_trial_grps == 1
         
         thisStep = 'separate_trial_grps'
@@ -450,10 +475,27 @@ for s_file = 1 : num_files
         
         [EEG_Odor, EEG_Sham, set_sequence] = ...
             f_sep_trial_groups(EEG, stimulation_seq, ...
-            trials2rejFile, trials2rejVar, baselineCorr);
+            trials2rejFile, trials2rejVar);
         
         allSteps(end+1) = {thisStep};
         
+    end
+    
+    
+    if defdetrend == 1
+        thisStep = 'defdetrend'
+        [EEG_Odor.data, lst_changes{end+1,1}] = f_detrend(EEG_Odor.data, ...
+            1, true, {});
+        [EEG_Sham.data, lst_changes{end+1,1}] = f_detrend(EEG_Sham.data, ...
+            1, true, {});
+        allSteps(end+1) = {thisStep};
+    end
+    
+    
+    if rereference == 1
+        thisStep = 'rereference'
+        run p_offlinereference
+        allSteps(end+1) = {thisStep};
     end
     
     
@@ -468,18 +510,16 @@ for s_file = 1 : num_files
     %% 3. Save dataset
     %  ===============
     
-    if strcmp(thisStep, 'separate_trial_grps')
+    if any(strcmp(allSteps, 'separate_trial_grps'))
         
         str_savefile_sham  = strcat(str_savefile, ...
             '_Sham_', set_sequence, '.set');
-
         str_savefile_odor  = strcat(str_savefile, ...
             '_Odor_', set_sequence, '.set');
      
         [EEG_Odor] = pop_saveset( EEG_Odor, ...
             'filename', str_savefile_odor, ...
             'filepath', savePath);
-        
         [EEG_Sham] = pop_saveset( EEG_Sham, ...
             'filename', str_savefile_sham, ...
             'filepath', savePath);

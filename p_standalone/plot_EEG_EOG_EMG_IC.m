@@ -5,8 +5,7 @@ dataPath = '/home/sleep/Documents/DAVID/Datasets/Ori_PlaceboNight/preProcessing/
 =======
 dataFile = 'RC_162_sleep_ICAweights.set';
 dataPath = 'D:\germanStudyData\datasetsSETS\Ori_TaskNONassoNight\preProcessing\ICAweights';
->>>>>>> 7b2809a322e45c87675fd3fd8119184f120bf151
-midtrialTrigger = 'DIN2';
+midtrialTrigger = 'DIN1'; % DIN1 if Off_On, DIN2 if ON_Off
 
 
 %% Automatic part

@@ -1,5 +1,5 @@
 function [EEG_Odor, EEG_Sham, set_sequence] = f_sep_trial_groups(...
-    EEG, set_sequence, noiseTrialFile, def_variable, v_baseline)
+    EEG, set_sequence, noiseTrialFile, def_variable)
 
 % recordings --> trigger1 on, trigger1 off, trigger2 on, trigger2 off, ...     
 % set_sequence    = cell string of sequence of odor stimulation and
@@ -113,27 +113,20 @@ if ~isempty(noiseTrialFile) && ~isempty(def_variable)
 end
 
 
-%% Remove baseline
-
-if ~isempty(v_baseline)
-    [EEG, EEG.lst_changes{end+1,1}] = pop_rmbase(EEG, v_baseline);
-end
-
-
 %% Determine groups of trials and separate them
 
 get_cidx= {EEG.event.mffkey_cidx};
 
 % Based on odds vs even @Jens' mail, INDEPENDANTLY OF ON OR OFF
 idx_trigger_sham        = find( mod(str2double(get_cidx), 2) == 0);
-idx_trigger_odor         = find( mod(str2double(get_cidx), 2) ~= 0);
+idx_trigger_odor        = find( mod(str2double(get_cidx), 2) ~= 0);
     
     
 % -------------------------------------------------------------------------
 % Isolating trial of interest into separate structures
 
 EEG_Sham    = EEG;
-EEG_Odor     = EEG;
+EEG_Odor    = EEG;
 
 [EEG_Sham, EEG_Sham.lst_changes{end+1,1}]    = ...
     pop_select( EEG_Sham, 'trial', idx_trigger_sham );

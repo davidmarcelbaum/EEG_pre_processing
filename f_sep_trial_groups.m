@@ -24,13 +24,11 @@ function [EEG_Odor, EEG_Sham, set_sequence] = f_sep_trial_groups(...
 
 global str_base
 
-
 [EEG, EEG.lst_changes{end+1,1}] = pop_epoch( EEG, ...
     { }, ...
     [-15 15], ...
     'newname', 'temp_set', ...
     'epochinfo', 'yes');
-
 
 %% Retain only trials with selected midtrial trigger type
 if strcmp(set_sequence, 'switchedON_switchedOFF')
@@ -40,12 +38,6 @@ elseif strcmp(set_sequence, 'switchedOFF_switchedON')
     triggerOI   = 'DIN1';
     trialEdges  = 'DIN2';
 end
-
-
-% -------------------------------------------------------------------------
-% Identify trials that only contain one trigger (that is they are not
-% overlapping with other trials) and only the trigger of interest
-% (triggerOI) as midpoint of epoch
 
 % This here is needed because EEG.epoch structure holds either cells or
 % chars for EEG.epoch.eventlabel (and others) based on whether at least one
@@ -61,10 +53,11 @@ for i_trans = 1 : numel(EEG.epoch)
     end
 end
 
-
+% -------------------------------------------------------------------------
+% Identify trials that only contain one trigger (that is they are not
+% overlapping with other trials) and only the trigger of interest
+% (triggerOI) as midpoint of epoch
 idx_triggerOI           = find(strcmp({EEG.epoch.eventlabel}, triggerOI));
-
-
 idx_unique_triggers     = [];
 for i = 1:size(EEG.epoch,2)
     if numel(EEG.epoch(i).event) == 1
@@ -74,10 +67,8 @@ end
 
 idx_trialsOI = intersect(idx_triggerOI, idx_unique_triggers);
 
-
 % -------------------------------------------------------------------------
 % Slice the dataset again in only epochs of interest
-
 [EEG, EEG.lst_changes{end+1,1}] = pop_epoch( EEG, ...
     { EEG.epoch(idx_trialsOI).eventtype }, ...
     [-15 15], ...
@@ -92,19 +83,15 @@ if ~isempty(noiseTrialFile) && ~isempty(def_variable)
     % ---------------------------------------------------------------------
     % Extract the vectors of the noisy periods that are given by the
     % sideloaded file
-    
     noisyTrials = load(noiseTrialFile);
-    
     
     subj_row = find(strcmp(noisyTrials.(def_variable)(:,1), ...
         str_base));
     
     rej_trials = noisyTrials.(def_variable){subj_row,3};
     
-    
     % ---------------------------------------------------------------------
     % Simply reject the epochs
-    
     if ~isempty(rej_trials)
         [EEG, EEG.lst_changes{end+1,1}] = ...
             pop_rejepoch( EEG, rej_trials ,0);
@@ -114,7 +101,6 @@ end
 
 
 %% Determine groups of trials and separate them
-
 get_cidx= {EEG.event.mffkey_cidx};
 
 % Based on odds vs even @Jens' mail, INDEPENDANTLY OF ON OR OFF

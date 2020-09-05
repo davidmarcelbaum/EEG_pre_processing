@@ -32,15 +32,22 @@
 
 % THESE STEPS CAN BE CHANGED IN ORDER WITHOUT ANY FURTHER CHANGES
 % NEEDED IN THE SCRIPT
+% allSteps = {...
+%     'eeglabfilter', ...
+%     'extractsws', ...
+%     'noisyperiodreject', ...
+%     'noisychans2zeros', ...
+%     'rejectchans', ...
+%     'chan_interpol', ...
+%     'rereference', ...
+%     'separate_trial_grps'};
 allSteps = {...
-    'eeglabfilter', ...
     'extractsws', ...
     'noisyperiodreject', ...
     'noisychans2zeros', ...
     'rejectchans', ...
     'chan_interpol', ...
-    'rereference', ...
-    'separate_trial_grps'};
+    'rereference'};
 % FOR CLEANED DATA:
 % extractSWS, customfilter,
 % noisychans2zeros, noisyperiodreject, rejectchans, rereference,
@@ -80,13 +87,13 @@ allSteps = {...
 % separate_trial_grps     Separate trial series into groups. Parameters
 %                         set when function is called in script.
 
-data_appendix            = 'separate_trial_grps';
+data_appendix            = 'rereference';
 % Define folder name and dataset appendix for datasets
 
-pathData            = 'D:\germanStudyData\datasetsSETS\Ori_CueNight';
+pathData            = 'D:\germanStudyData\datasetsSETS\Ori_CueNight\preProcessing\eeglabfilter';
 % String of file path to the mother stem folder containing the datasets
 
-dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
+dataType            = '.set'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
 stimulation_seq     = 'switchedOFF_switchedON';
@@ -202,6 +209,8 @@ for s_file = 1 : num_files
     fprintf('\n<!> Running %s (%d/%d)...\n', ...
         ls_files(s_file).name, s_file, num_files) % Report stage
     
+    
+    
     %% 0. Define subject
     %  =================
     % ---------------------------------------------------------------------
@@ -211,16 +220,15 @@ for s_file = 1 : num_files
     str_subj            = extractAfter(ls_files(s_file).name, 'RC_');
     str_subj            = extractBefore(str_subj, '_');
     
-    str_session         = str_subj(3); % Number of session
-    str_subjnum     	= str_subj(1:2); % Number of subject
+    str_session         = str_subj(3);      % Number of session
+    str_subjnum     	= str_subj(1:2);    % Number of subject
     % |=END USER INPUT=|
     
     if strcmp(dataType, '.set')
-        % Extract the last step performed on the datset
+        % Extract the last step performed on the dataset
         str_savefile    = extractBefore(ls_files(s_file).name, dataType);
-        str_parts       = strsplit(str_savefile, '_');
         str_savefile    = extractBefore(str_savefile, ...
-            strcat('_', str_parts(end)));
+            extractAfter(str_savefile, 'sleep'));
     else
         % Else, just get the file name without extension since no step
         % performed yet

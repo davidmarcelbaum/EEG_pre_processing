@@ -24,6 +24,12 @@ function [EEG_Odor, EEG_Sham, set_sequence] = f_sep_trial_groups(...
 
 global str_base
 
+% At this stage, the rejecteddata field (containing time series of rejected
+% channels) is probably not of any need ny more and increases the file size
+% unnecessarily.
+EEG = rmfield(EEG, 'rejecteddata');
+
+
 [EEG, EEG.lst_changes{end+1,1}] = pop_epoch( EEG, ...
     { }, ...
     [-15 15], ...
@@ -106,7 +112,26 @@ get_cidx= {EEG.event.mffkey_cidx};
 % Based on odds vs even @Jens' mail, INDEPENDANTLY OF ON OR OFF
 idx_trigger_sham        = find( mod(str2double(get_cidx), 2) == 0);
 idx_trigger_odor        = find( mod(str2double(get_cidx), 2) ~= 0);
-    
+
+% Here we reject the last trial if it is not complete (which means,
+% recording stopped before trial fully finished). The partial trial will
+% be removed from EEG.data and EEG.epoch but will still be shown in 
+% EEG.event, which is what we use to identify trials.
+if size(EEG.data, 3) ~= length(EEG.epoch)
+    error('Incompatible epoch handling')
+end
+s_rej = 0;
+if idx_trigger_sham(end) > size(EEG.data, 3)
+    idx_trigger_sham = idx_trigger_sham(1:end-1);
+    s_rej = s_rej + 1;
+end
+if idx_trigger_odor(end) > size(EEG.data, 3)
+    idx_trigger_odor = idx_trigger_odor(1:end-1);
+    s_rej = s_rej + 1;
+end
+if s_rej > 1
+    error('More than one incomplete trials. This does not make sense')
+end
     
 % -------------------------------------------------------------------------
 % Isolating trial of interest into separate structures

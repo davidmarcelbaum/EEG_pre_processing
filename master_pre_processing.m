@@ -32,23 +32,20 @@
 
 % THESE STEPS CAN BE CHANGED IN ORDER WITHOUT ANY FURTHER CHANGES
 % NEEDED IN THE SCRIPT
+allSteps = {'extractsws', ...
+    'noisyperiodreject', ...
+    'noisychans2zeros', ...
+    'rejectchans', ...
+    'chan_interpol', ...
+    'rereference', ...
+    'downsample', ...
+    'separate_trial_grps'};
 % allSteps = {...
-%     'eeglabfilter', ...
-%     'extractsws', ...
-%     'noisyperiodreject', ...
 %     'noisychans2zeros', ...
 %     'rejectchans', ...
 %     'chan_interpol', ...
 %     'rereference', ...
-%     'separate_trial_grps'};
-% allSteps = {...
-%     'extractsws', ...
-%     'noisyperiodreject', ...
-%     'noisychans2zeros', ...
-%     'rejectchans', ...
-%     'chan_interpol', ...
-%     'rereference'};
-allSteps = {'eeglabfilter'};
+%     'downsample'};
 % FOR CLEANED DATA:
 % extractSWS, customfilter,
 % noisychans2zeros, noisyperiodreject, rejectchans, rereference,
@@ -88,13 +85,13 @@ allSteps = {'eeglabfilter'};
 % separate_trial_grps     Separate trial series into groups. Parameters
 %                         set when function is called in script.
 
-data_appendix            = 'eeglabfilter';
+data_appendix            = 'TRIALS';
 % Define folder name and dataset appendix for datasets
 
-pathData            = 'D:\germanStudyData\datasetsSETS\Ori_CueNight';
+pathData            = 'D:\germanStudyData\datasetsSETS\Ori_CueNight\preProcessing\eeglabfilter';
 % String of file path to the mother stem folder containing the datasets
 
-dataType            = '.mff'; % {'.cdt', '.set', '.mff'}
+dataType            = '.set'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
 stimulation_seq     = 'switchedOFF_switchedON';
@@ -243,8 +240,12 @@ for s_file = 1 : num_files
     % Appendix to dataset name accordingly to defined string:
     % This will allow to collect databases easier just by running "dir"
     % on pathData.
-    str_savefile = strcat(str_savefile, '_', data_appendix, ...
-        '_', stimulation_seq, '.set');
+    if any(strcmp(allSteps, 'separate_trial_grps'))
+        str_savefile = strcat(str_savefile, '_', data_appendix, ...
+            '_', stimulation_seq, '.set');
+    else
+        str_savefile = strcat(str_savefile, '_', data_appendix, '.set');
+    end
     
     % ---------------------------------------------------------------------
     % This is useful in order to store the history of EEGLAB functions
@@ -350,6 +351,12 @@ for s_file = 1 : num_files
         
         
         if strcmp(thisStep, 'separate_trial_grps')
+            
+            % Check for incompatibility
+            if isempty(stimulation_seq)
+               error("If you want to epoch your datasets, 'stimulation_seq' can not be empty") 
+            end
+            
             % Add the history of all called functions to EEG structure
             if ~isfield(EEG, 'lst_changes')
                 EEG.lst_changes = lst_changes;
@@ -377,6 +384,12 @@ for s_file = 1 : num_files
         
         if strcmp(thisStep, 'rereference')
             [EEG, lst_changes{end+1,1}] = f_offlinereference(EEG);
+            stepsInRun = stepsInRun + 1;
+        end
+        
+        
+        if strcmp(thisStep, 'downsample')
+            [EEG, lst_changes{end+1,1}] = pop_resample(EEG, 100);
             stepsInRun = stepsInRun + 1;
         end
         

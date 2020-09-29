@@ -33,19 +33,19 @@
 % THESE STEPS CAN BE CHANGED IN ORDER WITHOUT ANY FURTHER CHANGES
 % NEEDED IN THE SCRIPT
 allSteps = {'extractsws', ...
-    'noisyperiodreject', ...
-    'noisychans2zeros', ...
-    'rejectchans', ...
-    'chan_interpol', ...
-    'rereference', ...
-    'downsample', ...
-    'separate_trial_grps'};
+   'noisyperiodreject', ...
+   'noisychans2zeros', ...
+   'rejectchans', ...
+   'chan_interpol', ...
+   'rereference', ...
+   'downsample'};
 % allSteps = {...
 %     'noisychans2zeros', ...
 %     'rejectchans', ...
 %     'chan_interpol', ...
 %     'rereference', ...
 %     'downsample'};
+% allSteps = {'eeglabfilter'};
 % FOR CLEANED DATA:
 % extractSWS, customfilter,
 % noisychans2zeros, noisyperiodreject, rejectchans, rereference,
@@ -85,10 +85,10 @@ allSteps = {'extractsws', ...
 % separate_trial_grps     Separate trial series into groups. Parameters
 %                         set when function is called in script.
 
-data_appendix            = 'TRIALS';
+data_appendix            = 'NREM';
 % Define folder name and dataset appendix for datasets
 
-pathData            = 'D:\germanStudyData\datasetsSETS\Ori_CueNight\preProcessing\eeglabfilter';
+pathData            = 'D:\germanStudyData\datasetsSETS\Ori_PlaceboNight\preProcessing\eeglabfilter';
 % String of file path to the mother stem folder containing the datasets
 
 dataType            = '.set'; % {'.cdt', '.set', '.mff'}
@@ -203,12 +203,12 @@ end
 
 tic;
 for s_file = 1 : num_files
-    
+
     fprintf('\n<!> Running %s (%d/%d)...\n', ...
         ls_files(s_file).name, s_file, num_files) % Report stage
-    
-    
-    
+
+
+
     %% 0. Define subject
     %  =================
     % ---------------------------------------------------------------------
@@ -217,11 +217,11 @@ for s_file = 1 : num_files
     % |===USER INPUT===|
     str_subj            = extractAfter(ls_files(s_file).name, 'RC_');
     str_subj            = extractBefore(str_subj, '_');
-    
+
     str_session         = str_subj(3);      % Number of session
     str_subjnum     	= str_subj(1:2);    % Number of subject
     % |=END USER INPUT=|
-    
+
     if strcmp(dataType, '.set')
         % Extract the last step performed on the dataset
         str_savefile    = extractBefore(ls_files(s_file).name, dataType);
@@ -234,9 +234,9 @@ for s_file = 1 : num_files
         % The str_savefile will be adapted according to
         % the last step performed later.
     end
-    
+
     str_base = str_savefile;
-    
+
     % Appendix to dataset name accordingly to defined string:
     % This will allow to collect databases easier just by running "dir"
     % on pathData.
@@ -246,12 +246,12 @@ for s_file = 1 : num_files
     else
         str_savefile = strcat(str_savefile, '_', data_appendix, '.set');
     end
-    
+
     % ---------------------------------------------------------------------
     % This is useful in order to store the history of EEGLAB functions
     % called during file processing
     lst_changes         = {};
-    
+
     % ---------------------------------------------------------------------
     % Break out of loop if the subject dataset has already been processed
     if exist(strcat(savePath, filesep, str_savefile), 'file')
@@ -260,103 +260,103 @@ for s_file = 1 : num_files
     end
     % End of subject definition
     % =========================
-    
-    
-    
+
+
+
     %% 1. Import datasets into EEGLAB-like structures
     %  ==============================================
-    
+
     [EEG, lst_changes{end+1,1}] = f_load_data(...
         ls_files(s_file).name, pathData, dataType);
     % End of import
     % =============
-    
-    
-    
+
+
+
     %% 2. Perform pre-processing steps
     %  ===============================
-    
+
     for i_step = 1:numel(allSteps)
-        
+
         thisStep    = char(allSteps(i_step));
         stepsInRun  = 0;
-        
-        
+
+
         if strcmp(thisStep, 'extractsws')
             run p_extract_sws.m
             stepsInRun = stepsInRun + 1;
         end
-        
-        
+
+
         if strcmp(thisStep, 'eeglabfilter')
             run p_eeglabfilter.m
             stepsInRun = stepsInRun + 1;
         end
-        
-        
+
+
         if strcmp(thisStep, 'customfilter')
             run p_standalone/p_design_filter.m
             stepsInRun = stepsInRun + 1;
         end
-        
-        
+
+
         if strcmp(thisStep, 'medianfilter')
             %         run p_medfilt.m
             stepsInRun = stepsInRun + 1;
             warning('MedFilt was set to be run but was skipped since commented!')
         end
-        
-        
+
+
         if strcmp(thisStep, 'noisychans2zeros')
             run p_set_zerochans.m
             stepsInRun = stepsInRun + 1;
         end
-        
-        
+
+
         if strcmp(thisStep, 'noisyperiodreject')
             run p_noise_periods.m
             stepsInRun = stepsInRun + 1;
         end
-        
-        
+
+
         if strcmp(thisStep, 'rejectchans')
             run p_chan_reject.m
             stepsInRun = stepsInRun + 1;
         end
-        
-        
+
+
         if strcmp(thisStep, 'performica')
             [EEG, lst_changes{end+1,1}] = f_ica(EEG);
             stepsInRun = stepsInRun + 1;
         end
-        
-        
+
+
         if strcmp(thisStep, 'reject_IC')
             [EEG, lst_changes{end+1,1}] = f_reject_ICs(...
                 EEG, trials2rejFile, trials2rejVar);
             stepsInRun = stepsInRun + 1;
         end
-        
-        
+
+
         if strcmp(thisStep, 'chan_interpol')
             run p_interpolate.m
             stepsInRun = stepsInRun + 1;
         end
-        
-        
+
+
         if strcmp(thisStep, 'basecorrect')
             [EEG, lst_changes{end+1,1}] = pop_rmbase(EEG, baselineCorr);
             stepsInRun = stepsInRun + 1;
         end
-        
-        
+
+
         if strcmp(thisStep, 'separate_trial_grps')
-            
+
             % Check for incompatibility
             if isempty(stimulation_seq)
-               error("If you want to epoch your datasets, 'stimulation_seq' can not be empty") 
+               error("If you want to epoch your datasets, 'stimulation_seq' can not be empty")
             end
-            
+
             % Add the history of all called functions to EEG structure
             if ~isfield(EEG, 'lst_changes')
                 EEG.lst_changes = lst_changes;
@@ -371,8 +371,8 @@ for s_file = 1 : num_files
                 trials2rejFile, trials2rejVar);
             stepsInRun = stepsInRun + 1;
         end
-        
-        
+
+
         if strcmp(thisStep, 'defdetrend')
             [EEG_Odor.data, lst_changes{end+1,1}] = ...
                 f_detrend(EEG_Odor.data, 1, true, {});
@@ -380,20 +380,20 @@ for s_file = 1 : num_files
                 f_detrend(EEG_Sham.data, 1, true, {});
             stepsInRun = stepsInRun + 1;
         end
-        
-        
+
+
         if strcmp(thisStep, 'rereference')
             [EEG, lst_changes{end+1,1}] = f_offlinereference(EEG);
             stepsInRun = stepsInRun + 1;
         end
-        
-        
+
+
         if strcmp(thisStep, 'downsample')
-            [EEG, lst_changes{end+1,1}] = pop_resample(EEG, 100);
+            [EEG, lst_changes{end+1,1}] = pop_resample(EEG, 200);
             stepsInRun = stepsInRun + 1;
         end
-        
-        
+
+
         % End loop check
         if stepsInRun == 0
             error('Current step string not matching with any option in code')
@@ -402,22 +402,22 @@ for s_file = 1 : num_files
         else
             fprintf('\n<!> Done with %s\n\n', thisStep)
         end
-        
+
     end
     % End of pre-processing
     % =====================
-    
-    
-    
+
+
+
     %% 3. Save dataset
     %  ===============
-    
+
     if any(strcmp(allSteps, 'separate_trial_grps'))
         str_savefile_sham  = strcat(extractBefore(str_savefile, '.set'), ...
             '_Sham', extractAfter(str_savefile, stimulation_seq));
         str_savefile_odor  = strcat(extractBefore(str_savefile, '.set'), ...
             '_Odor', extractAfter(str_savefile, stimulation_seq));
-        
+
         [EEG_Odor] = pop_saveset( EEG_Odor, ...
             'filename', str_savefile_odor, ...
             'filepath', savePath);
@@ -438,7 +438,7 @@ for s_file = 1 : num_files
             'filename', str_savefile, ...
             'filepath', savePath);
     end
-    
+
     clearvars EEG_Odor EEG_Sham EEG
 end
 

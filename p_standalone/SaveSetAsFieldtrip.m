@@ -1,7 +1,9 @@
-pathData = 'D:\germanStudyData\datasetsSETS\Ori_CueNight\preProcessing\EEGLABFiltered_Off_On_100Hz';
+pathData = ['D:\germanStudyData\datasetsSETS\Ori_PlaceboNight\', ...
+    'preProcessing\EEGLABFiltered_Off_On_200Hz'];
+
 FilesList = dir([pathData, filesep, '*.set']);
 
-savePath = [pathData, filesep, 'Conv'];
+savePath = [pathData, '_FT'];
 mkdir(savePath)
 
 for i_file = 1:numel({FilesList.name})
@@ -22,7 +24,7 @@ for i_file = 1:numel({FilesList.name})
         '-nocompression', '-v7.3');
     % Required for files larger than 2GB
     % nocompression should be set because files with non-repeated data
-    % (such as EEG) will take a LONG time to be saved and loaded when
+    % (such as EEG) will take a LONG(!) time to be saved and loaded when
     % compressed!
 
 end

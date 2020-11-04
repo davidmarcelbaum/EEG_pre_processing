@@ -1,5 +1,5 @@
-pathData = ['D:\germanStudyData\datasetsSETS\Ori_PlaceboNight\', ...
-    'preProcessing\EEGLABFiltered_Off_On_200Hz'];
+pathData = ['D:\germanStudyData\datasetsSETS\Ori_CueNight\', ...
+    'preProcessing\TRIALS_Ext'];
 
 FilesList = dir([pathData, filesep, '*.set']);
 

@@ -1,6 +1,12 @@
 function [EEG_Odor, EEG_Sham, set_sequence] = f_sep_trial_groups(...
     EEG, set_sequence, noiseTrialFile, def_variable)
 
+% |===USER INPUT===|
+trialEdges = [-5 25]; %Default [-15 15];
+% Default [-15 15]. What are the edges (s) around the event codes which the
+% trials should be extracted of.
+% |=END USER INPUT=|
+
 % recordings --> trigger1 on, trigger1 off, trigger2 on, trigger2 off, ...     
 % set_sequence    = cell string of sequence of odor stimulation and
 %                   olfactometer control
@@ -32,17 +38,15 @@ EEG = rmfield(EEG, 'rejecteddata');
 
 [EEG, EEG.lst_changes{end+1,1}] = pop_epoch( EEG, ...
     { }, ...
-    [-15 15], ...
+    trialEdges, ...
     'newname', 'temp_set', ...
     'epochinfo', 'yes');
 
 %% Retain only trials with selected midtrial trigger type
 if strcmp(set_sequence, 'switchedON_switchedOFF')
     triggerOI   = 'DIN2';
-    trialEdges  = 'DIN1';
 elseif strcmp(set_sequence, 'switchedOFF_switchedON')
     triggerOI   = 'DIN1';
-    trialEdges  = 'DIN2';
 end
 
 % This here is needed because EEG.epoch structure holds either cells or
@@ -63,13 +67,40 @@ end
 % Identify trials that only contain one trigger (that is they are not
 % overlapping with other trials) and only the trigger of interest
 % (triggerOI) as midpoint of epoch
-idx_triggerOI           = find(strcmp({EEG.epoch.eventlabel}, triggerOI));
-idx_unique_triggers     = [];
-for i = 1:size(EEG.epoch,2)
-    if numel(EEG.epoch(i).event) == 1
-        idx_unique_triggers = [idx_unique_triggers i];
+% idx_triggerOI           = find(strcmp({EEG.epoch.eventlabel}, triggerOI));
+% idx_unique_triggers     = [];
+% for i = 1:size(EEG.epoch,2)
+%     if numel(EEG.epoch(i).event) == 1
+%         idx_unique_triggers = [idx_unique_triggers i];
+%     end
+% end
+
+% =========================================================================
+%                   For epoching outside of trial borders
+c_events = {EEG.epoch.eventlabel};
+c_out = cell(numel(c_events), max(cellfun(@numel, c_events)));
+for i_c = 1:numel(c_events)
+    if iscell(c_events{i_c})
+        c_out(i_c, 1:numel(c_events{i_c})) = c_events{i_c};
+    else % only one element stored as char
+        c_out(i_c, 1) = c_events(i_c);
     end
 end
+idx_triggerOI           = find(strcmp(c_out(:,1), triggerOI));
+idx_unique_triggers     = [];
+for i = 1:size(EEG.epoch,2)
+    if numel(EEG.epoch(i).event) <= 2 && ~strcmp(c_out(i,1), c_out(i,2))
+        idx_unique_triggers = [idx_unique_triggers i];
+    end
+    
+    if iscell(EEG.epoch(i).eventtype)
+        EEG.epoch(i).eventtype = EEG.epoch(i).eventtype{1};
+    else
+        EEG.epoch(i).eventtype = EEG.epoch(i).eventtype(1);
+    end
+end
+
+% =========================================================================
 
 idx_trialsOI = intersect(idx_triggerOI, idx_unique_triggers);
 
@@ -77,9 +108,22 @@ idx_trialsOI = intersect(idx_triggerOI, idx_unique_triggers);
 % Slice the dataset again in only epochs of interest
 [EEG, EEG.lst_changes{end+1,1}] = pop_epoch( EEG, ...
     { EEG.epoch(idx_trialsOI).eventtype }, ...
-    [-15 15], ...
+    trialEdges, ...
     'newname', 'temp_set', ...
     'epochinfo', 'yes');
+
+% =========================================================================
+%                   For epoching outside of trial borders
+idx_ev_retain = [];
+i_add = 0;
+for i_ev = 1:length(EEG.event)
+    if mod(i_ev, 2) ~= 0
+        i_add = i_add + 1;
+        idx_ev_retain(i_add) = i_ev;
+    end
+end
+EEG.event = EEG.event(idx_ev_retain);
+% =========================================================================
 
 
 

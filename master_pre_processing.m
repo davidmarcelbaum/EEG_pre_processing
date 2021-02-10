@@ -2,7 +2,7 @@
 % code makes heavy use of EEGLAB 2019.1 and all credits go to the
 % developpers of the EEGLAB toolbox.
 
-
+clear all
 
 %% Terms and conditions
 %  ====================
@@ -30,23 +30,36 @@
 %% Important user-defined variables
 %  ================================
 
-% THESE STEPS CAN BE CHANGED IN ORDER WITHOUT ANY FURTHER CHANGES
-% NEEDED IN THE SCRIPT
-allSteps = {'extractsws', ...
-   'noisyperiodreject', ...
-   'noisychans2zeros', ...
-   'rejectchans', ...
-   'chan_interpol', ...
-   'rereference', ...
-   'downsample', ...
-   'separate_trial_grps'};
-% allSteps = {...
-%     'noisychans2zeros', ...
-%     'rejectchans', ...
-%     'chan_interpol', ...
-%     'rereference', ...
-%     'downsample'};
+% INITIAL DATASET PREPARATION (by far the longest step)
 % allSteps = {'eeglabfilter'};
+
+% EPOCHED DATASETS
+% allSteps = {'extractsws', ...
+%    'noisyperiodreject', ...
+%    'noisychans2zeros', ...
+%    'rejectchans', ...
+%    'rereference', ...
+%    'chan_interpol', ...
+%    'downsample', ...
+%    'separate_trial_grps'};
+
+% "NREM" DATASETS
+% allSteps = {'extractsws', ...
+%    'noisyperiodreject', ...
+%    'noisychans2zeros', ...
+%    'rejectchans', ...
+%    'rereference', ...
+%    'chan_interpol', ...
+%    'downsample'};
+
+% "WHOLE" DATASETS
+allSteps = {...
+    'noisychans2zeros', ...
+    'rejectchans', ...
+    'rereference', ...
+    'chan_interpol', ...
+    'downsample'};
+
 % FOR CLEANED DATA:
 % extractSWS, customfilter,
 % noisychans2zeros, noisyperiodreject, rejectchans, rereference,
@@ -86,16 +99,26 @@ allSteps = {'extractsws', ...
 % separate_trial_grps     Separate trial series into groups. Parameters
 %                         set when function is called in script.
 
-data_appendix            = 'TRIALS_Ext';
+data_appendix            = 'WHOLE';
 % Define folder name and dataset appendix for datasets
 
-pathData            = 'D:\germanStudyData\datasetsSETS\Ori_CueNight\preProcessing\eeglabfilter';
+offline_elecref          = 'Mastoid';
+
+chans.Mastoid           = {'E57', 'E100'};
+chans.EOG               = {'E8', 'E14', 'E21', 'E25', 'E126', 'E127'};
+chans.EMG               = {'E43', 'E120'};
+chans.VREF              = {'E129'};
+chans.Face              = {'E49', 'E48', 'E17', 'E128', 'E32', 'E1', ...
+                            'E125', 'E119', 'E113'};
+
+pathData            = ['D:\germanStudyData\datasetsSETS\Ori_CueNight', ...
+                        '\preProcessing\eeglabfilter'];
 % String of file path to the mother stem folder containing the datasets
 
 dataType            = '.set'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
-stimulation_seq     = 'switchedOFF_switchedON';
+stimulation_seq     = 'OFF_ON';
 % {'switchedON_switchedOFF', 'switchedOFF_switchedON'}
 % recordings --> trigger1 on, trigger1 off, trigger2 on, trigger2 off, ...
 % "on_off" = [ongoing stimulation type 1, post-stimulation type 1] and
@@ -163,6 +186,12 @@ if isempty(ls_files) || num_files == 0
 end
 
 % -------------------------------------------------------------------------
+% Stop here when no steps given to script
+if ~exist('allSteps', 'var')
+    error('You did not define any pre-processing steps')
+end
+
+% -------------------------------------------------------------------------
 % Here, we locate EEGLAB toolbox since the path might differ between
 % systems. This will then add the functions the script needs to MATLAB path
 locateEeglab = which('eeglab.m');
@@ -200,7 +229,8 @@ end
 
 %% The core of the script
 %  ======================
-% Every script seems rough on the outside, but has a soft core, so treat it nicely.
+% Every script seems rough on the outside, but has a soft core, so treat it 
+% nicely.
 
 tic;
 for s_file = 1 : num_files
@@ -304,7 +334,8 @@ for s_file = 1 : num_files
         if strcmp(thisStep, 'medianfilter')
             %         run p_medfilt.m
             stepsInRun = stepsInRun + 1;
-            warning('MedFilt was set to be run but was skipped since commented!')
+            warning(['MedFilt was set to be run but was skippe', ...
+                'd since commented!'])
         end
 
 
@@ -321,7 +352,8 @@ for s_file = 1 : num_files
 
 
         if strcmp(thisStep, 'rejectchans')
-            run p_chan_reject.m
+            [EEG, lst_changes{end+1,1}] = f_chan_reject(EEG, chans, ...
+                {'EOG', 'EMG', 'VREF', 'Face'});
             stepsInRun = stepsInRun + 1;
         end
 
@@ -355,7 +387,8 @@ for s_file = 1 : num_files
 
             % Check for incompatibility
             if isempty(stimulation_seq)
-               error("If you want to epoch your datasets, 'stimulation_seq' can not be empty")
+               error(["If you want to epoch your datasets, '", ...
+                   "stimulation_seq' can not be empty"])
             end
 
             % Add the history of all called functions to EEG structure
@@ -384,7 +417,8 @@ for s_file = 1 : num_files
 
 
         if strcmp(thisStep, 'rereference')
-            [EEG, lst_changes{end+1,1}] = f_offlinereference(EEG);
+            [EEG, lst_changes{end+1,1}] = ...
+                f_offlinereference(EEG, chans, offline_elecref);
             stepsInRun = stepsInRun + 1;
         end
 

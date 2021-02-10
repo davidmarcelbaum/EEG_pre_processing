@@ -1,9 +1,9 @@
 pathData = ['D:\germanStudyData\datasetsSETS\Ori_CueNight\', ...
-    'preProcessing\TRIALS_Ext'];
+    'preProcessing\EEGLABFiltered_Off_On_200Hz'];
 
 FilesList = dir([pathData, filesep, '*.set']);
 
-savePath = [pathData, '_FT'];
+savePath = [pathData, '_Oct'];
 mkdir(savePath)
 
 for i_file = 1:numel({FilesList.name})
@@ -20,8 +20,12 @@ for i_file = 1:numel({FilesList.name})
     saveName = strcat(extractBefore(FilesList(i_file).name, '.set'), ...
         '.mat');
     
+    % Version 7 makes it possible to load the data into GNU Octave.
     save([savePath, filesep, saveName], 'hdr', 'data', 'events', ...
-        '-nocompression', '-v7.3');
+        '-nocompression', '-v7');
+    
+%     save([savePath, filesep, saveName], 'hdr', 'data', 'events', ...
+%         '-nocompression', '-v7.3');
     % Required for files larger than 2GB
     % nocompression should be set because files with non-repeated data
     % (such as EEG) will take a LONG(!) time to be saved and loaded when

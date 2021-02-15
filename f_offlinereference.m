@@ -1,6 +1,10 @@
 function [EEGout, lst_changes] = f_offlinereference(EEGin, chans, offline_elecref)
 
-idx_elecref = find(strcmp({EEGin.chanlocs.type}, offline_elecref));
+if ischar(offline_elecref) || iscell(offline_elecref)
+    idx_elecref = find(strcmp({EEGin.chanlocs.type}, offline_elecref));
+elseif isnumeric(offline_elecref) || isempty(offline_elecref)
+    idx_elecref = offline_elecref;
+end
 
 %% Extract position of noisy channel and find closest channel to it
 log_noisy = find(strcmp({EEGin.chanlocs(idx_elecref).description}, 'Noisy'));
@@ -33,11 +37,16 @@ if any(strcmp({EEGin.chanlocs(idx_elecref).description}, 'Noisy'))
 end
 
 
-% Re-referecning function will also erase the channels used for
+% Re-referencing function will also erase the channels used for
 % rereferencing from dataset, so the next step is commented out since not
 % needed
 [EEGout, lst_changes] = pop_reref( EEGin, idx_elecref, ...
     'exclude', find(strcmp({EEGin.chanlocs.description}, 'Noisy')));
+% 'exclude' tag since data of noisy channels are set to zeros and will be
+% interpolated. The exclude tag is defining which channels will be excluded
+% from the calculation of the reference values, in the case for example 
+% that reference is done with average of all channels, as well as the 
+% referencing itself.
 
 % [EEGout, lst_changes{end+1, 1}] = ...
 %     f_chan_reject(EEGout, chans, offline_elecref);

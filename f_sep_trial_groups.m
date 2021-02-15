@@ -33,11 +33,14 @@ global str_base
 % At this stage, the rejecteddata field (containing time series of rejected
 % channels) is probably not of any need any more and increases the file 
 % size unnecessarily.
-EEG = rmfield(EEG, 'rejecteddata');
+if isfield(EEG, 'rejecteddata')
+    EEG = rmfield(EEG, 'rejecteddata');
+end
 
 
 
-%% Retain only trials with selected midtrial trigger type
+%%  Retain only trials with selected midtrial trigger type of valid length
+
 if strcmp(set_sequence, 'ON_OFF')
     triggerOI   = 'DIN2';
     triggerEND  = 'DIN1';
@@ -45,6 +48,7 @@ elseif strcmp(set_sequence, 'OFF_ON')
     triggerOI   = 'DIN1';
     triggerEND  = 'DIN2';
 end
+
 
 idx_triggerOI   = find(strcmp({EEG.event.label}, triggerOI));
 
@@ -54,9 +58,11 @@ cidx_all(cellfun('isempty',cidx_all))   = [];
 cidx_all                                = cellfun(@str2double,cidx_all);
 cidx_unique                             = sort(unique(cidx_all));
 
+cidx_unique_ori = cidx_unique;
+
 for cidx = numel(cidx_unique):-1:1
     
-    will_be_rejected = 0;
+    will_be_rejected        = 0;
     
     idx = find(strcmp({EEG.event.mffkey_cidx}, ...
         num2str(cidx_unique(cidx))));
@@ -70,71 +76,79 @@ for cidx = numel(cidx_unique):-1:1
         
         % ...whether first is a start and second an end trigger
     elseif ~strcmp(EEG.event(idx(1)).label, 'DIN1') || ...
-            ~strcmp(EEG.event(idx(2)).label, 'DIN2')
+            ~strcmp(EEG.event(idx(end)).label, 'DIN2')
         will_be_rejected = 1;
         warning(['Deleting stimulation because it doesnt have the r', ...
             'ight start and end.'])
         
-        % ...whether it is about 15 s long
-    elseif EEG.event(idx(2)).latency - EEG.event(idx(1)).latency ...
+        % ...whether the On period is about 15 s long
+    elseif EEG.event(idx(end)).latency - EEG.event(idx(1)).latency ...
             < 15 * EEG.srate || ...
-            EEG.event(idx(2)).latency - EEG.event(idx(1)).latency ...
+            EEG.event(idx(end)).latency - EEG.event(idx(1)).latency ...
             > 15.1 * EEG.srate
         will_be_rejected = 1;
         warning('Deleting stimulation because its too short or too long.')
-        
+       
     end
     
-    if will_be_rejected == 0
-        % Avoid diving into this since the following section is assuming
-        % that idx is a two-element vector which the first if statement
-        % above might already have been checking
+    % Check whether condition is too close to subsequent one
+    remove_subseq = 0;
+    
+    if cidx_unique(cidx) == cidx_unique_ori(end) && ...
+            mod(cidx_unique(cidx), 2) ~= 0
+        will_be_rejected = 1; % Since no Sham condition following
+        warning('Deleting Odor because not followed by Sham')
+    elseif idx(end) < length(EEG.event) - 2
         
-        % A complete cycle is defined as Odor On and Off followed by
-        % Sham On and Off. Here we reject Odor and Sham conditions that 
-        % stand alone
-        if mod(cidx_unique(cidx),2) ~= 0 && idx(2) < length(EEG.event)
-            % Odor condition (odd mffkey_cidx): We check whether the 
-            % condition afterwards is a vehicle one
-            idx_next    = idx + 2;
-            % Reject the second idx_next if last condition was a sham On 
-            % one without Off period which is ok for us
-            idx_next(idx_next > length(EEG.event)) = [];
-            
-            cidx_next   = str2double({EEG.event(idx_next).mffkey_cidx});
-            if any(mod(cidx_next, 2) ~= 0) || ...
-                    any(isempty(cidx_next)) || ...
-                    any(isnan(cidx_next))% Sham conditions are pair values
-                will_be_rejected = 1;
-                warning(['Deleting Odor condition since it is no', ...
-                    't followed by Sham'])
-            end
+        if cidx_unique(cidx) == cidx_unique(end)
+            break
         end
+        idx_subseq = find(strcmp({EEG.event.mffkey_cidx}, ...
+            num2str(cidx_unique(cidx+1))));
         
-        if mod(cidx_unique(cidx),2) == 0 && idx(1) > 2
-            % Odor condition (pair mffkey_cidx): We check whether the 
-            % condition before is a odor one
-            idx_before  = idx - 2;
-            
-            cidx_before = str2double({EEG.event(idx_before).mffkey_cidx});
-            if any(mod(cidx_before, 2) == 0) || ...
-                    any(isempty(cidx_before)) || ...
-                    any(isnan(cidx_before)) % Odor conditions are odd values
-                will_be_rejected = 1;
-                warning(['Deleting Sham condition since it is no', ...
-                    't preseded by Odor'])
-            end
+        if mod(cidx_unique(cidx), 2) ~= 0 && ( ...
+                EEG.event(idx_subseq(1)).latency - ...
+                EEG.event(idx(end)).latency < 15 * EEG.srate || ...
+                EEG.event(idx_subseq(1)).latency - ...
+                EEG.event(idx(end)).latency > 15.1 * EEG.srate )
+            % We care here whether Odor condition is of adequate length to
+            % the next Sham condition
+            remove_subseq = 1;
+            will_be_rejected = 1;
+        elseif mod(cidx_unique(cidx), 2) == 0 && ( ...
+                EEG.event(idx_subseq(1)).latency - ...
+                EEG.event(idx(end)).latency < 15 * EEG.srate )
+            % We don't care whether the next trial is too far away since
+            % it's Sham here and therefore the end of the stimulation cycle
+            remove_subseq = 1;
+            will_be_rejected = 1;
         end
-        
+    end
+    
+    if remove_subseq == 1
+        cidx_unique(cidx+1)
+        cidx_unique(cidx+1) = [];
     end
     
     if will_be_rejected == 1
-        cidx
+        cidx_unique(cidx)
         cidx_unique(cidx) = [];
     end
     
 end
 
+
+% It can occur that because of sleep scoring an Odor condition is not
+% listed in the EEG.event structure as first condition since it has been
+% rejected by extractsws, but instead the structure is starting by Sham. We
+% correct this here.
+if mod(cidx_unique(1), 2) == 0 % Sham condition
+    cidx_unique(1) = [];
+end
+
+
+
+%% =-=-=-=-=-=-=-=-=-=- Slice datasets into trials -=-=-=-=-=-=-=-=-=-=-=-=
 
 % Now all EEG.event are valid, all odd ones are odor, all even ones are
 % sham
@@ -148,188 +162,84 @@ idx_trigger_odor          = intersect(idx_triggerOI, Odor_Epochs);
 idx_trigger_sham          = intersect(idx_triggerOI, Sham_Epochs);
 
 
+% % End check-up
+% if numel(idx_trigger_odor) ~= numel(idx_trigger_sham) || ...
+%         mod(cidx_unique(end), 2) ~= 0
+%    error('Still not matching correctly!') 
+% end
+
+
 EEG_Sham        = EEG;
 EEG_Odor        = EEG;
 
 [EEG_Sham, EEG_Sham.lst_changes{end+1,1}] = pop_epoch( EEG_Sham, ...
     {EEG_Sham.event(idx_trigger_sham).type}, ...
     trialEdges, ...
-    'newname', 'temp_set', ...
+    'newname', str_base, ...
     'epochinfo', 'yes');
 [EEG_Odor, EEG_Odor.lst_changes{end+1,1}] = pop_epoch( EEG_Odor, ...
     {EEG_Odor.event(idx_trigger_odor).type}, ...
     trialEdges, ...
-    'newname', 'temp_set', ...
+    'newname', str_base, ...
     'epochinfo', 'yes');
 
 
+
+%% =-=-=-=-=-=-=-=-=-=- Balance sequence of trials -=-=-=-=-=-=-=-=-=-=-=-=
+
+% Check for overlapping conditions
+
+cidx_sham = {EEG_Sham.event.mffkey_cidx};
+cidx_sham = cellfun(@str2double,cidx_sham);
+
+cidx_odor = {EEG_Odor.event.mffkey_cidx};
+cidx_odor = cellfun(@str2double,cidx_odor);
+
+% Check Odor conditions
+idx_remove = [];
+idx_check = find(mod(cidx_odor, 2) == 0);
+for i = 1:numel(idx_check)
+    if EEG_Odor.event(idx_check(i)+1).latency - ...
+            EEG_Odor.event(idx_check(i)).latency < 15 * EEG.srate
+        idx_remove = [idx_remove, idx_check(i), idx_check(i) + 1];
+    end
+    if EEG_Odor.event(idx_check(i)).latency - ...
+            EEG_Odor.event(idx_check(i)-1).latency < 15 * EEG.srate
+        idx_remove = [idx_remove, idx_check(i), idx_check(i) - 1];
+    end
+end
+idx_remove_odor = unique(idx_remove);
+
+cidx_odor(idx_remove_odor) = [];
+
+% Check Sham conditions
+idx_remove = [];
+idx_check = find(mod(cidx_sham, 2) ~= 0);
+for i = 1:numel(idx_check)
+    if EEG_Sham.event(idx_check(i)+1).latency - ...
+            EEG_Sham.event(idx_check(i)).latency < 15 * EEG.srate
+        idx_remove = [idx_remove, idx_check(i), idx_check(i) + 1];
+    end
+    if EEG_Sham.event(idx_check(i)).latency - ...
+            EEG_Sham.event(idx_check(i)-1).latency < 15 * EEG.srate
+        idx_remove = [idx_remove, idx_check(i), idx_check(i) - 1];
+    end
+end
+idx_remove_sham = unique(idx_remove);
+
+cidx_sham(idx_remove_sham) = [];
+
+
+idx_retain_odor = find(ismember(cidx_odor+1, cidx_sham));
+[EEG_Odor, EEG_Odor.lst_changes{end+1,1}] = pop_select( EEG_Odor, ...
+    'trial', idx_retain_odor );
+
+idx_retain_sham = find(ismember(cidx_sham-1, cidx_odor));
+[EEG_Sham, EEG_Sham.lst_changes{end+1,1}] = pop_select( EEG_Sham, ...
+    'trial', idx_retain_sham );
+
+if numel(idx_retain_odor) ~= numel(idx_retain_sham)
+    error('Still no match')
 end
 
-% 
-% 
-% 
-% [EEG, EEG.lst_changes{end+1,1}] = pop_epoch( EEG, ...
-%     { }, ...
-%     trialEdges, ...
-%     'newname', 'temp_set', ...
-%     'epochinfo', 'yes');
-% 
-% 
-% 
-% 
-% % This here is needed because EEG.epoch structure holds either cells or
-% % chars for EEG.epoch.eventlabel (and others) based on whether at least one
-% % trial contains overlapping triggers or not
-% for i_trans = 1 : numel(EEG.epoch)
-%     if numel(EEG.epoch(i_trans).event) == 1
-%         EEG.epoch(i_trans).eventlabel = char(EEG.epoch(i_trans).eventlabel);
-%         EEG.epoch(i_trans).eventtype = char(EEG.epoch(i_trans).eventtype);
-% %         eventduration
-% %         eventrelativebegintime
-% %         eventsourcedevice
-% %         eventlatency
-%     end
-% end
-% 
-% % -------------------------------------------------------------------------
-% % Identify trials that only contain one trigger (that is they are not
-% % overlapping with other trials) and only the trigger of interest
-% % (triggerOI) as midpoint of epoch
-% idx_triggerOI           = find(strcmp({EEG.epoch.eventlabel}, triggerOI));
-% idx_unique_triggers     = [];
-% for i = 1:size(EEG.epoch,2)
-%     if numel(EEG.epoch(i).event) == 1
-%         idx_unique_triggers = [idx_unique_triggers i];
-%     end
-% end
-% 
-% 
-% % *************************************************************************
-% % (Addition 1 here)
-% % *************************************************************************
-% 
-% 
-% idx_trialsOI = intersect(idx_triggerOI, idx_unique_triggers);
-% 
-% % -------------------------------------------------------------------------
-% % Slice the dataset again in only epochs of interest
-% [EEG, EEG.lst_changes{end+1,1}] = pop_epoch( EEG, ...
-%     { EEG.epoch(idx_trialsOI).eventtype }, ...
-%     trialEdges, ...
-%     'newname', 'temp_set', ...
-%     'epochinfo', 'yes');
-% 
-% 
-% % *************************************************************************
-% % (Addition 2 here)
-% % *************************************************************************
-% 
-% 
-% %% Reject trials that have been labeled for rejection in a separate file
-% 
-% if ~isempty(noiseTrialFile) && ~isempty(def_variable)
-%     % ---------------------------------------------------------------------
-%     % Extract the vectors of the noisy periods that are given by the
-%     % sideloaded file
-%     noisyTrials = load(noiseTrialFile);
-%     
-%     subj_row = find(strcmp(noisyTrials.(def_variable)(:,1), ...
-%         str_base));
-%     
-%     rej_trials = noisyTrials.(def_variable){subj_row,3};
-%     
-%     % ---------------------------------------------------------------------
-%     % Simply reject the epochs
-%     if ~isempty(rej_trials)
-%         [EEG, EEG.lst_changes{end+1,1}] = ...
-%             pop_rejepoch( EEG, rej_trials ,0);
-%     end
-% 
-% end
-% 
-% 
-% %% Determine groups of trials and separate them
-% get_cidx= {EEG.event.mffkey_cidx};
-% 
-% % Based on odds vs even @Jens' mail, INDEPENDANTLY OF ON OR OFF
-% idx_trigger_sham        = find( mod(str2double(get_cidx), 2) == 0);
-% idx_trigger_odor        = find( mod(str2double(get_cidx), 2) ~= 0);
-% 
-% % Here we reject the last trial if it is not complete (which means,
-% % recording stopped before trial fully finished). The partial trial will
-% % be removed from EEG.data and EEG.epoch but will still be shown in 
-% % EEG.event, which is what we use to identify trials.
-% if size(EEG.data, 3) ~= length(EEG.epoch)
-%     error('Incompatible epoch handling')
-% end
-% s_rej = 0;
-% if idx_trigger_sham(end) > size(EEG.data, 3)
-%     idx_trigger_sham = idx_trigger_sham(1:end-1);
-%     s_rej = s_rej + 1;
-% end
-% if idx_trigger_odor(end) > size(EEG.data, 3)
-%     idx_trigger_odor = idx_trigger_odor(1:end-1);
-%     s_rej = s_rej + 1;
-% end
-% if s_rej > 1
-%     error('More than one incomplete trials. This does not make sense')
-% end
-%     
-% % -------------------------------------------------------------------------
-% % Isolating trial of interest into separate structures
-% 
-% EEG_Sham    = EEG;
-% EEG_Odor    = EEG;
-% 
-% [EEG_Sham, EEG_Sham.lst_changes{end+1,1}]    = ...
-%     pop_select( EEG_Sham, 'trial', idx_trigger_sham );
-% [EEG_Odor, EEG_Odor.lst_changes{end+1,1}]     = ...
-%     pop_select( EEG_Odor, 'trial', idx_trigger_odor );
-% 
-% 
-% end
-% 
-% 
-% %                               Addition 1
-% % % =========================================================================
-% % %                   For epoching outside of trial borders
-% % c_events = {EEG.epoch.eventlabel};
-% % c_out = cell(numel(c_events), max(cellfun(@numel, c_events)));
-% % for i_c = 1:numel(c_events)
-% %     if iscell(c_events{i_c})
-% %         c_out(i_c, 1:numel(c_events{i_c})) = c_events{i_c};
-% %     else % only one element stored as char
-% %         c_out(i_c, 1) = c_events(i_c);
-% %     end
-% % end
-% % idx_triggerOI           = find(strcmp(c_out(:,1), triggerOI));
-% % idx_unique_triggers     = [];
-% % for i = 1:size(EEG.epoch,2)
-% %     if numel(EEG.epoch(i).event) <= 2 && ~strcmp(c_out(i,1), c_out(i,2))
-% %         idx_unique_triggers = [idx_unique_triggers i];
-% %     end
-% %     
-% %     if iscell(EEG.epoch(i).eventtype)
-% %         EEG.epoch(i).eventtype = EEG.epoch(i).eventtype{1};
-% %     else
-% %         EEG.epoch(i).eventtype = EEG.epoch(i).eventtype(1);
-% %     end
-% % end
-% 
-% % =========================================================================
-% 
-% 
-% 
-% %                               Addition 2
-% % % =========================================================================
-% % %                   For epoching outside of trial borders
-% % idx_ev_retain = [];
-% % i_add = 0;
-% % for i_ev = 1:length(EEG.event)
-% %     if mod(i_ev, 2) ~= 0
-% %         i_add = i_add + 1;
-% %         idx_ev_retain(i_add) = i_ev;
-% %     end
-% % end
-% % EEG.event = EEG.event(idx_ev_retain);
-% % % =========================================================================
+end

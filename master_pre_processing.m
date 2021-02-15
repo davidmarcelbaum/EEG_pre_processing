@@ -34,14 +34,14 @@ clear all
 % allSteps = {'eeglabfilter'};
 
 % EPOCHED DATASETS
-% allSteps = {'extractsws', ...
-%    'noisyperiodreject', ...
-%    'noisychans2zeros', ...
-%    'rejectchans', ...
-%    'rereference', ...
-%    'chan_interpol', ...
-%    'downsample', ...
-%    'separate_trial_grps'};
+allSteps = {'extractsws', ...
+   'noisyperiodreject', ...
+   'noisychans2zeros', ...
+   'rejectchans', ...
+   'rereference', ...
+   'chan_interpol', ...
+   'downsample', ...
+   'separate_trial_grps'};
 
 % "NREM" DATASETS
 % allSteps = {'extractsws', ...
@@ -53,12 +53,12 @@ clear all
 %    'downsample'};
 
 % "WHOLE" DATASETS
-allSteps = {...
-    'noisychans2zeros', ...
-    'rejectchans', ...
-    'rereference', ...
-    'chan_interpol', ...
-    'downsample'};
+% allSteps = {...
+%     'noisychans2zeros', ...
+%     'rejectchans', ...
+%     'rereference', ...
+%     'chan_interpol', ...
+%     'downsample'};
 
 % FOR CLEANED DATA:
 % extractSWS, customfilter,
@@ -72,37 +72,37 @@ allSteps = {...
 % chan_interpol, rereference
 
 % Define all steps to be performed: 0 for false and 1 for true
-% extractsws              Extract SWS periods of datasets
-% defdetrend              Detrend the dataset (quadtratic, linear,
-%                         continuous, discontinuous)
-% eeglabfilter            Filtfilt processing. Parameters set when
-%                         when function called in script
-% customfilter            Build and apply a custom zero-phase Fir
-%                         FiltFilt bandpass filter
-% medianfilter            Median filtering of noise artefacts of
-%                         low-frequency occurence
-% basecorrect             Baseline correction of signal according to
-%                         time vector given by 'baselineCorr'.
-% noisychans2zeros        Interpolation of noisy channels based on
-%                         manually generated table with noisy chan info
-% noisyperiodreject       Rejection of noisy channels based on manually
-%                         generated table with noisy period info
-% rejectchans             Reject non-wanted channels
-% rereference             Re-reference channels to choosen reference.
-%                         Reference is choosen when function is called
-%                         in script
-% performica              Run ICA on datasets. This step takes a while
-% reject_IC               Extract information about artifact components
-%                         and reject these
-% chan_interpol           Interpolate rejected channels (all 0)
-% downsample              Downsample datsets to user-defined sample fr
-% separate_trial_grps     Separate trial series into groups. Parameters
-%                         set when function is called in script.
+% extractsws            Extract SWS periods of datasets
+% defdetrend            Detrend the dataset (quadtratic, linear,
+%                       continuous, discontinuous)
+% eeglabfilter          Filtfilt processing. Parameters set when
+%                       when function called in script
+% customfilter          Build and apply a custom zero-phase Fir
+%                       FiltFilt bandpass filter
+% medianfilter          Median filtering of noise artefacts of
+%                       low-frequency occurence
+% basecorrect           Baseline correction of signal according to
+%                       time vector given by 'baselineCorr'.
+% noisychans2zeros      Interpolation of noisy channels based on
+%                       manually generated table with noisy chan info
+% noisyperiodreject     Rejection of noisy channels based on manually
+%                       generated table with noisy period info
+% rejectchans           Reject non-wanted channels
+% rereference           Re-reference channels to choosen reference.
+%                       Reference is choosen when function is called
+%                       in script
+% performica            Run ICA on datasets. This step takes a while
+% reject_IC             Extract information about artifact components
+%                       and reject these
+% chan_interpol         Interpolate rejected channels (all 0)
+% downsample            Downsample datsets to user-defined sample fr
+% separate_trial_grps   Separate trial series into groups. Parameters
+%                       set when function is called in script.
 
-data_appendix            = 'WHOLE';
+data_appendix           = 'TRIALS';
 % Define folder name and dataset appendix for datasets
 
-offline_elecref          = 'Mastoid';
+offline_elecref         = 'Mastoid'; % Indices or char array ('Mastoid', [])
 
 chans.Mastoid           = {'E57', 'E100'};
 chans.EOG               = {'E8', 'E14', 'E21', 'E25', 'E126', 'E127'};
@@ -110,15 +110,18 @@ chans.EMG               = {'E43', 'E120'};
 chans.VREF              = {'E129'};
 chans.Face              = {'E49', 'E48', 'E17', 'E128', 'E32', 'E1', ...
                             'E125', 'E119', 'E113'};
+                        
+chans2rej               = {'EOG', 'EMG', 'VREF', 'Face'};
+% Define channel types to reject from data and structures
 
-pathData            = ['D:\germanStudyData\datasetsSETS\Ori_CueNight', ...
-                        '\preProcessing\eeglabfilter'];
+pathData                = ['D:\germanStudyData\datasetsSETS\Ori_CueNight', ...
+                            '\preProcessing\eeglabfilter'];
 % String of file path to the mother stem folder containing the datasets
 
-dataType            = '.set'; % {'.cdt', '.set', '.mff'}
+dataType                = '.set'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
-stimulation_seq     = 'OFF_ON';
+stimulation_seq         = 'OFF_ON';
 % {'switchedON_switchedOFF', 'switchedOFF_switchedON'}
 % recordings --> trigger1 on, trigger1 off, trigger2 on, trigger2 off, ...
 % "on_off" = [ongoing stimulation type 1, post-stimulation type 1] and
@@ -127,16 +130,16 @@ stimulation_seq     = 'OFF_ON';
 % On and Off therefore refers to the current state of the stimulation
 % ("switched on" or "switched off").
 
-baselineCorr = []; % [-7000 0] Array of min and max (ms) for baseline
+baselineCorr            = []; % [-7000 0] Array of min and max (ms)
 % Baseline correction when epochs are extracted from dataset in
 % f_sep_trial_groups. Leave empty if no correction is desired.
 
 
-trials2rejFile   = '';
+trials2rejFile          = '';
 % Path to .mat file that contains information about trials to reject
 % (explanations about organization of the file in f_sep_trial_groups
 
-trials2rejVar    = 'comps2reject';
+trials2rejVar           = 'comps2reject';
 % Name of variable that holds the information about the trials to reject
 % inside the .mat file
 
@@ -352,8 +355,15 @@ for s_file = 1 : num_files
 
 
         if strcmp(thisStep, 'rejectchans')
+            if ischar(offline_elecref) && ...
+                    any(strcmp(chans2rej, offline_elecref)) && ...
+                    find(strcmp(allSteps, 'rejectchans')) < ...
+                    find(strcmp(allSteps, 'rereference'))
+                error(['You were about to reject the channels use', ...
+                    'd later for offline referencing!'])
+            end
             [EEG, lst_changes{end+1,1}] = f_chan_reject(EEG, chans, ...
-                {'EOG', 'EMG', 'VREF', 'Face'});
+                chans2rej);
             stepsInRun = stepsInRun + 1;
         end
 

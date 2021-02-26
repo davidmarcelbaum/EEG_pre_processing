@@ -114,7 +114,7 @@ chans.Face              = {'E49', 'E48', 'E17', 'E128', 'E32', 'E1', ...
 chans2rej               = {'EOG', 'EMG', 'VREF', 'Face'};
 % Define channel types to reject from data and structures
 
-pathData                = ['D:\germanStudyData\datasetsSETS\Ori_CueNight', ...
+pathData                = ['D:\germanStudyData\datasetsSETS\Ori_PlaceboNight', ...
                             '\preProcessing\eeglabfilter'];
 % String of file path to the mother stem folder containing the datasets
 
@@ -382,7 +382,8 @@ for s_file = 1 : num_files
 
 
         if strcmp(thisStep, 'chan_interpol')
-            run p_interpolate.m
+            [EEG, lst_changes{end+1,1}] = ...
+                f_interpolate(EEG, {'Noisy', 'OffReference'});
             stepsInRun = stepsInRun + 1;
         end
 

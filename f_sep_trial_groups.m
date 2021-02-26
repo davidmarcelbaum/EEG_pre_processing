@@ -197,7 +197,16 @@ cidx_odor = cellfun(@str2double,cidx_odor);
 
 % Check Odor conditions
 idx_remove = [];
-idx_check = find(mod(cidx_odor, 2) == 0);
+idx_incomp = find(mod(cidx_odor, 2) == 0);
+idx_multip = [];
+for i_num = 1:numel(cidx_odor)
+    s_found = find(cidx_odor == cidx_odor(i_num));
+    if numel(s_found) > 1
+        idx_multip = [idx_multip, i_num];
+    end
+end
+
+idx_check = [idx_incomp, idx_multip];
 for i = 1:numel(idx_check)
     if EEG_Odor.event(idx_check(i)+1).latency - ...
             EEG_Odor.event(idx_check(i)).latency < 15 * EEG.srate
@@ -212,9 +221,20 @@ idx_remove_odor = unique(idx_remove);
 
 cidx_odor(idx_remove_odor) = [];
 
+
+
 % Check Sham conditions
 idx_remove = [];
-idx_check = find(mod(cidx_sham, 2) ~= 0);
+idx_incomp = find(mod(cidx_sham, 2) ~= 0);
+idx_multip = [];
+for i_num = 1:numel(cidx_sham)
+    s_found = find(cidx_sham == cidx_sham(i_num));
+    if numel(s_found) > 1
+        idx_multip = [idx_multip, i_num];
+    end
+end
+
+idx_check = [idx_incomp, idx_multip];
 for i = 1:numel(idx_check)
     if EEG_Sham.event(idx_check(i)+1).latency - ...
             EEG_Sham.event(idx_check(i)).latency < 15 * EEG.srate
@@ -231,15 +251,21 @@ cidx_sham(idx_remove_sham) = [];
 
 
 idx_retain_odor = find(ismember(cidx_odor+1, cidx_sham));
-[EEG_Odor, EEG_Odor.lst_changes{end+1,1}] = pop_select( EEG_Odor, ...
-    'trial', idx_retain_odor );
-
 idx_retain_sham = find(ismember(cidx_sham-1, cidx_odor));
-[EEG_Sham, EEG_Sham.lst_changes{end+1,1}] = pop_select( EEG_Sham, ...
-    'trial', idx_retain_sham );
 
-if numel(idx_retain_odor) ~= numel(idx_retain_sham)
-    error('Still no match')
-end
+idx_retain_cond_indep = intersect(idx_retain_sham, idx_retain_odor);
+
+
+% [EEG_Odor, EEG_Odor.lst_changes{end+1,1}] = pop_select( EEG_Odor, ...
+%     'trial', idx_retain_odor );
+% 
+% [EEG_Sham, EEG_Sham.lst_changes{end+1,1}] = pop_select( EEG_Sham, ...
+%     'trial', idx_retain_sham );
+
+[EEG_Odor, EEG_Odor.lst_changes{end+1,1}] = pop_select( EEG_Odor, ...
+    'trial', idx_retain_cond_indep );
+
+[EEG_Sham, EEG_Sham.lst_changes{end+1,1}] = pop_select( EEG_Sham, ...
+    'trial', idx_retain_cond_indep );
 
 end

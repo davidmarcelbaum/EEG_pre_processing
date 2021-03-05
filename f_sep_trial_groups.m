@@ -58,6 +58,8 @@ cidx_all(cellfun('isempty',cidx_all))   = [];
 cidx_all                                = cellfun(@str2double,cidx_all);
 cidx_unique                             = sort(unique(cidx_all));
 
+mark4rejection = zeros(1, numel(cidx_unique));
+
 cidx_unique_ori = cidx_unique;
 
 for cidx = numel(cidx_unique):-1:1
@@ -127,16 +129,19 @@ for cidx = numel(cidx_unique):-1:1
     
     if remove_subseq == 1
         cidx_unique(cidx+1)
-        cidx_unique(cidx+1) = [];
+%         cidx_unique(cidx+1) = [];
+        mark4rejection(cidx+1) = 1;
     end
     
     if will_be_rejected == 1
         cidx_unique(cidx)
-        cidx_unique(cidx) = [];
+%         cidx_unique(cidx) = [];
+        mark4rejection(cidx) = 1;
     end
     
 end
 
+cidx_unique(logical(mark4rejection)) = [];
 
 % It can occur that because of sleep scoring an Odor condition is not
 % listed in the EEG.event structure as first condition since it has been
@@ -253,19 +258,31 @@ cidx_sham(idx_remove_sham) = [];
 idx_retain_odor = find(ismember(cidx_odor+1, cidx_sham));
 idx_retain_sham = find(ismember(cidx_sham-1, cidx_odor));
 
-idx_retain_cond_indep = intersect(idx_retain_sham, idx_retain_odor);
-
-
-% [EEG_Odor, EEG_Odor.lst_changes{end+1,1}] = pop_select( EEG_Odor, ...
-%     'trial', idx_retain_odor );
-% 
-% [EEG_Sham, EEG_Sham.lst_changes{end+1,1}] = pop_select( EEG_Sham, ...
-%     'trial', idx_retain_sham );
-
 [EEG_Odor, EEG_Odor.lst_changes{end+1,1}] = pop_select( EEG_Odor, ...
-    'trial', idx_retain_cond_indep );
+    'trial', idx_retain_odor );
 
 [EEG_Sham, EEG_Sham.lst_changes{end+1,1}] = pop_select( EEG_Sham, ...
-    'trial', idx_retain_cond_indep );
+    'trial', idx_retain_sham );
+
+cidx_sham = {EEG_Sham.event.mffkey_cidx};
+cidx_sham = cellfun(@str2double,cidx_sham);
+
+cidx_odor = {EEG_Odor.event.mffkey_cidx};
+cidx_odor = cellfun(@str2double,cidx_odor);
+
+% End checkup
+if any(cidx_sham-1 ~= cidx_odor) || ...
+        numel(cidx_sham) ~= numel(cidx_odor) || ...
+        numel(cidx_sham) ~= numel(unique(cidx_sham)) || ...
+        numel(cidx_odor) ~= numel(unique(cidx_odor)) || ...
+        any(mod(cidx_sham, 2) ~= 0) || ...
+        any(mod(cidx_odor, 2) == 0)
+    % Check whether Sham and Odor datasets have:
+    % 1. Compatible (Sham trials directly downstream of Odor trials)
+    % 2. Same amount of trials
+    % 3. No duplicated triggers
+    % 4. Appropriate trigger values (Odd ones for Odor, Even ones for Sham)
+    error('End result is not compatible!')
+end
 
 end

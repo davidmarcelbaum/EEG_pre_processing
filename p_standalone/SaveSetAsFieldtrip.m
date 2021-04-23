@@ -7,7 +7,7 @@ savePath = [pathData, '_Oct'];
 mkdir(savePath)
 
 for i_file = 1:numel({FilesList.name})
-    
+        
     hdr    = ft_read_header([pathData, filesep, ...
         FilesList(i_file).name]);
     data   = ft_read_data([pathData, filesep, ...

@@ -25,17 +25,23 @@ subj_row = find(strcmp(noisePeriods.(def_variable)(:,1), ...
 v_periods = noisePeriods.(def_variable){subj_row,2};
 
 
-if isempty(v_periods)
-    return
-end
-
-
 % -------------------------------------------------------------------------
 % The vectors are given in seconds. Here we will have to adapt them to
-% latencies of the EEG structure and then substract 1 time point from the
-% end edge of periods to be rejected.
+% latencies of the EEG structure.
 
 v_periods           = v_periods .* EEG.srate;
+
+
+
+% Determine percentage of noise in recording
+if isempty(v_periods)
+    Perc_noise(s_file, 1)   = 0;
+    return
+else
+    Length_noise            = v_periods(:, 2) - v_periods(:, 1);
+    Perc_noise(s_file, 1)   = sum(Length_noise) / numel(EEG.times);
+end
+
 
 if strcmp(noisePeriods.(def_variable){subj_row,3}, 'end')
    

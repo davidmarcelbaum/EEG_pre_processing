@@ -4,31 +4,20 @@ function [EEG_Odor, EEG_Sham, set_sequence] = f_sep_trial_groups(...
 % |===USER INPUT===|
 trialEdges = [-15 15]; %Default [-15 15];
 % Default [-15 15]. What are the edges (s) around the event codes which the
-% trials should be extracted of.
+% trials should be extracted of. The datasets will be sliced into trials
+% centered trialEdges seconds around the "triggerOI" defined later.
 % |=END USER INPUT=|
 
 % recordings --> trigger1 on, trigger1 off, trigger2 on, trigger2 off, ...     
 % set_sequence    = cell string of sequence of odor stimulation and
-%                   olfactometer control
-% {'switchedON_switchedOFF', 'switchedOFF_switchedON'}
+%                   olfactometer control: {'ON_OFF', 'OFF_ON'}
 % "on_off" = [ongoing stimulation type 1, post-stimulation type 1] and
 % "off_on" = [pre-stimulation type 1, ongoing stimulation type 1], where
 % "pre-stimulation type 1" is actually post-stimulation type 2!
 % On and Off therefore refers to the current state of the stimulation
 % ("switched on" or "switched off").
 
-% noiseTrialFile    = string of path to the .mat file that contains
-% information about trials/epochs to be rejected. The file should be
-% organized in 3 columns:
-% Col 1 = cell strings of subjects where the string is equal to "str_base"
-% Col 2 = array of independent components to reject. Not needed for this
-%         function
-% Col 3 = array of epochs to reject
-% The matrix should be contained in a variable whose name is defined by
-% "def_variable"
-% Leave both EMPTY if you don't want to reject epochs based on this method
-
-global str_base
+global str_base % This is the file name
 
 % At this stage, the rejecteddata field (containing time series of rejected
 % channels) is probably not of any need any more and increases the file 

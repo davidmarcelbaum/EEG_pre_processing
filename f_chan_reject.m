@@ -76,9 +76,9 @@ end
 idx_chan2rej = find(strcmp({EEG.chanlocs.description}, 'To_exlude'));
 
 
-% Backup time series of channels that will be rejected
-EEG.rejecteddata        = EEG.data(idx_chan2rej, :);
-EEG.rejectedchanlocs    = EEG.chanlocs(idx_chan2rej);
+% % Backup time series of channels that will be rejected
+% EEG.rejecteddata        = EEG.data(idx_chan2rej, :);
+% EEG.rejectedchanlocs    = EEG.chanlocs(idx_chan2rej);
 
 
 % Remove channels competely from dataset.

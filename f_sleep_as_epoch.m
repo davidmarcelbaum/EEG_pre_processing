@@ -1,3 +1,6 @@
+function [EEG, lst_changes] = f_sleep_as_epoch(EEG, ...
+    str_subjnum, str_session)
+
 % |===USER INPUT===|
 pathSleepScore      = 'D:\Gits\EEG_pre_processing\data_specific\GermanData\Hypnograms\';
 % String of file path to the mother stem folder containing the files of
@@ -8,32 +11,18 @@ column_of_interest  = 1;        % Which column contains the scoring values
 str_delimiter       = ' ';
 % We define structure of sleep scoring file and then import values
 
-use_eegrej          = 1; % [0, 1]
-% Whether to use the built-in EEGLAB function eegrej in order to reject
-% time blocks of EEG.data or not. The own-coded part works perfectly fine
-% but I am not sure if adapting EEG.event and EEG.times is enough in the
-% future when proceeding to next steps. EEGLAB might get confused. Instead,
-% the builtin function eegrej should take care of adjusting everything that
-% is needed. It also adds boundaries where needed which is not done in case
-% of use_eegrej == 0. This might requiere additional work during epoching 
-% later in order to exclude incomplete trials.
-
 chunk_scoring       = 30; % scalar (s)
 % What was the scoring interval (in seconds)
 
-% sleepStages         = [2, 3, 4]; % [scalars]
-sleepStages         = [2]; % [scalars]
-% Define the sleep stages of interest to use if scleep scoring files will
-% be sideloaded
-
 EEG.sleepscorelabels = { ...
-    'Awake', 0;     ...
-    'REM', 5;       ...
-    'NREM1', 1;     ...
-    'NREM2', 2;     ...
-    'NREM3', 3;     ...
-    'NREM4', 4;     ...
-    'MT', 8         };
+    'Awake',    0;     ...
+    'REM',      5;     ...
+    'NREM1',    1;     ...
+    'NREM2',    2;     ...
+    'NREM3',    3;     ...
+    'NREM4',    4;     ...
+    'MT',       8;     ...
+    'All',      NaN};
 % |=END USER INPUT=|
 
 
@@ -61,11 +50,11 @@ ls_score(rej)   = [];
 if strcmp(pathSleepScore(end), filesep)
     pathSleepScore(end) = [];
 end
-                  
 
 
-%% 2. Extract SWS (2, 3 and 4)
-%  ===========================
+
+%% 2. Extract sleep stages
+%  =======================
 % -------------------------------------------------------------------------
 % Here, we look for the sleep scoring file corresponding to the subject and
 % session of recording
@@ -103,15 +92,24 @@ v_sleepStages       = v_sleepStages(:,column_of_interest);
 % -------------------------------------------------------------------------
 % Define Slow Wave Sleep periods (SWS) and extract time series of SWS
 
-validSleepStages    = zeros(numel(v_sleepStages), 1);
-for i = 1 : numel(sleepStages)
-    validSleepStages(v_sleepStages == sleepStages(i)) = 1;
-end
-
-startpos_sws        = find(validSleepStages == 1);
-
-
-if use_eegrej == 1
+for iStage = 1:size(EEG.sleepscorelabels, 1)
+    
+    currStage = EEG.sleepscorelabels{iStage, 2};
+    
+    if ~isnan(currStage)
+        validSleepStages    = zeros(numel(v_sleepStages), 1);
+        validSleepStages(v_sleepStages == currStage) = 1;
+    else
+        validSleepStages    = ones(numel(v_sleepStages), 1);
+    end
+    
+    startpos_sws        = find(validSleepStages == 1);
+    
+    
+    %% Extract sleep stage times
+    %  ------------------------------------------------------------------------
+    
+    
     
     for pos_sws = 1 : numel(startpos_sws)
         
@@ -124,10 +122,23 @@ if use_eegrej == 1
     end
     
     i = 0;
+    
+    if isempty(startpos_sws)
+       
+        EEG.(char(EEG.sleepscorelabels{iStage, 1})) = [];
+        continue
+        
+    end
+    
+    
     for v_rej = 1 : size(time_borders, 2)
         
         % Build a matrix with limits of data blocks to reject
-        if v_rej == 1 && time_borders(1,1) > 1
+        if v_rej == 1 && time_borders(1,1) == 1
+            
+            continue        
+        
+        elseif v_rej == 1 && time_borders(1,1) > 1
             % If first period of SWS is different from first scoring period
             
             i = i + 1;
@@ -153,12 +164,12 @@ if use_eegrej == 1
         if v_rej == size(time_borders, 2)
             
             if time_borders(2, v_rej) > EEG.times(end) + 1
-                % It is possible that the last scoring period, which is 
-                % created in a fixed way, exceeds the time limit of actual 
+                % It is possible that the last scoring period, which is
+                % created in a fixed way, exceeds the time limit of actual
                 % recording. In that case, correct the last stop point
-            
+                
                 out_of_bound(i,2) = EEG.times(end) + 1;
-            
+                
             elseif time_borders(2, v_rej) < EEG.times(end) + 1
                 % In tihs case, an additional boundary needs to be added
                 % between last SWS period and end of recording.
@@ -167,8 +178,8 @@ if use_eegrej == 1
                 
                 out_of_bound(i,1) = time_borders(2, v_rej) + 1;
                 out_of_bound(i,2) = EEG.times(end) + 1;
-                                    % +1 because begins with 0
-            
+                % +1 because begins with 0
+                
             end
             
         end
@@ -179,7 +190,7 @@ if use_eegrej == 1
     
     ori_pnts = EEG.times(end) + 1;
     
-    [EEG, lst_changes{end+1,1}] = eeg_eegrej( EEG, out_of_bound);
+    [EEGTmp] = eeg_eegrej( EEG, out_of_bound);
     % This should adapt the values of the latencies to the new EEG.times
     
     
@@ -187,7 +198,7 @@ if use_eegrej == 1
     % This check obviously does not apply to datasets in which last SWS
     % period was exceeding oiginal length of recording
     if time_borders(2, end) < ori_pnts && ...
-            EEG.pnts ~= pnts_scoring * numel(startpos_sws)
+            EEGTmp.pnts ~= pnts_scoring * numel(startpos_sws)
         
         error('Mismatch between final dataset time points and number of SWS periods')
         
@@ -198,92 +209,65 @@ if use_eegrej == 1
     end
     
     % ---------------------------------------------------------------------
-    % Cleanup in order to avoid errors in current subject in remaining 
+    % Cleanup in order to avoid errors in current subject in remaining
     % lines in these variables when previous subject had more borders.
     
     clear time_borders out_of_bound
     
+    %% Slice datasets
     
-elseif use_eegrej == 0
-    
-    % Since startpos_sws is a position-in-vector variable, we convert the
-    % values to latencies according to the actual recording values and then
-    % extract the time series from the recording data
-    v_data  = zeros(size(EEG.data ,1), numel(startpos_sws) * pnts_scoring);
-    v_times = zeros(1, numel(startpos_sws) * pnts_scoring);
-    for pos_sws = 1 : numel(startpos_sws)
-        
-        % Start and stop latency of the imported dataset
-        start_latency   = startpos_sws(pos_sws) * pnts_scoring - ...
-            pnts_scoring + 1;
-        stop_latency    = start_latency + pnts_scoring - 1;
-        
-        % Start and end in our time vectors, not the imported dataset
-        start_pnt       = pos_sws * pnts_scoring - pnts_scoring + 1;
-        stop_pnt        = pos_sws * pnts_scoring;
-        
-        % Extract data points and latencies from dataset and store in data 
-        % and time vector
-        v_data(:, start_pnt:stop_pnt)   = EEG.data(:, ...
-            start_latency:stop_latency);
-        v_times(start_pnt:stop_pnt)     = start_latency:stop_latency;
-        
+    epoch_edges_seconds     = [-15, 15]; % seconds around epoch midpoint
+    epoch_edges             = epoch_edges_seconds * EEG.srate;
+    % Checkpoint
+    if mod(EEGTmp.pnts / sum(abs(epoch_edges)), 1) ~= 0
+        error('Data samples do not match 30 second sleep scores')
     end
     
     
-    % ---------------------------------------------------------------------
-    % Assign EEGLAB structures to the extracted values
+    trial_time_stamps = 15*EEG.srate:sum(abs(epoch_edges)):EEG.pnts;
     
-    EEG.data            = v_data;
-    EEG.sleepscores     = v_sleepStages;
-    EEG.pnts            = size(EEG.data, 2);
-    EEG.times           = 1:size(EEG.data, 2); % is continuous
-    EEG.timesSWS        = v_times; % are the actual time latencies extracted
+    % Purge existing non-desired events from structure
+    EEGTmp.event(1:length(EEGTmp.event)) = [];
     
-    
-    % ---------------------------------------------------------------------
-    % IMPORTANT: Latencies of triggers in EEG.event.latency have not been
-    % adapted since we did not use an in-built EEGLAB function in order to 
-    % crop the time series. We need to assign the trigger latencies to the 
-    % new EEG.times vector which is continuous.
-    
-    % Backup original events
-    EEG.rejectedevent   = EEG.event;
-    
-    % Necessary to convert trigger latencies into integers since MATLAB
-    % will not perform ismember function correctly if not.
-    v_latencies         = int64([EEG.event.latency]);
-    
-    in_or_out = zeros(1, numel(v_latencies));
-    for s_lat = 1 : numel(v_latencies)
+    for iTrial = 1:numel(trial_time_stamps)
         
-        % Get the triggers that are inside the SWS time series
-        in_or_out(s_lat) = ismember(v_latencies(s_lat), EEG.timesSWS);
+        EEGTmp.event(iTrial).latency = trial_time_stamps(iTrial);
+        EEGTmp.event(iTrial).type    = 'SleepEpoch';
         
     end
     
-    pos_lat_in_SWS      = find(in_or_out == 1);
-    pos_lat_out_SWS     = find(in_or_out == 0);
-    
-    for pos_lat = 1 : numel(pos_lat_in_SWS)
-        
-        % Find the latency in the continuous time vector
-        pos_time = ...
-            find(EEG.timesSWS == v_latencies(pos_lat_in_SWS(pos_lat)));
-        
-        EEG.event(pos_lat_in_SWS(pos_lat)).latency = pos_time;
-        
-    end
-    
-    % Lastly, we reject the triggers outside the time series from EEG.event
-    EEG.event(pos_lat_out_SWS) = [];
+    [EEGTmp] = pop_epoch(EEGTmp, ...
+        {EEGTmp.event(1:numel(trial_time_stamps)).type}, ...
+        epoch_edges_seconds);
     
     
-    % ---------------------------------------------------------------------
-    % Cleanup in order to allow loading of heavy variables afterwards 
-    % (Subject 091 gives Java Memory Error)
+    
+    EEG.(char(EEG.sleepscorelabels{iStage, 1})) = EEGTmp.data;
+    EEGTmp = [];
+    
+    
+end
 
-    clear v_data v_times
+sum_samples = 0;
+for iStage = 1:size(EEG.sleepscorelabels, 1)
     
+    curr_data = EEG.(char(EEG.sleepscorelabels{iStage, 1}));
+    if isempty(curr_data) || strcmp(EEG.sleepscorelabels{iStage, 1}, 'All')
+        continue
+    end
     
+    sum_samples = sum_samples + size(curr_data, 2) * size(curr_data, 3);
+    
+end
+
+if sum_samples > size(EEG.data, 2)
+    error('Overlap in sleep stages')
+end
+
+EEG.data    = []; % Avoid datasets from being too large
+EEG.times   = [];
+EEG.event   = [];
+lst_changes = 'By sleep stage extraction';
+
+
 end

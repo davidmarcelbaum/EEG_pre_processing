@@ -75,6 +75,8 @@ end
 
 idx_chan2rej = find(strcmp({EEG.chanlocs.description}, 'To_exlude'));
 
+% idx_chans2keep = 1:length(EEG.chanlocs);
+% idx_chans2keep = idx_chans2keep(~ismember(idx_chans2keep, idx_chan2rej));
 
 % % Backup time series of channels that will be rejected
 % EEG.rejecteddata        = EEG.data(idx_chan2rej, :);
@@ -85,8 +87,7 @@ idx_chan2rej = find(strcmp({EEG.chanlocs.description}, 'To_exlude'));
 % +----------------------------------------------+
 % |This will also remove out of bounds events    |
 % +----------------------------------------------+
-[EEG, lst_changes] = ...
-    pop_select( EEG, 'nochannel', idx_chan2rej);
+[EEG, lst_changes] = pop_select( EEG, 'nochannel', idx_chan2rej);
 % The 'nochannel' option will adapt EEG.chanlocs and EEG.nbchan
 
 

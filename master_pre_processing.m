@@ -57,12 +57,20 @@ clear all
 %    'downsample'};
 
 % "WHOLE" DATASETS
-allSteps = {...
-    'noisychans2zeros', ...
+% allSteps = {...
+%     'noisychans2zeros', ...
+%     'rejectchans', ...
+%     'rereference', ...
+%     'chan_interpol', ...
+%     'downsample'};
+
+% "SLEEPSTAGES" DATASETS
+allSteps = {'noisychans2zeros', ...
     'rejectchans', ...
     'rereference', ...
     'chan_interpol', ...
-    'downsample'};
+    'downsample', ...
+    'sleep_as_epoch'};
 
 % FOR CLEANED DATA:
 % extractSWS, customfilter,
@@ -102,8 +110,9 @@ allSteps = {...
 % downsample            Downsample datsets to user-defined sample fr
 % separate_trial_grps   Separate trial series into groups. Parameters
 %                       set when function is called in script.
+% sleep_as_epoch        Will slice the datasets into 30 second trial epochs
 
-data_appendix           = 'WHOLE';
+data_appendix           = 'SLEEPSTAGES';
 % Define folder name and dataset appendix for datasets
 
 offline_elecref         = 'Mastoid'; % Indices or char array ('Mastoid', [])
@@ -124,11 +133,17 @@ chans2rej               = {'EOG', 'EMG', 'VREF', 'Face'};
 % Define channel types to reject from data and structures
 
 pathData                = ['D:\germanStudyData\datasetsSETS\', ...
-                            'Ori_CueNight\preProcessing\eeglabfilter'];
+                            'Ori_PlaceboNight\preProcessing\eeglabfilter'];
 % String of file path to the mother stem folder containing the datasets
+
+saveMode                = 'onefile'; % {'onefile', 'twofiles'}
+% Whether to combine everything in one .set file or split into .set and
+% .fdt
 
 dataType                = '.set'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
+
+saveType                = '.mat'; % {'.set', '.mat'}
 
 stimulation_seq         = 'OFF_ON';
 % {'switchedON_switchedOFF', 'switchedOFF_switchedON'}
@@ -285,9 +300,9 @@ for s_file = 1 : num_files
     % on pathData.
     if any(strcmp(allSteps, 'separate_trial_grps'))
         str_savefile = strcat(str_savefile, '_', data_appendix, ...
-            '_', stimulation_seq, '.set');
+            '_', stimulation_seq, saveType);
     else
-        str_savefile = strcat(str_savefile, '_', data_appendix, '.set');
+        str_savefile = strcat(str_savefile, '_', data_appendix, saveType);
     end
 
     % ---------------------------------------------------------------------
@@ -447,6 +462,13 @@ for s_file = 1 : num_files
             [EEG, lst_changes{end+1,1}] = pop_resample(EEG, 200);
             stepsInRun = stepsInRun + 1;
         end
+        
+        
+        if strcmp(thisStep, 'sleep_as_epoch')
+            [EEG, lst_changes{end+1,1}] = f_sleep_as_epoch(EEG, ...
+                str_subjnum, str_session);
+            stepsInRun = stepsInRun + 1;
+        end
 
 
         % End loop check
@@ -473,12 +495,17 @@ for s_file = 1 : num_files
         str_savefile_odor  = strcat(extractBefore(str_savefile, '.set'), ...
             '_Odor', extractAfter(str_savefile, stimulation_seq));
 
-        [EEG_Odor] = pop_saveset( EEG_Odor, ...
-            'filename', str_savefile_odor, ...
-            'filepath', savePath);
-        [EEG_Sham] = pop_saveset( EEG_Sham, ...
-            'filename', str_savefile_sham, ...
-            'filepath', savePath);
+        if strcmp(saveType, '.set')
+            [EEG_Odor] = pop_saveset( EEG_Odor, ...
+                'filename', str_savefile_odor, ...
+                'filepath', savePath, 'savemode', saveMode);
+            [EEG_Sham] = pop_saveset( EEG_Sham, ...
+                'filename', str_savefile_sham, ...
+                'filepath', savePath, 'savemode', saveMode);
+        elseif strcmp(saveType, '.mat') 
+            save([savePath, filesep, str_savefile_odor], 'EEG_Odor')
+            save([savePath, filesep, str_savefile_sham], 'EEG_Sham')
+        end
     else
         % Add the history of all called functions to EEG structure
         if ~isfield(EEG, 'lst_changes')
@@ -489,9 +516,13 @@ for s_file = 1 : num_files
                 numel(EEG.lst_changes) + numel(lst_changes)) = ...
                 lst_changes;
         end
-        [EEG] = pop_saveset( EEG, ...
-            'filename', str_savefile, ...
-            'filepath', savePath);
+        if strcmp(saveType, '.set')
+            [EEG] = pop_saveset( EEG, ...
+                'filename', str_savefile, ...
+                'filepath', savePath, 'savemode', saveMode);
+        elseif strcmp(saveType, '.mat')
+            save([savePath, filesep, str_savefile], 'EEG')
+        end
     end
 
     clearvars EEG_Odor EEG_Sham EEG

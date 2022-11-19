@@ -87,8 +87,12 @@ idx_chan2rej = find(strcmp({EEG.chanlocs.description}, 'To_exlude'));
 % +----------------------------------------------+
 % |This will also remove out of bounds events    |
 % +----------------------------------------------+
-[EEG, lst_changes] = pop_select( EEG, 'nochannel', idx_chan2rej);
-% The 'nochannel' option will adapt EEG.chanlocs and EEG.nbchan
+if ~isempty(idx_chan2rej)
+    [EEG, lst_changes] = pop_select( EEG, 'nochannel', idx_chan2rej);
+    % The 'nochannel' option will adapt EEG.chanlocs and EEG.nbchan
+else
+    lst_changes = 'No channel rejected'
+end
 
 
 

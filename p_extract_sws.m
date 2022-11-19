@@ -21,8 +21,7 @@ use_eegrej          = 1; % [0, 1]
 chunk_scoring       = 30; % scalar (s)
 % What was the scoring interval (in seconds)
 
-% sleepStages         = [2, 3, 4]; % [scalars]
-sleepStages         = [2]; % [scalars]
+sleepStages         = [2, 3, 4]; % [scalars]
 % Define the sleep stages of interest to use if scleep scoring files will
 % be sideloaded
 

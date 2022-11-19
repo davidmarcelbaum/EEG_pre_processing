@@ -25,6 +25,9 @@ clear all
 % IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
 % WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
+global trials_out
+trials_out.unbalanced = [];
+trials_out.balanced = [];
 
 
 %% Important user-defined variables
@@ -64,13 +67,21 @@ clear all
 %     'chan_interpol', ...
 %     'downsample'};
 
-% "SLEEPSTAGES" DATASETS
-allSteps = {'noisychans2zeros', ...
+% "OPENBCI" DATASETS
+allSteps = {...
+    'noisychans2zeros', ...
     'rejectchans', ...
     'rereference', ...
-    'chan_interpol', ...
     'downsample', ...
-    'sleep_as_epoch'};
+    'chan_interpol'};
+
+% "SLEEPSTAGES" DATASETS
+% allSteps = {'noisychans2zeros', ...
+%     'rejectchans', ...
+%     'rereference', ...
+%     'chan_interpol', ...
+%     'downsample', ...
+%     'sleep_as_epoch'};
 
 % FOR CLEANED DATA:
 % extractSWS, customfilter,
@@ -112,7 +123,7 @@ allSteps = {'noisychans2zeros', ...
 %                       set when function is called in script.
 % sleep_as_epoch        Will slice the datasets into 30 second trial epochs
 
-data_appendix           = 'SLEEPSTAGES';
+data_appendix           = 'Testing';
 % Define folder name and dataset appendix for datasets
 
 offline_elecref         = 'Mastoid'; % Indices or char array ('Mastoid', [])
@@ -129,21 +140,21 @@ chans.Face              = {'E49', 'E48', 'E17', 'E128', 'E32', ...
                             'E94', 'E99', 'E107'};
 
                         
-chans2rej               = {'EOG', 'EMG', 'VREF', 'Face'};
+chans2rej               = {}%{'EOG', 'EMG', 'VREF', 'Face'};
 % Define channel types to reject from data and structures
 
 pathData                = ['D:\germanStudyData\datasetsSETS\', ...
-                            'Ori_PlaceboNight\preProcessing\eeglabfilter'];
+                            'Ori_PlaceboNight'];
 % String of file path to the mother stem folder containing the datasets
 
 saveMode                = 'onefile'; % {'onefile', 'twofiles'}
 % Whether to combine everything in one .set file or split into .set and
 % .fdt
 
-dataType                = '.set'; % {'.cdt', '.set', '.mff'}
+dataType                = '.mff'; % {'.cdt', '.set', '.mff'}
 % String of file extension of data to process
 
-saveType                = '.mat'; % {'.set', '.mat'}
+saveType                = '.set'; % {'.set', '.mat'}
 
 stimulation_seq         = 'OFF_ON';
 % {'switchedON_switchedOFF', 'switchedOFF_switchedON'}
@@ -224,6 +235,7 @@ end
 locateEeglab = which('eeglab.m');
 [folderEEGLAB, ~, ~] = fileparts(locateEeglab);
 addpath(genpath(folderEEGLAB))
+eeglab
 
 % -------------------------------------------------------------------------
 % Correcting potential error sources and clearing unnecessary variables
@@ -459,7 +471,8 @@ for s_file = 1 : num_files
 
 
         if strcmp(thisStep, 'downsample')
-            [EEG, lst_changes{end+1,1}] = pop_resample(EEG, 200);
+            [EEG, lst_changes{end+1,1}] = pop_resample(EEG, 250);
+            warning('Downsampling to 250')
             stepsInRun = stepsInRun + 1;
         end
         

@@ -69,7 +69,7 @@ if ~isempty(str_rebuild)
         EEGout.chanlocs(chan_loc).description = 'OffReference';
     end
 else
-    [EEGout, lst_changes] = pop_reref( EEGin, idx_elecref, ...
+    [EEGout, lst_changes] = pop_reref( EEGin, [idx_elecref], ...
         'exclude', find(strcmp({EEGin.chanlocs.description}, 'Noisy')));
 end
 % 'exclude' tag since data of noisy channels are set to zeros and will be
